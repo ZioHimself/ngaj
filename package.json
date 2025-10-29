@@ -38,6 +38,7 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
+    "@vitest/coverage-v8": "^4.0.5",
     "@vitest/ui": "^4.0.5",
     "eslint": "^9.38.0",
     "prettier": "^3.6.2",

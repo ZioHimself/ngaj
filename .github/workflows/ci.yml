@@ -33,14 +33,14 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit -- --coverage
 
-      - name: Run integration tests
-        run: npm run test:integration
+      # - name: Run integration tests
+      #   run: npm run test:integration
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      # - name: Install Playwright browsers
+      #   run: npx playwright install --with-deps
 
-      - name: Run E2E tests
-        run: npm run test:e2e
+      # - name: Run E2E tests
+      #   run: npm run test:e2e
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

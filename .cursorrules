@@ -1,0 +1,34 @@
+# Cursor AI Agent Rules for ngaj
+
+## Test-Writer Agent Mode
+
+When I say "write tests for [requirement]":
+1. Load system prompt from `.agents/prompts/test-writer/system-prompt.md`
+2. Read requirement from `requirements/features/[requirement].feature`
+3. Generate test plan in `.agents/artifacts/test-writer/test-plans/`
+4. Write tests in `tests/` directory
+5. Log decisions to `.agents/logs/test-writer/decisions.jsonl`
+6. Verify tests fail (Red phase)
+
+## Implementer Agent Mode
+
+When I say "implement [requirement]":
+1. Load system prompt from `.agents/prompts/implementer/system-prompt.md`
+2. Read failing tests
+3. Implement in `src/` directory
+4. Run tests to verify they pass (Green phase)
+5. Log decisions to `.agents/logs/implementer/decisions.jsonl`
+
+## Reviewer Agent Mode
+
+When I say "review [change]":
+1. Load system prompt from `.agents/prompts/reviewer/system-prompt.md`
+2. Load checklists from `.agents/prompts/reviewer/checklists/`
+3. Review code and tests
+4. Generate report in `.agents/artifacts/reviewer/review-reports/`
+
+## Context Loading
+
+Always load:
+- `.agents/context/tech-stack.md`
+- `.agents/context/project-glossary.md`

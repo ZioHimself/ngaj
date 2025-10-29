@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "approval_rules": {
+    "global": {
+      "enabled": true,
+      "default_confidence_threshold": 0.8,
+      "notification_methods": ["terminal"],
+      "timeout_minutes": 60,
+      "timeout_action": "block"
+    },
+    "agents": {
+      "test-writer": {
+        "confidence_threshold": 0.7
+      },
+      "implementer": {
+        "confidence_threshold": 0.75,
+        "require_approval_for": [
+          {"decision_type": "architecture", "confidence_below": 0.85},
+          {"decision_type": "external_dependency", "confidence_below": 0.9},
+          {"tags": ["security"], "confidence_below": 1.0}
+        ]
+      },
+      "reviewer": {
+        "confidence_threshold": 0.8
+      }
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "agents": [
+    {
+      "id": "test-writer",
+      "name": "Test Writer Agent",
+      "role": "Write comprehensive tests based on requirements",
+      "model": "claude-sonnet-4.5",
+      "system_prompt_path": ".agents/prompts/test-writer/system-prompt.md",
+      "context_paths": [
+        ".agents/prompts/test-writer/context/",
+        ".agents/context/architecture.md",
+        ".agents/context/tech-stack.md"
+      ],
+      "output_directory": ".agents/artifacts/test-writer/",
+      "log_directory": ".agents/logs/test-writer/",
+      "capabilities": ["write_tests", "create_test_plans", "requirement_analysis"],
+      "constraints": {
+        "max_test_file_size": 500,
+        "must_link_to_requirement": true,
+        "must_fail_initially": true
+      }
+    },
+    {
+      "id": "implementer",
+      "name": "Implementer Agent",
+      "role": "Implement code to make tests pass",
+      "model": "claude-sonnet-4.5",
+      "system_prompt_path": ".agents/prompts/implementer/system-prompt.md",
+      "context_paths": [
+        ".agents/prompts/implementer/context/",
+        ".agents/context/architecture.md",
+        ".agents/context/tech-stack.md",
+        ".agents/context/decisions/"
+      ],
+      "output_directory": ".agents/artifacts/implementer/",
+      "log_directory": ".agents/logs/implementer/",
+      "capabilities": ["write_implementation", "create_design_docs", "refactor_code"],
+      "constraints": {
+        "must_pass_existing_tests": true,
+        "no_test_modification": true,
+        "follow_architecture": true
+      }
+    },
+    {
+      "id": "reviewer",
+      "name": "Reviewer Agent",
+      "role": "Review code quality, security, and standards",
+      "model": "claude-opus-4.1",
+      "system_prompt_path": ".agents/prompts/reviewer/system-prompt.md",
+      "context_paths": [
+        ".agents/prompts/reviewer/checklists/",
+        ".agents/prompts/reviewer/context/",
+        ".agents/context/"
+      ],
+      "output_directory": ".agents/artifacts/reviewer/",
+      "log_directory": ".agents/logs/reviewer/",
+      "capabilities": ["code_review", "security_analysis", "performance_analysis"],
+      "constraints": {
+        "must_check_all_checklists": true,
+        "provide_actionable_feedback": true,
+        "confidence_threshold": 0.7
+      }
+    }
+  ],
+  "workflows": {
+    "tdd-cycle": {
+      "steps": [
+        {
+          "agent": "test-writer",
+          "input": "requirement",
+          "output": "failing_tests"
+        },
+        {
+          "agent": "implementer",
+          "input": "failing_tests",
+          "output": "implementation"
+        },
+        {
+          "agent": "reviewer",
+          "input": ["implementation", "tests"],
+          "output": "review_report"
+        }
+      ]
+    }
+  }
+}

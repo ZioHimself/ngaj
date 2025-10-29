@@ -42,6 +42,7 @@
     "eslint": "^9.38.0",
     "prettier": "^3.6.2",
     "supertest": "^7.1.4",
+    "typescript-eslint": "^8.46.2",
     "vitest": "^4.0.5"
   }
 }

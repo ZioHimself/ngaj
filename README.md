@@ -60,4 +60,4 @@ npm run test:watch
 
 ## License
 
-MIT © [Your Name]
+MIT © Serhiy Onyshchenko

@@ -13,11 +13,21 @@
       ],
       "output_directory": ".agents/artifacts/test-writer/",
       "log_directory": ".agents/logs/test-writer/",
-      "capabilities": ["write_tests", "create_test_plans", "requirement_analysis"],
+      "capabilities": ["write_tests", "create_test_plans", "requirement_analysis", "github_issues"],
       "constraints": {
         "max_test_file_size": 500,
         "must_link_to_requirement": true,
         "must_fail_initially": true
+      },
+      "github": {
+        "enabled": true,
+        "actions": [
+          "create_issue",
+          "comment_on_issue",
+          "update_issue_status",
+          "link_to_issue",
+          "link_commits"
+        ]
       }
     },
     {
@@ -34,7 +44,16 @@
       ],
       "output_directory": ".agents/artifacts/implementer/",
       "log_directory": ".agents/logs/implementer/",
-      "capabilities": ["write_implementation", "create_design_docs", "refactor_code"],
+      "capabilities": ["write_implementation", "create_design_docs", "refactor_code", "github_issues"],
+      "github": {
+        "enabled": true,
+        "actions": [
+          "create_issue",
+          "comment_on_issue",
+          "update_issue_status",
+          "link_commits"
+        ]
+      },
       "constraints": {
         "must_pass_existing_tests": true,
         "no_test_modification": true,
@@ -54,7 +73,16 @@
       ],
       "output_directory": ".agents/artifacts/reviewer/",
       "log_directory": ".agents/logs/reviewer/",
-      "capabilities": ["code_review", "security_analysis", "performance_analysis"],
+      "capabilities": ["code_review", "security_analysis", "performance_analysis", "github_issues"],
+      "github": {
+        "enabled": true,
+        "actions": [
+          "comment_on_issue",
+          "add_labels",
+          "request_changes",
+          "update_issue_status"
+        ]
+      },
       "constraints": {
         "must_check_all_checklists": true,
         "provide_actionable_feedback": true,

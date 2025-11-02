@@ -33,6 +33,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server-github": "^2025.4.8",
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.9.2",
     "@types/supertest": "^6.0.3",

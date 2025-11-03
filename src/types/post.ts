@@ -1,3 +1,5 @@
+import { Platform } from './platform';
+
 /**
  * Represents a social media post from any platform
  */
@@ -6,7 +8,7 @@ export interface Post {
     id: string;
     
     /** Platform where the post originated */
-    platform: 'bluesky' | 'twitter' | 'reddit' | 'linkedin';
+    platform: Platform;
     
     /** Platform-specific post ID */
     platformPostId: string;

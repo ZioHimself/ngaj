@@ -29,7 +29,6 @@ out/
 .env*.local
 
 # Agent artifacts (temporary/draft work)
-.agents/artifacts/
 .agents/approvals/pending/
 .agents/logs/*/session.json
 

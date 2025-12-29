@@ -2,15 +2,18 @@
 
 ## Core Domain Terms
 
+- **Profile**: A cross-platform persona defining voice, discovery preferences, and knowledge base. Represents "who you are" across platforms
+- **Account**: A connection to a specific social media platform (Bluesky, LinkedIn, Reddit) with platform-specific credentials and scheduling. Represents "where you post"
 - **Opportunity**: A discovered social media post that matches user interests and could be a good engagement target
 - **Discovery**: Automated process of finding relevant social media posts based on user-configured interests and keywords
 - **Knowledge Base**: Collection of user's uploaded reference materials (PDFs, markdown, text files) used to ground AI responses
 - **Response**: AI-generated suggested reply to an opportunity, grounded in the user's knowledge base and voice
 - **Engagement**: The act of responding to or interacting with social media posts
-- **Voice**: User's tone, style, and communication preferences used to guide AI response generation
+- **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Part of a profile configuration
 - **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with
 - **Scoring**: Algorithm that ranks opportunities by relevance using impact, recency, and keyword matching
 - **Queue**: Prioritized list of pending opportunities awaiting user review
+- **Handle**: Platform-specific username or identifier (e.g., @user.bsky.social for Bluesky, u/username for Reddit)
 
 ## Technical Terms
 

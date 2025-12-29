@@ -9,10 +9,12 @@ When I say "design [feature]" or "let's design [feature]":
    - Data models and entity relationships
    - API contracts and interfaces
    - Trade-offs and design options
-3. Document decisions in:
-   - Architecture Decision Record (ADR) in `docs/architecture/decisions/`
+3. Document decisions (in order, with cross-references):
+   - ADR (WHY): Architecture Decision Record in `docs/architecture/decisions/`
+   - Design Doc (HOW): Technical specification in `.agents/artifacts/designer/designs/`
+   - Handoff (TEST WHAT): Test guidance in `.agents/artifacts/designer/handoffs/`
 4. Create type stubs in `src/types/` (if applicable)
-5. Generate handoff document for Test-Writer in `.agents/artifacts/designer/handoffs/`
+5. Ensure no duplication: each document has unique content, linked together
 
 ## Test-Writer Agent Mode
 

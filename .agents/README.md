@@ -159,25 +159,43 @@ User: "design opportunity discovery service"
 ### Documentation Phase (10-20 minutes)
 
 **Designer Agent**:
-> Excellent! I'll now create the design artifacts:
+> Excellent! I'll now create the design artifacts in order:
 > 
 > [Creates files...]
 > 
 > ✅ **Created**:
-> - `docs/architecture/decisions/006-opportunity-discovery-design.md` - ADR
-> - `src/types/opportunity.ts` - TypeScript types
-> - `src/types/platform-adapter.ts` - Platform adapter interface
-> - `.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md` - Test-Writer handoff
 > 
-> ### Key Decisions Documented
+> 1. **ADR-006** (`docs/architecture/decisions/006-opportunity-discovery-design.md`)
+>    - **WHY**: Decision context and rationale for adapter pattern, scoring, deduplication
+>    - Key decisions documented at high level
+>    - Links to related ADRs (ADR-005 for MVP scope)
 > 
-> - **Adapter Pattern**: Platform-agnostic interface with Bluesky implementation
-> - **Score Threshold**: Store only opportunities with score ≥ 30
-> - **Deduplication**: By (post_id, user_id) to prevent duplicate opportunities
-> - **Cron Schedule**: Every 15 minutes (configurable)
-> - **Error Handling**: Log and skip on API errors, exponential backoff for rate limits
+> 2. **Design Doc** (`.agents/artifacts/designer/designs/opportunity-discovery-design.md`)
+>    - **HOW**: Complete technical specification
+>    - Full TypeScript interfaces for `Opportunity`, `IPlatformAdapter`, `IDiscoveryService`
+>    - API contracts with request/response schemas
+>    - Sequence diagram for discovery flow
+>    - References ADR-006 for decision rationale
 > 
-> **Ready for Test-Writer!** 🎉
+> 3. **Handoff** (`.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md`)
+>    - **TEST WHAT**: Test scenarios and acceptance criteria
+>    - "Should discover posts above threshold (score ≥ 30)"
+>    - "Should deduplicate by (post_id, user_id)"
+>    - "Should handle rate limits with exponential backoff"
+>    - Links to Design Doc for full API schemas
+>    - Links to ADR-006 for understanding design decisions
+> 
+> 4. **Type Stubs** (`src/types/`)
+>    - `opportunity.ts` - Matches interfaces in Design Doc
+>    - `platform-adapter.ts` - Matches interfaces in Design Doc
+> 
+> ### Documentation Structure (No Duplication)
+> 
+> - **ADR-006**: Strategic decisions only (no code samples or detailed schemas)
+> - **Design Doc**: Full technical details (the source of truth for implementation)
+> - **Handoff**: Test guidance (links to Design Doc, doesn't repeat schemas)
+> 
+> **Ready for Test-Writer!** 🎉 All documents cross-reference each other.
 
 ---
 
@@ -404,11 +422,17 @@ User: "review opportunity discovery"
 
 | Phase | Agent | Duration | Artifacts |
 |-------|-------|----------|-----------|
-| 1. Design | Designer | 30-45 min | ADR, types, handoff doc |
+| 1. Design | Designer | 30-45 min | ADR (WHY), Design Doc (HOW), Handoff (TEST WHAT), type stubs |
 | 2. Tests | Test-Writer | 20-30 min | Test plan, 10 test cases |
 | 3. Implementation | Implementer | 45-60 min | Services, adapters, repos |
 | 4. Review | Reviewer | 15-20 min | Review report |
 | **Total** | **All Agents** | **~2.5 hours** | **Production-ready feature** |
+
+### Designer Artifact Breakdown (No Duplication)
+- **ADR**: Strategic decision record (what + why, high-level)
+- **Design Doc**: Complete technical blueprint (how, with code/schemas)
+- **Handoff**: Test-specific guidance (what to test, links to Design Doc for details)
+- Each document cross-references the others, no large content duplication
 
 ## Key Benefits
 
@@ -443,9 +467,12 @@ To introduce a new feature, follow this workflow:
 "design [feature name]"
 ```
 - Collaborate on data models and APIs
-- Document decisions in ADR
+- Document in 3 complementary artifacts:
+  - **ADR**: What was decided and why (strategic)
+  - **Design Doc**: Complete technical specification (detailed)
+  - **Handoff**: Test scenarios and criteria (actionable)
+- Cross-reference documents (no duplication)
 - Create type definitions
-- Generate handoff for tests
 
 ### 2. Test Phase
 ```
@@ -499,6 +526,7 @@ For these cases, jump straight to:
 - [Reviewer Agent Prompt](.agents/prompts/reviewer/system-prompt.md)
 - [Agent Configuration](.agents/config/agents.json)
 - [Cursor Rules](../.cursorrules)
+- **[Documentation Templates](.agents/templates/documentation-templates.md)** - Avoid duplication with proper structure
 
 ---
 

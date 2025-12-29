@@ -1,600 +1,505 @@
-# Introducing a Requirement with the Agent Framework
+# Introducing a Feature with the Agent Framework
 
 ## Complete Workflow Example
 
-Let's walk through introducing a real requirement: **Post Discovery Service**
+Let's walk through introducing a real feature: **Opportunity Discovery Service**
 
----
-
-## Step 1: Write the Requirement (Gherkin Feature File)
-
-Create: `requirements/features/post-discovery.feature`
-
-```gherkin
-Feature: Post Discovery
-  As a user
-  I want the system to discover relevant social media posts
-  So that I can engage with conversations matching my interests
-
-  Background:
-    Given I have configured keyword monitoring for "TypeScript"
-    And I have set minimum engagement to 10 likes
-
-  @requirement:PD-001
-  Scenario: Discover posts matching keywords
-    Given there are 50 tweets mentioning "TypeScript"
-    When the discovery job runs
-    Then posts containing "TypeScript" should be fetched
-    And posts should be filtered by engagement criteria
-    And posts should be ranked by relevance score
-    And the top 20 posts should be added to my inbox
-
-  @requirement:PD-002
-  Scenario: Filter out low engagement posts
-    Given there is a post with "TypeScript" and 5 likes
-    And my minimum engagement is set to 10 likes
-    When the discovery job runs
-    Then that post should not appear in my inbox
-
-  @requirement:PD-003
-  Scenario: Deduplicate similar posts
-    Given there are 3 tweets with nearly identical "TypeScript tips" content
-    When the discovery job runs
-    Then only 1 post should be added to my inbox
-    And it should be the one with highest engagement
+This example demonstrates the **Full Cycle** workflow:
 ```
-
-**Command:**
-```bash
-# Create the feature file
-mkdir -p requirements/features
-nano requirements/features/post-discovery.feature
-# Paste the content above
+Designer → Test-Writer → Implementer → Reviewer
 ```
 
 ---
 
-## Step 2: Use Test-Writer Agent
+## Phase 1: Designer Agent 🎨
 
-### Option A: Using Cursor IDE (Recommended)
-
-**In Cursor IDE:**
-
+### Invocation
 ```
-You: "Test-Writer mode: write tests for PD-001"
+User: "design opportunity discovery service"
 ```
 
-**What the agent does:**
-1. Reads the feature file
-2. Loads test-writer prompt from `.agents/prompts/test-writer/system-prompt.md`
-3. Loads context from `.agents/context/`
-4. Creates test plan in `.agents/artifacts/test-writer/test-plans/PD-001_test-plan.md`
-5. Writes tests in `tests/unit/services/post-discovery.spec.ts`
-6. Logs decisions to `.agents/logs/test-writer/decisions.jsonl`
-7. Creates handoff document for implementer
+### Discovery Phase (5-10 minutes)
 
-### Option B: Manual Prompt (If not using Cursor)
+**Designer Agent**:
+> Let's design the opportunity discovery service! I see from the project glossary that:
+> 
+> > **Discovery**: Automated process of finding relevant social media posts based on user-configured interests and keywords
+> 
+> A few questions to understand the requirements:
+> 
+> 1. **Discovery Trigger**: Should this run on a cron schedule, on-demand, or both?
+> 2. **Data Source**: For MVP (ADR-005), we're Bluesky-only. Should we design for multi-platform from the start?
+> 3. **Storage**: Do we store all discovered posts, or just ones above a certain score threshold?
+> 4. **User Filtering**: How do users configure what they want to discover? Keywords only, or also by hashtags, authors, topics?
 
-**Prompt for Claude:**
+**User**:
+> 1. Cron schedule for now (every 15 minutes)
+> 2. Design the interface to be platform-agnostic, but implement Bluesky only
+> 3. Store all posts above score threshold of 30
+> 4. Keywords for MVP, but leave room for hashtags later
 
-```markdown
-You are the Test-Writer Agent. Please write comprehensive tests for requirement PD-001.
+### Exploration Phase (15-30 minutes)
 
-Context:
-- Requirement file: requirements/features/post-discovery.feature
-- Tech stack: TypeScript, Vitest, Node.js
-- Testing approach: Unit tests with mocked dependencies
-- Output: tests/unit/services/post-discovery.spec.ts
+**Designer Agent**:
+> Great! Let me sketch the data model and architecture:
+> 
+> ### Data Model: Opportunity
+> 
+> ```typescript
+> interface Opportunity {
+>   id: string;                    // MongoDB ObjectId
+>   user_id: string;               // Which user this opportunity is for
+>   platform: 'bluesky';           // Platform source
+>   post_id: string;               // Platform-specific post ID
+>   post_url: string;              // Direct link to post
+>   author: {
+>     id: string;
+>     username: string;
+>     display_name: string;
+>     follower_count: number;
+>   };
+>   content: {
+>     text: string;
+>     created_at: Date;
+>   };
+>   engagement: {
+>     like_count: number;
+>     reply_count: number;
+>     repost_count: number;
+>   };
+>   scoring: OpportunityScore;     // From scoring service
+>   status: 'pending' | 'dismissed' | 'responded';
+>   discovered_at: Date;
+>   updated_at: Date;
+> }
+> ```
+> 
+> ### Service Architecture
+> 
+> I'm thinking we use the **Adapter Pattern** for platform abstraction:
+> 
+> ```typescript
+> // Platform-agnostic interface
+> interface IPlatformAdapter {
+>   authenticate(): Promise<void>;
+>   fetchRecentPosts(filters: DiscoveryFilters): Promise<Post[]>;
+>   getPostDetails(postId: string): Promise<Post>;
+> }
+> 
+> // Bluesky implementation
+> class BlueskyAdapter implements IPlatformAdapter {
+>   // Bluesky-specific AT Protocol calls
+> }
+> 
+> // Discovery Service orchestrates everything
+> interface IDiscoveryService {
+>   discover(userId: string): Promise<Opportunity[]>;
+>   getOpportunities(userId: string, status?: OpportunityStatus): Promise<Opportunity[]>;
+>   dismissOpportunity(id: string): Promise<void>;
+> }
+> ```
+> 
+> Does this structure make sense?
 
-Please:
-1. Read the requirement from the feature file
-2. Generate a test plan
-3. Write failing tests (Red phase of TDD)
-4. Log your decisions
-5. Create a handoff document for the Implementer
+**User**:
+> Yes! I like the adapter pattern. That'll make multi-platform easier later.
 
-Follow the system prompt at: .agents/prompts/test-writer/system-prompt.md
-```
+**Designer Agent**:
+> Perfect! Now for the discovery flow:
+> 
+> ### Discovery Algorithm
+> 
+> ```typescript
+> async function discover(userId: string): Promise<Opportunity[]> {
+>   // 1. Get user preferences (keywords, weights)
+>   const preferences = await userService.getPreferences(userId);
+>   
+>   // 2. Fetch recent posts from platform
+>   const posts = await platformAdapter.fetchRecentPosts({
+>     keywords: preferences.keywords,
+>     since: getLastDiscoveryTime(userId),
+>     limit: 100
+>   });
+>   
+>   // 3. Score each post
+>   const scoredPosts = posts.map(post => ({
+>     post,
+>     score: scoringService.scoreOpportunity(
+>       post, 
+>       preferences.keywords, 
+>       preferences.scoring_weights
+>     )
+>   }));
+>   
+>   // 4. Filter by threshold
+>   const filtered = scoredPosts.filter(sp => sp.score.total >= 30);
+>   
+>   // 5. Store as opportunities
+>   const opportunities = await opportunityRepository.createMany(
+>     filtered.map(sp => toOpportunity(sp, userId))
+>   );
+>   
+>   return opportunities;
+> }
+> ```
+> 
+> ### Edge Cases to Consider
+> 
+> 1. **Rate Limits**: Bluesky API has rate limits. Should we implement exponential backoff?
+> 2. **Duplicates**: If we discover the same post twice (different cron runs), deduplicate?
+> 3. **No Results**: If no posts meet the threshold, return empty array or notify user?
+> 4. **API Down**: If Bluesky is unreachable, skip that run or retry?
 
-### Expected Output
+**User**:
+> 1. Yes, exponential backoff
+> 2. Deduplicate by post_id + user_id
+> 3. Empty array is fine
+> 4. Log error and skip, we'll catch it next run
 
-**Test Plan** (`.agents/artifacts/test-writer/test-plans/PD-001_test-plan.md`):
+### Documentation Phase (10-20 minutes)
 
-```markdown
-# Test Plan: PD-001 - Post Discovery
-
-## Requirement
-Discover posts matching keywords and filter by engagement criteria
-
-## Test Strategy
-- Unit tests for PostDiscoveryService
-- Mock Twitter API adapter
-- Mock Vector DB for relevance scoring
-- Test both happy path and edge cases
-
-## Test Cases
-1. Should fetch posts matching single keyword
-2. Should fetch posts matching multiple keywords
-3. Should filter posts by minimum likes
-4. Should filter posts by minimum replies
-5. Should rank posts by relevance score
-6. Should limit results to configured batch size
-7. Should handle API errors gracefully
-8. Should handle empty results
-
-## Mocking Strategy
-- Mock TwitterAdapter.searchTweets()
-- Mock VectorDB.search() for relevance scoring
-- Use test fixtures for post data
-
-## Coverage Goal
-- 100% of discovery logic
-- All error cases
-- Edge cases (0 results, API timeout, etc.)
-```
-
-**Test File** (`tests/unit/services/post-discovery.spec.ts`):
-
-```typescript
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PostDiscoveryService } from '@/services/post-discovery';
-import { TwitterAdapter } from '@/adapters/twitter';
-import { VectorDB } from '@/database/vector-db';
-
-// @requirement: PD-001
-describe('PostDiscoveryService - Keyword Monitoring', () => {
-  let service: PostDiscoveryService;
-  let mockTwitter: TwitterAdapter;
-  let mockVectorDB: VectorDB;
-
-  beforeEach(() => {
-    mockTwitter = {
-      searchTweets: vi.fn(),
-    } as any;
-    
-    mockVectorDB = {
-      search: vi.fn(),
-    } as any;
-
-    service = new PostDiscoveryService(mockTwitter, mockVectorDB);
-  });
-
-  // @requirement: PD-001.1
-  it('should fetch posts matching single keyword', async () => {
-    // Arrange
-    const config = {
-      sources: { keywords: ['TypeScript'] },
-      filters: { minEngagement: { likes: 10 } }
-    };
-    
-    mockTwitter.searchTweets.mockResolvedValue([
-      { id: '1', content: 'TypeScript is great', likes: 15 },
-      { id: '2', content: 'TypeScript tips', likes: 12 }
-    ]);
-
-    // Act
-    const posts = await service.discoverPosts(config);
-
-    // Assert
-    expect(mockTwitter.searchTweets).toHaveBeenCalledWith('TypeScript');
-    expect(posts).toHaveLength(2);
-    expect(posts.every(p => p.content.includes('TypeScript'))).toBe(true);
-  });
-
-  // @requirement: PD-002
-  it('should filter out posts below minimum likes threshold', async () => {
-    // Arrange
-    const config = {
-      sources: { keywords: ['TypeScript'] },
-      filters: { minEngagement: { likes: 10 } }
-    };
-
-    mockTwitter.searchTweets.mockResolvedValue([
-      { id: '1', content: 'Post 1', likes: 15 },
-      { id: '2', content: 'Post 2', likes: 5 },  // Below threshold
-      { id: '3', content: 'Post 3', likes: 12 }
-    ]);
-
-    // Act
-    const posts = await service.discoverPosts(config);
-
-    // Assert
-    expect(posts).toHaveLength(2);
-    expect(posts.find(p => p.id === '2')).toBeUndefined();
-    expect(posts.every(p => p.likes >= 10)).toBe(true);
-  });
-
-  // Additional tests...
-});
-```
-
-**Decision Log** (`.agents/logs/test-writer/decisions.jsonl`):
-
-```json
-{"timestamp":"2024-10-29T15:30:00Z","agent":"test-writer","requirement_id":"PD-001","decision_type":"test_strategy","decision":"Use unit tests with mocked dependencies","rationale":"Service has external dependencies (Twitter API, Vector DB) that should be mocked for fast, isolated tests","confidence":0.9,"alternatives_considered":[{"approach":"Integration tests with TestContainers","pros":["More realistic","Tests actual integrations"],"cons":["Slower execution","Complex setup"],"why_not_chosen":"Reserve integration tests for API layer"}],"context":{"files_affected":["tests/unit/services/post-discovery.spec.ts"],"related_requirements":["PD-002","PD-003"]},"outcome":{"status":"success","artifacts_created":["tests/unit/services/post-discovery.spec.ts"],"tests_affected":["post-discovery.spec.ts"]},"follow_up_needed":false,"tags":["unit-testing","tdd","service-layer"]}
-```
-
-**Handoff Document** (`.agents/artifacts/test-writer/PD-001_handoff.md`):
-
-```markdown
-# Handoff: Test-Writer → Implementer
-
-**Date**: 2024-10-29
-**Requirement**: PD-001
-**Tests Written**: tests/unit/services/post-discovery.spec.ts
-
-## Current Status
-
-✓ Tests written (8 test cases)
-✓ All tests failing (Red phase - expected)
-
-## What Needs Implementation
-
-### 1. PostDiscoveryService Class
-Location: `src/services/post-discovery.ts`
-
-Required methods:
-- `discoverPosts(config: DiscoveryConfig): Promise<RankedPost[]>`
-
-### 2. Required Functionality
-- Fetch posts from TwitterAdapter using keywords
-- Filter posts by engagement criteria (likes, replies)
-- Rank posts by relevance score
-- Limit results to batch size
-- Handle errors gracefully
-
-### 3. Dependencies Needed
-- TwitterAdapter interface/implementation
-- VectorDB interface for relevance scoring
-- DiscoveryConfig type definition
-- RankedPost type definition
-
-### 4. Edge Cases to Handle
-- Empty search results
-- API timeout/errors
-- Invalid configuration
-- Duplicate posts
-
-## Test Output
-
-```
-FAIL tests/unit/services/post-discovery.spec.ts
-  PostDiscoveryService - Keyword Monitoring
-    ✗ should fetch posts matching single keyword
-      → PostDiscoveryService is not defined
-    ✗ should filter out posts below minimum likes threshold
-      → PostDiscoveryService is not defined
-```
-
-## Definition of Done
-- [ ] All 8 tests pass
-- [ ] No existing tests broken
-- [ ] Code follows architecture patterns
-- [ ] Proper error handling
-- [ ] TypeScript types defined
-- [ ] JSDoc comments added
-
-## Next: Implementer Agent
-Run: "Implementer mode: implement PD-001"
-```
+**Designer Agent**:
+> Excellent! I'll now create the design artifacts:
+> 
+> [Creates files...]
+> 
+> ✅ **Created**:
+> - `docs/architecture/decisions/006-opportunity-discovery-design.md` - ADR
+> - `src/types/opportunity.ts` - TypeScript types
+> - `src/types/platform-adapter.ts` - Platform adapter interface
+> - `.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md` - Test-Writer handoff
+> 
+> ### Key Decisions Documented
+> 
+> - **Adapter Pattern**: Platform-agnostic interface with Bluesky implementation
+> - **Score Threshold**: Store only opportunities with score ≥ 30
+> - **Deduplication**: By (post_id, user_id) to prevent duplicate opportunities
+> - **Cron Schedule**: Every 15 minutes (configurable)
+> - **Error Handling**: Log and skip on API errors, exponential backoff for rate limits
+> 
+> **Ready for Test-Writer!** 🎉
 
 ---
 
-## Step 3: Verify Tests Fail (Red Phase)
+## Phase 2: Test-Writer Agent 🧪
+
+### Invocation
+```
+User: "write tests for opportunity discovery"
+```
+
+**Test-Writer Agent**:
+> I'll write comprehensive tests for opportunity discovery. Let me check for design artifacts...
+> 
+> ✅ Found handoff document: `.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md`
+> 
+> Reading design specs...
+
+### Test Plan Generation (5-10 minutes)
+
+**Test-Writer Agent**:
+> Based on the design, I'll create tests for:
+> 
+> ### Unit Tests
+> 1. **DiscoveryService.discover()** - Happy path
+> 2. **DiscoveryService.discover()** - Empty results (no posts meet threshold)
+> 3. **DiscoveryService.discover()** - Duplicate post handling
+> 4. **DiscoveryService.discover()** - API rate limit error
+> 5. **BlueskyAdapter.fetchRecentPosts()** - Successful fetch
+> 6. **BlueskyAdapter.fetchRecentPosts()** - API error handling
+> 
+> ### Integration Tests
+> 7. **Discovery → Storage** - End-to-end flow with mocked Bluesky
+> 8. **Cron Job Execution** - Verify scheduled discovery runs
+> 
+> Creating test files...
+> 
+> ✅ **Created**:
+> - `tests/unit/services/discovery-service.spec.ts` (8 test cases)
+> - `tests/integration/discovery-flow.spec.ts` (2 test cases)
+> - `.agents/artifacts/test-writer/test-plans/opportunity-discovery-test-plan.md`
+> 
+> Running tests to verify Red phase...
+
+### Test Execution
 
 ```bash
-npm test
+$ npm test
 
-# Expected output:
-# FAIL tests/unit/services/post-discovery.spec.ts
-#   ● PostDiscoveryService › should fetch posts...
-#     ReferenceError: PostDiscoveryService is not defined
+FAIL tests/unit/services/discovery-service.spec.ts
+  DiscoveryService
+    ✗ discover() returns scored opportunities above threshold (2 ms)
+    ✗ discover() returns empty array when no posts meet threshold (1 ms)
+    ✗ discover() deduplicates posts by post_id + user_id (1 ms)
+    ...
+
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 8 total
 ```
 
-✅ Tests should fail - this is correct! (Red phase of TDD)
+**Test-Writer Agent**:
+> ✅ **Red Phase Confirmed**: All 10 tests failing as expected.
+> 
+> Implementation stubs created:
+> - `src/services/discovery-service.ts` (empty class)
+> - `src/adapters/bluesky-adapter.ts` (empty class)
+> 
+> **Ready for Implementer!** 🚀
 
 ---
 
-## Step 4: Use Implementer Agent
+## Phase 3: Implementer Agent ⚙️
 
-**In Cursor IDE:**
-
+### Invocation
 ```
-You: "Implementer mode: implement PD-001"
-```
-
-**What the agent does:**
-1. Reads the failing tests
-2. Reads the handoff document
-3. Loads implementer prompt
-4. Creates design document
-5. Implements code in `src/services/post-discovery.ts`
-6. Runs tests to verify they pass (Green phase)
-7. Logs decisions
-8. Creates handoff for reviewer
-
-### Expected Output
-
-**Design Document** (`.agents/artifacts/implementer/design-docs/PD-001_design.md`):
-
-```markdown
-# Design: Post Discovery Service
-
-## Architecture
-Service layer component that orchestrates post discovery
-
-## Dependencies
-- TwitterAdapter (injected)
-- VectorDB (injected)
-
-## Key Design Decisions
-1. Dependency injection for testability
-2. Strategy pattern for filtering
-3. Builder pattern for configuration
-
-## Implementation Plan
-1. Define types (DiscoveryConfig, RankedPost)
-2. Implement PostDiscoveryService class
-3. Implement filtering logic
-4. Implement ranking logic
-5. Add error handling
+User: "implement opportunity discovery"
 ```
 
-**Implementation** (`src/services/post-discovery.ts`):
+**Implementer Agent**:
+> I'll implement the discovery service to make the tests pass.
+> 
+> Reading:
+> - ✅ Design docs from `.agents/artifacts/designer/handoffs/`
+> - ✅ Failing tests from `tests/unit/services/discovery-service.spec.ts`
+> - ✅ ADR-006 for architectural guidance
+> 
+> Implementing...
 
-```typescript
-import { TwitterAdapter } from '@/adapters/twitter';
-import { VectorDB } from '@/database/vector-db';
+### Implementation (30-60 minutes)
 
-export interface DiscoveryConfig {
-  sources: {
-    keywords: string[];
-  };
-  filters: {
-    minEngagement: {
-      likes: number;
-      replies?: number;
-    };
-  };
-}
-
-export interface RankedPost {
-  id: string;
-  content: string;
-  likes: number;
-  replies?: number;
-  scores?: {
-    relevance: number;
-    final: number;
-  };
-}
-
-export class PostDiscoveryService {
-  constructor(
-    private twitterAdapter: TwitterAdapter,
-    private vectorDB: VectorDB
-  ) {}
-
-  async discoverPosts(config: DiscoveryConfig): Promise<RankedPost[]> {
-    // 1. Fetch posts from Twitter
-    const keyword = config.sources.keywords[0]; // Simple implementation
-    const rawPosts = await this.twitterAdapter.searchTweets(keyword);
-
-    // 2. Filter by engagement
-    const filtered = this.filterByEngagement(
-      rawPosts,
-      config.filters.minEngagement
-    );
-
-    // 3. Rank posts (placeholder for now)
-    const ranked = filtered.map(post => ({
-      ...post,
-      scores: {
-        relevance: 0,
-        final: 0
-      }
-    }));
-
-    return ranked;
-  }
-
-  private filterByEngagement(
-    posts: any[],
-    criteria: { likes: number; replies?: number }
-  ): any[] {
-    return posts.filter(post => {
-      const meetsLikes = post.likes >= criteria.likes;
-      const meetsReplies = criteria.replies
-        ? post.replies >= criteria.replies
-        : true;
-      return meetsLikes && meetsReplies;
-    });
-  }
-}
-```
-
-**Decision Log** (`.agents/logs/implementer/decisions.jsonl`):
-
-```json
-{"timestamp":"2024-10-29T16:00:00Z","agent":"implementer","requirement_id":"PD-001","decision_type":"implementation_approach","decision":"Use dependency injection for adapters","rationale":"Makes testing easier and follows SOLID principles","confidence":0.95,"alternatives_considered":[{"approach":"Direct instantiation of adapters","pros":["Simpler code"],"cons":["Hard to test","Tight coupling"],"why_not_chosen":"Poor testability"}],"context":{"files_affected":["src/services/post-discovery.ts"]},"outcome":{"status":"success","test_results":{"before":"8 failing","after":"8 passing"}}}
-```
-
----
-
-## Step 5: Verify Tests Pass (Green Phase)
+**Implementer Agent**:
+> Created/Updated:
+> - `src/services/discovery-service.ts` - Discovery orchestration logic
+> - `src/adapters/bluesky-adapter.ts` - Bluesky API integration
+> - `src/repositories/opportunity-repository.ts` - MongoDB storage
+> - `src/utils/rate-limiter.ts` - Exponential backoff for rate limits
+> - `src/jobs/discovery-cron.ts` - Cron job setup
+> 
+> Running tests...
 
 ```bash
-npm test
+$ npm test
 
-# Expected output:
-# PASS tests/unit/services/post-discovery.spec.ts
-#   PostDiscoveryService - Keyword Monitoring
-#     ✓ should fetch posts matching single keyword (5ms)
-#     ✓ should filter out posts below minimum likes threshold (3ms)
-#     ...
-# Tests: 8 passed, 8 total
+PASS tests/unit/services/discovery-service.spec.ts
+  DiscoveryService
+    ✓ discover() returns scored opportunities above threshold (24 ms)
+    ✓ discover() returns empty array when no posts meet threshold (12 ms)
+    ✓ discover() deduplicates posts by post_id + user_id (18 ms)
+    ✓ discover() handles API rate limit with exponential backoff (45 ms)
+    ✓ discover() handles API errors gracefully (15 ms)
+    ...
+
+PASS tests/integration/discovery-flow.spec.ts
+  Discovery Flow
+    ✓ discovers, scores, and stores opportunities end-to-end (156 ms)
+    ✓ cron job executes discovery on schedule (89 ms)
+
+Test Suites: 2 passed, 2 total
+Tests:       10 passed, 10 total
+Time:        2.341 s
 ```
 
-✅ All tests should pass - Green phase complete!
+**Implementer Agent**:
+> ✅ **Green Phase Achieved**: All 10 tests passing!
+> 
+> **Implementation Summary**:
+> - Adapter pattern implemented with Bluesky adapter
+> - Discovery service orchestrates fetch → score → filter → store
+> - Exponential backoff for rate limits (1s, 2s, 4s, 8s)
+> - Deduplication by checking existing (post_id, user_id) pairs
+> - Cron job scheduled for every 15 minutes
+> 
+> **Ready for Review!** 👀
 
 ---
 
-## Step 6: Use Reviewer Agent
+## Phase 4: Reviewer Agent 🔍
 
-**In Cursor IDE:**
-
+### Invocation
 ```
-You: "Reviewer mode: review PD-001 implementation"
+User: "review opportunity discovery"
 ```
 
-**What the agent does:**
-1. Loads reviewer prompt and checklists
-2. Reviews both tests and implementation
-3. Checks code quality, security, performance
-4. Reviews decision logs from other agents
-5. Generates review report
-6. Provides verdict (approve/request changes)
+**Reviewer Agent**:
+> I'll review the opportunity discovery implementation.
+> 
+> Loading review checklists:
+> - ✅ Code quality checklist
+> - ✅ Security checklist
+> - ✅ Architecture compliance checklist
+> 
+> Reviewing...
 
-### Expected Output
+### Review Report (10-15 minutes)
 
-**Review Report** (`.agents/artifacts/reviewer/review-reports/PD-001_review.md`):
+**Reviewer Agent**:
+> ✅ **Review Complete**
+> 
+> ### Summary
+> 
+> **Overall**: ✅ Approved with minor suggestions
+> **Test Coverage**: 100% of service logic
+> **Architecture**: ✅ Follows ADR-006 design
+> **Security**: ✅ No sensitive data leaks, credentials via env vars
+> 
+> ### Strengths
+> 1. ✅ Clean adapter pattern implementation
+> 2. ✅ Comprehensive error handling
+> 3. ✅ Well-structured, testable code
+> 4. ✅ Proper separation of concerns
+> 5. ✅ Good TypeScript type safety
+> 
+> ### Suggestions
+> 
+> 1. **Logging**: Add structured logging for discovery runs
+>    - Severity: LOW
+>    - Rationale: Debugging production issues easier with logs
+>    - Suggestion: Use a logger service for discovery start/end/errors
+> 
+> 2. **Monitoring**: Consider metrics for discovery success rate
+>    - Severity: LOW
+>    - Rationale: MVP doesn't need it, but useful for v0.2
+>    - Suggestion: Track discovered_count, filtered_count, error_count
+> 
+> 3. **Rate Limit Documentation**: Document Bluesky rate limits in code
+>    - Severity: LOW
+>    - Rationale: Future maintainers should know the constraints
+>    - Suggestion: Add comment with Bluesky's documented limits
+> 
+> ### Test Coverage
+> 
+> ```
+> File                        | % Stmts | % Branch | % Funcs | % Lines
+> ----------------------------|---------|----------|---------|--------
+> discovery-service.ts        |   100   |   100    |   100   |   100
+> bluesky-adapter.ts          |   95.5  |   100    |   100   |   95.5
+> opportunity-repository.ts   |   100   |   100    |   100   |   100
+> ----------------------------|---------|----------|---------|--------
+> All files                   |   98.5  |   100    |   100   |   98.5
+> ```
+> 
+> ### Security Analysis
+> 
+> ✅ No issues found:
+> - Credentials loaded from environment variables (ADR-002)
+> - No sensitive data in logs
+> - Input validation on user_id, post_id
+> - MongoDB injection prevented by using typed queries
+> 
+> ### Architecture Compliance
+> 
+> ✅ Follows design decisions:
+> - Adapter pattern as specified in ADR-006
+> - Score threshold of 30 enforced
+> - Deduplication by (post_id, user_id)
+> - Exponential backoff implemented
+> 
+> **Report saved**: `.agents/artifacts/reviewer/review-reports/opportunity-discovery-review.md`
+> 
+> **Feature Complete!** ✅
 
-```markdown
-# Code Review: PD-001 - Post Discovery
+---
 
-## Summary
-Implementation of post discovery service with keyword filtering and engagement-based filtering.
+## Workflow Summary
 
-## Test Quality ✓
-- Coverage: 100%
-- Edge cases handled: Yes
-- Test independence: Yes
-- Mocking appropriate: Yes
+| Phase | Agent | Duration | Artifacts |
+|-------|-------|----------|-----------|
+| 1. Design | Designer | 30-45 min | ADR, types, handoff doc |
+| 2. Tests | Test-Writer | 20-30 min | Test plan, 10 test cases |
+| 3. Implementation | Implementer | 45-60 min | Services, adapters, repos |
+| 4. Review | Reviewer | 15-20 min | Review report |
+| **Total** | **All Agents** | **~2.5 hours** | **Production-ready feature** |
 
-## Implementation Quality ✓
-- Code clarity: 4/5
-- SOLID principles: Yes
-- Error handling: Needs improvement
-- Type safety: Yes
+## Key Benefits
 
-## Specific Feedback
+### Documentation-Driven
+- Every decision captured in ADR
+- Design artifacts serve as living documentation
+- Future developers understand the "why"
 
-### Must Fix (Blocking)
-1. Add error handling for API failures
-2. Add input validation for config
+### Test-First Development
+- Tests written before implementation
+- Comprehensive coverage (98.5%+)
+- Red → Green → Refactor workflow
 
-### Should Fix (Important)
-1. Extract filtering logic to separate service
-2. Add JSDoc comments
+### Quality Assurance
+- Automated code review
+- Security analysis
+- Architecture compliance checks
 
-### Nice to Have
-1. Consider caching for repeated keyword searches
+### Clear Handoffs
+- Designer → Test-Writer: Handoff doc with acceptance criteria
+- Test-Writer → Implementer: Failing tests define requirements
+- Implementer → Reviewer: Working code + tests for review
 
-## Decision Log Review
-- Test-Writer decisions: Sound ✓
-- Implementer decisions: Sound ✓
+---
 
-## Verdict
-**Status**: REQUEST_CHANGES
-**Confidence**: 0.85
-**Reasoning**: Implementation is solid but needs error handling before merging
+## Quick Start
+
+To introduce a new feature, follow this workflow:
+
+### 1. Design Phase
+```
+"design [feature name]"
+```
+- Collaborate on data models and APIs
+- Document decisions in ADR
+- Create type definitions
+- Generate handoff for tests
+
+### 2. Test Phase
+```
+"write tests for [feature name]"
+```
+- Read design handoff
+- Create comprehensive test plan
+- Write failing tests (Red phase)
+- Verify tests fail
+
+### 3. Implementation Phase
+```
+"implement [feature name]"
+```
+- Read failing tests
+- Implement to make tests pass (Green phase)
+- Refactor for quality
+- Verify all tests pass
+
+### 4. Review Phase
+```
+"review [feature name]"
+```
+- Code quality analysis
+- Security review
+- Architecture compliance
+- Generate review report
+
+---
+
+## When to Skip Design Phase
+
+Use the **TDD Cycle** (skip Designer) when:
+- ❌ Small bug fixes
+- ❌ Following existing patterns (e.g., adding similar API endpoint)
+- ❌ Design is already clear
+- ❌ Time-sensitive hotfixes
+
+For these cases, jump straight to:
+```
+"write tests for [requirement]"
 ```
 
 ---
 
-## Step 7: Address Review Feedback
+## Additional Resources
 
-If reviewer requests changes:
-
-**In Cursor IDE:**
-
-```
-You: "Implementer mode: address review feedback for PD-001 - add error handling and input validation"
-```
-
-Agent makes changes, tests still pass, ready for final approval.
+- [Designer Agent Guide](.agents/prompts/designer/README.md)
+- [Test-Writer Agent Prompt](.agents/prompts/test-writer/system-prompt.md)
+- [Implementer Agent Prompt](.agents/prompts/implementer/system-prompt.md)
+- [Reviewer Agent Prompt](.agents/prompts/reviewer/system-prompt.md)
+- [Agent Configuration](.agents/config/agents.json)
+- [Cursor Rules](../.cursorrules)
 
 ---
 
-## Summary: Complete Workflow
-
-```bash
-# 1. Write requirement
-nano requirements/features/post-discovery.feature
-
-# 2. Test-Writer Agent
-# In Cursor: "write tests for PD-001"
-
-# 3. Verify tests fail (Red)
-npm test  # Should fail ✓
-
-# 4. Implementer Agent
-# In Cursor: "implement PD-001"
-
-# 5. Verify tests pass (Green)
-npm test  # Should pass ✓
-
-# 6. Reviewer Agent
-# In Cursor: "review PD-001"
-
-# 7. Address feedback if needed
-# In Cursor: "address review feedback for PD-001"
-
-# 8. Commit
-git add .
-git commit -m "feat: implement post discovery service (PD-001)"
-```
-
----
-
-## File Structure After Completion
-
-```
-ngaj/
-├── requirements/
-│   └── features/
-│       └── post-discovery.feature         # Your requirement
-├── tests/
-│   └── unit/
-│       └── services/
-│           └── post-discovery.spec.ts     # Generated by Test-Writer
-├── src/
-│   └── services/
-│       └── post-discovery.ts              # Generated by Implementer
-└── .agents/
-    ├── logs/
-    │   ├── test-writer/decisions.jsonl    # Test-Writer decisions
-    │   ├── implementer/decisions.jsonl    # Implementer decisions
-    │   └── reviewer/decisions.jsonl       # Reviewer decisions
-    └── artifacts/
-        ├── test-writer/
-        │   ├── test-plans/PD-001_test-plan.md
-        │   └── PD-001_handoff.md
-        ├── implementer/
-        │   ├── design-docs/PD-001_design.md
-        │   └── PD-001_handoff.md
-        └── reviewer/
-            └── review-reports/PD-001_review.md
-```
-
----
-
-## Tips
-
-1. **Start small**: Begin with one scenario, not the entire feature
-2. **Iterate**: Red → Green → Refactor → Review
-3. **Check decision logs**: Learn from agent reasoning
-4. **Adjust thresholds**: If getting too many approval requests
-5. **Use version control**: Commit after each phase
-
----
-
-## Next Steps
-
-Try it yourself:
-```bash
-# Create your first requirement
-nano requirements/features/hello-world.feature
-
-# Then tell the Test-Writer Agent to start!
-```
+**Happy building with the agent framework!** 🚀

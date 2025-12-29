@@ -1,9 +1,17 @@
 {
   "name": "ngaj",
   "version": "0.1.0",
-  "description": "Your AI-powered social media engagement assistant",
-  "main": "dist/index.js",
+  "description": "Proactive engagement companion for social media",
+  "main": "dist/backend/index.js",
+  "type": "module",
   "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "tsx watch src/backend/index.ts",
+    "dev:frontend": "vite",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "tsc -p tsconfig.backend.json",
+    "build:frontend": "vite build",
+    "start": "node dist/backend/index.js",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
@@ -11,40 +19,78 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "build": "tsc",
-    "dev": "tsx watch src/index.ts",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "type-check": "tsc --noEmit"
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "db:init": "tsx scripts/init-db.ts",
+    "db:reset": "tsx scripts/reset-db.ts"
   },
   "keywords": [
     "social-media",
     "ai",
-    "automation",
+    "bluesky",
     "engagement",
+    "automation",
+    "claude",
     "tdd"
   ],
-  "author": "Your Name ziohimself@gmail.com",
+  "author": "ziohimself@gmail.com",
   "license": "MIT",
-  "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@atproto/api": "^0.13.0",
     "chalk": "^5.6.2",
+    "chromadb": "^1.8.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "mongodb": "^6.3.0",
+    "node-cron": "^3.0.3",
+    "openai": "^4.63.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.26.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@modelcontextprotocol/server-github": "^2025.4.8",
     "@playwright/test": "^1.56.1",
+    "@types/express": "^4.17.21",
     "@types/node": "^24.9.2",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
+    "@vitejs/plugin-react": "^4.3.0",
     "@vitest/coverage-v8": "^4.0.5",
     "@vitest/ui": "^4.0.5",
-    "eslint": "^9.38.0",
-    "prettier": "^3.6.2",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^9.1.0",
+    "postcss": "^8.4.47",
+    "prettier": "^3.7.4",
     "supertest": "^7.1.4",
+    "tailwindcss": "^3.4.0",
     "typescript-eslint": "^8.46.2",
+    "vite": "^7.3.0",
     "vitest": "^4.0.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }

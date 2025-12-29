@@ -16,14 +16,13 @@
 ## AI/ML
 
 - **LLM**: Anthropic Claude API (Sonnet 4.5)
-- **Embeddings**: Claude or OpenAI ada-002
-- **Vector DB**: Qdrant (self-hosted)
+- **Embeddings**: Claude
+- **Vector DB**: ChromaDB (self-hosted)
 
 ## Database
 
-- **Primary**: PostgreSQL 15+
-- **Cache**: Redis
-- **Vector**: Qdrant
+- **Primary**: MongoDB
+- **Vector**: ChromaDB
 
 ## Development
 

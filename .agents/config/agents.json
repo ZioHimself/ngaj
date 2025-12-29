@@ -1,6 +1,38 @@
 {
   "agents": [
     {
+      "id": "designer",
+      "name": "Designer Agent",
+      "role": "Collaborate on data models, interfaces, and architecture decisions",
+      "model": "claude-sonnet-4.5",
+      "system_prompt_path": ".agents/prompts/designer/system-prompt.md",
+      "context_paths": [
+        ".agents/prompts/designer/context/",
+        ".agents/context/tech-stack.md",
+        ".agents/context/project-glossary.md",
+        "docs/architecture/"
+      ],
+      "output_directory": ".agents/artifacts/designer/",
+      "log_directory": ".agents/logs/designer/",
+      "capabilities": ["design_data_models", "design_apis", "write_adrs", "collaborative_design", "github_issues"],
+      "constraints": {
+        "no_implementation": true,
+        "no_tests": true,
+        "must_create_adr": true,
+        "must_document_decisions": true,
+        "align_with_tech_stack": true
+      },
+      "github": {
+        "enabled": true,
+        "actions": [
+          "create_issue",
+          "comment_on_issue",
+          "update_issue_status",
+          "link_to_issue"
+        ]
+      }
+    },
+    {
       "id": "test-writer",
       "name": "Test Writer Agent",
       "role": "Write comprehensive tests based on requirements",
@@ -91,7 +123,32 @@
     }
   ],
   "workflows": {
+    "full-cycle": {
+      "steps": [
+        {
+          "agent": "designer",
+          "input": "feature_idea",
+          "output": "design_docs"
+        },
+        {
+          "agent": "test-writer",
+          "input": "design_docs",
+          "output": "failing_tests"
+        },
+        {
+          "agent": "implementer",
+          "input": "failing_tests",
+          "output": "implementation"
+        },
+        {
+          "agent": "reviewer",
+          "input": ["implementation", "tests"],
+          "output": "review_report"
+        }
+      ]
+    },
     "tdd-cycle": {
+      "description": "Skip design phase (for small changes or when design is already done)",
       "steps": [
         {
           "agent": "test-writer",

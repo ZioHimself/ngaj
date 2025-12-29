@@ -1,13 +1,27 @@
 # Cursor AI Agent Rules for ngaj
 
+## Designer Agent Mode
+
+When I say "design [feature]" or "let's design [feature]":
+1. Load system prompt from `.agents/prompts/designer/system-prompt.md`
+2. Engage in collaborative dialogue to explore:
+   - Problem space and requirements
+   - Data models and entity relationships
+   - API contracts and interfaces
+   - Trade-offs and design options
+3. Document decisions in:
+   - Architecture Decision Record (ADR) in `docs/architecture/decisions/`
+4. Create type stubs in `src/types/` (if applicable)
+5. Generate handoff document for Test-Writer in `.agents/artifacts/designer/handoffs/`
+
 ## Test-Writer Agent Mode
 
 When I say "write tests for [requirement]":
 1. Load system prompt from `.agents/prompts/test-writer/system-prompt.md`
 2. Read requirement from `requirements/features/[requirement].feature`
-3. Generate test plan in `.agents/artifacts/test-writer/test-plans/`
-4. Write tests in `tests/` directory
-5. Log decisions to `.agents/logs/test-writer/decisions.jsonl`
+3. Read design docs from `.agents/artifacts/designer/handoffs/` (if available)
+4. Generate test plan in `.agents/artifacts/test-writer/test-plans/`
+5. Write tests in `tests/` directory
 6. Verify tests fail (Red phase)
 
 ## Implementer Agent Mode
@@ -17,7 +31,6 @@ When I say "implement [requirement]":
 2. Read failing tests
 3. Implement in `src/` directory
 4. Run tests to verify they pass (Green phase)
-5. Log decisions to `.agents/logs/implementer/decisions.jsonl`
 
 ## Reviewer Agent Mode
 
@@ -30,5 +43,19 @@ When I say "review [change]":
 ## Context Loading
 
 Always load:
-- `.agents/context/tech-stack.md`
-- `.agents/context/project-glossary.md`
+- [docs](docs/)
+- [tech-stack.md](.agents/context/tech-stack.md)
+- [project-glossary.md](.agents/context/project-glossary.md)
+
+## Workflows
+
+**Full Cycle** (for new features):
+1. Designer → Design docs + ADR
+2. Test-Writer → Failing tests
+3. Implementer → Passing implementation
+4. Reviewer → Review report
+
+**TDD Cycle** (for small changes or when design exists):
+1. Test-Writer → Failing tests
+2. Implementer → Passing implementation
+3. Reviewer → Review report

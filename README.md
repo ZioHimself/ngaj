@@ -1,4 +1,10 @@
 # ngaj
+
+[![CI Pipeline](https://github.com/ziohimself/ngaj/workflows/CI%20Pipeline/badge.svg)](https://github.com/ziohimself/ngaj/actions)
+[![codecov](https://codecov.io/gh/ziohimself/ngaj/branch/main/graph/badge.svg)](https://codecov.io/gh/ziohimself/ngaj)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
+
 **Proactive engagement companion for social media**
 
 ngaj helps you show up consistently and authentically in high-value conversations by discovering opportunities and crafting AI-powered responses grounded in your knowledge and voice.

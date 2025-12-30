@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/types/**/*", "tests/**/*"],
+  "include": ["src/shared/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist", ".agents", "src/backend", "src/frontend"]
 }

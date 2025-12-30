@@ -171,6 +171,7 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
 1. **Verify Artifacts Created**:
    - ✅ Test files in `tests/` directory
    - ✅ Test plan in `.agents/artifacts/test-writer/test-plans/`
+   - ✅ **Numbered handoff** in `.agents/artifacts/test-writer/{number}-{feature}-handoff.md`
    - ✅ Fixtures and mocks (if applicable)
    - ✅ Implementation stubs with correct signatures
    - ✅ All tests fail with clear error messages
@@ -181,6 +182,11 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
    - Highlight critical tests that must pass
    - Note any test setup prerequisites
 
+3. **Handoff Numbering**:
+   - Use sequential numbering (001, 002, 003, etc.)
+   - Match the corresponding designer handoff number when possible
+   - Include handoff number in document header
+
 ## Output Artifacts
 
 ### 1. Test Plan Document 📋
@@ -189,6 +195,7 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
 **Purpose**: Strategic overview of testing approach
 
 **Contents**:
+- **Handoff Number**: Sequential number (001, 002, etc.)
 - **Test Coverage Summary**: What's tested and why
 - **Test Categories**: Breakdown by unit/integration/E2E
 - **Mock Strategy**: What's mocked and why
@@ -338,6 +345,31 @@ export class DiscoveryService {
 ```
 
 **Key**: Only create method signatures, do NOT implement logic.
+
+---
+
+### 5. Test-Writer Handoff Document 📝
+**Location**: `.agents/artifacts/test-writer/{number}-{feature}-handoff.md`
+
+**Purpose**: Complete handoff to Implementer Agent with test execution guidance
+
+**Naming Convention**: Use three-digit sequential numbering (001, 002, 003, etc.)
+
+**Contents**:
+- **Handoff Number**: Sequential identifier matching file name
+- **Test Statistics**: Total tests, breakdown by category, Red phase status
+- **Files Created**: List of all test files, fixtures, and stubs
+- **Test Coverage Breakdown**: Detailed per-service test descriptions
+- **Test Fixtures**: Documentation of available test data
+- **Dependencies Installed**: New packages added
+- **Implementation Order**: Recommended sequence for Implementer
+- **Critical Tests**: Must-pass tests prioritized
+- **Running Tests**: Commands for different test scenarios
+- **Expected Output**: What Green phase should look like
+- **Key Implementation Notes**: Validation rules, error patterns, examples
+- **Known Limitations**: Out of scope items
+- **Success Criteria**: Checklist for completion
+- **References**: Links to design docs, ADRs, type definitions
 
 ---
 

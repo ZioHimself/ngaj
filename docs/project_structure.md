@@ -53,10 +53,9 @@ ngaj/
 │       └── decisions/            # Architecture Decision Records (ADRs)
 │
 ├── src/                          # Source code
-│   ├── types/                    # Shared TypeScript type definitions
-│   │   ├── index.ts              # Central type exports
-│   │   ├── account.ts            # Account types (ADR-006)
-│   │   └── profile.ts            # Profile types (ADR-006)
+│   ├── shared/                   # Shared code used across backend and frontend
+│   │   ├── types/                # Shared TypeScript type definitions
+│   │   └── errors/               # Custom error classes
 │   │
 │   ├── backend/                  # Node.js/Express backend
 │   │   ├── index.ts              # Server entry point
@@ -84,11 +83,17 @@ ngaj/
 
 ## High-Level Structure Guidelines
 
-### `/src/types` - Shared Type Definitions
+### `/src/shared` - Shared Code
+- Code shared across backend and frontend
+- Includes types, error classes, and utilities
+
+#### `/src/shared/types` - Shared Type Definitions
 - TypeScript interfaces and types shared across backend and frontend
 - Type guards and validation helpers
 - Exported through `index.ts` for clean imports
-- Current: Account and Profile types (ADR-006)
+
+#### `/src/shared/errors` - Custom Error Classes
+- Application-specific error types
 
 ### `/src/backend` - Node.js Backend
 - Express server with RESTful API

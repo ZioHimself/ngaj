@@ -8,7 +8,7 @@
     "lib": ["ES2022"],
     "types": ["node"]
   },
-  "include": ["src/backend/**/*", "src/types/**/*"],
+  "include": ["src/backend/**/*", "src/shared/**/*"],
   "exclude": ["node_modules", "dist", "src/frontend", "tests"]
 }
 

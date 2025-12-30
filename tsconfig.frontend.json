@@ -10,7 +10,7 @@
     "types": ["vite/client"],
     "skipLibCheck": true
   },
-  "include": ["src/frontend/**/*", "src/types/**/*"],
+  "include": ["src/frontend/**/*", "src/shared/**/*"],
   "exclude": ["node_modules", "dist", "src/backend", "tests"]
 }
 

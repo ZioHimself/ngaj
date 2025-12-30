@@ -1,5 +1,7 @@
 # ngaj Architecture Overview
 
+> **Document Purpose**: This document provides a high-level architectural overview of the ngaj system, including system context, component architecture, core workflows, and operational considerations. For detailed specifications, see linked documents (ADRs, API specs, design docs).
+
 ## System Vision
 
 ngaj is a **proactive engagement companion** designed to help users maintain authentic, strategic presence across social media communities. The system discovers engagement opportunities, crafts AI-powered responses grounded in user knowledge, and operates with a local-first, privacy-focused architecture.
@@ -94,15 +96,13 @@ ngaj is a **proactive engagement companion** designed to help users maintain aut
 │  ┌────────────────────────────────────────────────┐     │
 │  │            API Layer (Express)                 │     │
 │  │                                                │     │
-│  │  GET  /api/account                             │     │
-│  │  PUT  /api/account                             │     │
-│  │  GET  /api/opportunities                       │     │
-│  │  POST /api/opportunities/discover              │     │
-│  │  GET  /api/opportunities/:id                   │     │
-│  │  POST /api/knowledge/upload                    │     │
-│  │  GET  /api/knowledge                           │     │
-│  │  POST /api/responses/generate                  │     │
-│  │  POST /api/responses/:id/post                  │     │
+│  │  - Account Management (profiles, accounts)     │     │
+│  │  - Opportunity Discovery & Retrieval           │     │
+│  │  - Knowledge Base Upload & Query               │     │
+│  │  - Response Generation & Posting               │     │
+│  │  - System Health & Statistics                  │     │
+│  │                                                │     │
+│  │  📋 Full API Spec: docs/api/openapi.yaml       │     │
 │  │                                                │     │
 │  └────┬───────────────────────────────────────────┘     │
 │       │                                                 │
@@ -143,7 +143,11 @@ ngaj is a **proactive engagement companion** designed to help users maintain aut
 └─────────────────────────────────────────────────────────┘
 ```
 
+> **📋 Complete API Documentation**: See [OpenAPI Specification](../api/openapi.yaml) for full endpoint definitions, request/response schemas, error codes, and interactive documentation.
+
 ## Core Workflows
+
+These diagrams illustrate the high-level flow through the system. For detailed API contracts and service interfaces, see the [OpenAPI Specification](../api/openapi.yaml) and [Design Documents](../.agents/artifacts/designer/designs/).
 
 ### 1. Discovery Workflow
 
@@ -317,47 +321,61 @@ User Request → Response Generator → ChromaDB (knowledge query)
           MongoDB (update status: posted)
 ```
 
+> **📋 Data Models**: See [Account Configuration Design](../.agents/artifacts/designer/designs/account-configuration-design.md) for complete MongoDB schemas and ChromaDB collection structures.
+
 ## Security Considerations
 
 ### Credentials Management
-- **Storage**: Environment variables only (`.env` file)
-- **Access**: Read-only by backend process
+- **Storage**: Environment variables in `.env` file (never in database)
 - **Scope**: Local filesystem permissions protect access
-- **Rotation**: Manual update in `.env` file
+- **Platform Security**: App passwords used (not main account passwords)
+
+> **📋 Credential Strategy Details**: See [ADR-002: Environment Variables for Credentials](./decisions/002-env-credentials.md) for complete rationale and security considerations.
 
 ### API Security
-- **Authentication**: All Bluesky operations use app password (not main password)
-- **Rate Limiting**: Respect platform limits (future: implement backoff)
-- **Error Handling**: Never log credentials or tokens
+- **Authentication**: Platform-specific app passwords (Bluesky, LinkedIn, Reddit)
+- **Rate Limiting**: Respect platform limits with exponential backoff
+- **Error Handling**: Never log credentials, tokens, or sensitive data
 
 ### Data Privacy
-- **User Data**: Stored locally in MongoDB and ChromaDB
-- **Knowledge Base**: Never sent to external services except for embedding generation
-- **Responses**: Drafts stored locally before posting
+- **Local-First**: All user data stored locally (MongoDB and ChromaDB on user's machine)
+- **Knowledge Base**: Documents remain local; only embeddings generated via external API
+- **No Cloud Storage**: No sensitive data sent to external services except AI API calls
+- **Response Drafts**: Stored locally before user approval and posting
 
 ## Scalability Considerations
 
 ### v0.1 (MVP) - Single User, Single Account
-- Local MongoDB instance
-- Local ChromaDB instance
-- Single-threaded discovery cron
+- Local MongoDB instance (document-based storage)
+- Local ChromaDB instance (vector embeddings)
+- Single-threaded discovery cron (every 2-4 hours)
 - Expected load: <100 opportunities/day, <20 responses/day
+- No horizontal scaling needed
 
-### Future Scaling
-- **v0.2**: Multiple accounts → Separate MongoDB documents, separate ChromaDB collections
-- **v0.3**: Higher frequency polling → Queue-based processing, worker threads
-- **v0.4**: Analytics → Time-series database for metrics
-- **Cloud Migration**: MongoDB Atlas, hosted ChromaDB, container orchestration
+> **📋 MVP Scope Details**: See [ADR-005: MVP Scope](./decisions/005-mvp-scope.md) for complete v0.1 requirements and v0.2+ roadmap.
 
-## Technology Choices
+### Future Scaling (Post-v0.1)
+- **v0.2 (Multi-Account/Multi-Platform)**: 
+  - Multiple profile documents in MongoDB
+  - Separate ChromaDB collections per profile
+  - See [ADR-006: Profile and Account Separation](./decisions/006-profile-account-separation.md)
+- **v0.3 (High-Frequency Discovery)**: Queue-based processing, worker threads
+- **v0.4 (Analytics)**: Time-series database for metrics and insights
+- **Cloud Deployment (Optional)**: MongoDB Atlas, hosted ChromaDB, containerization
 
-See [Architecture Decision Records](./decisions/) for detailed rationale:
+## Technology Stack
 
-- [ADR-001: MongoDB for Storage](./decisions/001-mongodb-storage.md)
-- [ADR-002: Environment Variables for Credentials](./decisions/002-env-credentials.md)
-- [ADR-003: TypeScript Full Stack](./decisions/003-typescript-stack.md)
-- [ADR-004: ChromaDB for Vectors](./decisions/004-chromadb-vectors.md)
-- [ADR-005: MVP Scope](./decisions/005-mvp-scope.md)
+| Component | Technology | Rationale |
+|-----------|------------|-----------|
+| **Backend** | Node.js + TypeScript | Type safety, ecosystem maturity ([ADR-003](./decisions/003-typescript-stack.md)) |
+| **Frontend** | React + TypeScript | Component model, developer experience ([ADR-003](./decisions/003-typescript-stack.md)) |
+| **Database** | MongoDB | Flexible schema, document model ([ADR-001](./decisions/001-mongodb-storage.md)) |
+| **Vector Store** | ChromaDB | Local-first, simple API ([ADR-004](./decisions/004-chromadb-vectors.md)) |
+| **AI Model** | Claude Sonnet 4.5 | Best-in-class reasoning, API reliability |
+| **Platform** | Bluesky (v0.1) | AT Protocol, developer-friendly ([ADR-005](./decisions/005-mvp-scope.md)) |
+| **Credentials** | Environment Variables | Security, portability ([ADR-002](./decisions/002-env-credentials.md)) |
+
+> **📋 Detailed Rationale**: See [Architecture Decision Records](./decisions/) for complete analysis of alternatives, trade-offs, and consequences.
 
 ## Deployment Model
 
@@ -407,5 +425,12 @@ The architecture supports future extensions:
 
 ## Related Documentation
 
-- [API Specification](./api/openapi.yaml) - REST endpoints
-- [Setup Guide](../setup.md) - Installation instructions
+### Technical Specifications
+- [OpenAPI Specification](../api/openapi.yaml) - Complete REST API contracts, request/response schemas
+- [Tech Stack](../tech-stack.md) - Technologies, frameworks, and tools used
+- [Project Glossary](../project-glossary.md) - Domain terms, technical terms, and acronyms
+- [Project Structure](../project_structure.md) - Directory layout and file organization
+- [Setup Guide](../setup.md) - Installation and configuration instructions
+
+### Design Artifacts
+- [Account Configuration Design](../.agents/artifacts/designer/designs/account-configuration-design.md) - Profile/Account data models and APIs

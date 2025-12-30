@@ -46,8 +46,8 @@ When I say "review [change]":
 
 Always load:
 - [docs](docs/)
-- [tech-stack.md](.agents/context/tech-stack.md)
-- [project-glossary.md](.agents/context/project-glossary.md)
+- [tech-stack.md](docs/tech-stack.md)
+- [project-glossary.md](docs/project-glossary.md)
 
 ## Workflows
 

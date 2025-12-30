@@ -39,3 +39,4 @@
 - **UI**: User Interface
 - **PDF**: Portable Document Format
 - **RAG**: Retrieval-Augmented Generation (semantic search + LLM generation pattern)
+

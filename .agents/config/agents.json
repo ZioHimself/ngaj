@@ -8,12 +8,12 @@
       "system_prompt_path": ".agents/prompts/designer/system-prompt.md",
       "context_paths": [
         ".agents/prompts/designer/context/",
-        ".agents/context/tech-stack.md",
-        ".agents/context/project-glossary.md",
-        "docs/architecture/"
+        ".agents/artifacts/designer/designs/",
+        "docs/tech-stack.md",
+        "docs/project-glossary.md",
+        "docs/architecture/overview.md"
       ],
       "output_directory": ".agents/artifacts/designer/",
-      "log_directory": ".agents/logs/designer/",
       "capabilities": ["design_data_models", "design_apis", "write_adrs", "collaborative_design", "github_issues"],
       "constraints": {
         "no_implementation": true,
@@ -40,11 +40,12 @@
       "system_prompt_path": ".agents/prompts/test-writer/system-prompt.md",
       "context_paths": [
         ".agents/prompts/test-writer/context/",
-        ".agents/context/architecture.md",
-        ".agents/context/tech-stack.md"
+        ".agents/artifacts/designer/handoffs/",
+        ".agents/artifacts/designer/designs/",
+        "docs/architecture/overview.md",
+        "docs/tech-stack.md"
       ],
       "output_directory": ".agents/artifacts/test-writer/",
-      "log_directory": ".agents/logs/test-writer/",
       "capabilities": ["write_tests", "create_test_plans", "requirement_analysis", "github_issues"],
       "constraints": {
         "max_test_file_size": 500,
@@ -70,12 +71,11 @@
       "system_prompt_path": ".agents/prompts/implementer/system-prompt.md",
       "context_paths": [
         ".agents/prompts/implementer/context/",
-        ".agents/context/architecture.md",
-        ".agents/context/tech-stack.md",
-        ".agents/context/decisions/"
+        ".agents/artifacts/designer/designs/",
+        "docs/architecture/overview.md",
+        "docs/tech-stack.md"
       ],
       "output_directory": ".agents/artifacts/implementer/",
-      "log_directory": ".agents/logs/implementer/",
       "capabilities": ["write_implementation", "create_design_docs", "refactor_code", "github_issues"],
       "github": {
         "enabled": true,
@@ -104,7 +104,6 @@
         ".agents/context/"
       ],
       "output_directory": ".agents/artifacts/reviewer/",
-      "log_directory": ".agents/logs/reviewer/",
       "capabilities": ["code_review", "security_analysis", "performance_analysis", "github_issues"],
       "github": {
         "enabled": true,

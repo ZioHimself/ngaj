@@ -11,8 +11,8 @@ export type {
   DiscoveryConfig,
   CreateProfileInput,
   UpdateProfileInput,
-} from './profile';
-export { isProfile } from './profile';
+} from './profile.js';
+export { isProfile } from './profile.js';
 
 // Account types
 export type {
@@ -24,6 +24,6 @@ export type {
   CreateAccountInput,
   UpdateAccountInput,
   AccountWithProfile,
-} from './account';
-export { isAccount } from './account';
+} from './account.js';
+export { isAccount } from './account.js';
 

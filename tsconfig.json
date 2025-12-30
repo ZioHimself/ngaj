@@ -19,10 +19,9 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@agents/*": ["./.agents/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", ".agents/**/*"],
-  "exclude": ["node_modules", "dist", ".agents/artifacts"]
+  "include": ["src/types/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist", ".agents", "src/backend", "src/frontend"]
 }

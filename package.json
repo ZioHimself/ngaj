@@ -22,7 +22,9 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
-    "type-check": "tsc --noEmit",
+    "type-check": "npm run type-check:backend && npm run type-check:frontend",
+    "type-check:backend": "tsc -p tsconfig.backend.json --noEmit",
+    "type-check:frontend": "tsc -p tsconfig.frontend.json --noEmit",
     "db:init": "tsx scripts/init-db.ts",
     "db:reset": "tsx scripts/reset-db.ts"
   },

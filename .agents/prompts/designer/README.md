@@ -1,4 +1,6 @@
-# Designer Agent
+# Designer Agent - User Guide
+
+> **For AI Instructions**: See [system-prompt.md](./system-prompt.md) for the complete Designer Agent system prompt.
 
 The Designer Agent is a collaborative design partner that helps you think through data models, API contracts, and architecture decisions **before** writing tests and implementation.
 
@@ -27,43 +29,24 @@ Examples:
 
 ## What to Expect
 
-### Phase 1: Discovery (5-10 minutes)
-The Designer Agent will:
-- Ask clarifying questions about the problem
-- Understand requirements and constraints
-- Identify stakeholders and use cases
-- Reference existing ADRs and architecture
+The Designer Agent follows a collaborative **4-phase workflow**:
 
-**Example questions**:
-- "What problem are we solving?"
-- "How does this fit with ADR-005 (MVP scope)?"
-- "What are the constraints?"
+| Phase | Duration | What Happens | Your Role |
+|-------|----------|--------------|-----------|
+| **1. Discovery** | 5-10 min | Agent asks clarifying questions about the problem, constraints, and fit with existing architecture | Answer questions, share context |
+| **2. Exploration** | 15-30 min | Collaborate on data models, API contracts, and trade-offs | Discuss options, make decisions |
+| **3. Documentation** | 10-20 min | Agent creates ADR, Design Doc, Type Stubs, and Handoff | Review artifacts, request changes |
+| **4. Handoff** | Immediate | Design artifacts saved, ready for Test-Writer | Proceed to testing phase |
 
-### Phase 2: Exploration (15-30 minutes)
-Together you'll:
-- Sketch data models (MongoDB schemas, TypeScript types)
-- Design API contracts (endpoints, request/response)
-- Discuss trade-offs (performance vs. simplicity, etc.)
-- Explore edge cases and error handling
+> **📋 Detailed Workflow**: See [system-prompt.md - Workflow section](./system-prompt.md#workflow) for complete phase-by-phase instructions.
 
-**Example outputs**:
-- MongoDB collection schemas
-- TypeScript interfaces
-- API endpoint specifications
-- Sequence diagrams
+### Outputs Created
 
-### Phase 3: Documentation (10-20 minutes)
-The Designer Agent will create:
-- **ADR** (Architecture Decision Record) in `docs/architecture/decisions/`
-- **Design Document** in `.agents/artifacts/designer/designs/`
-- **Type Stubs** (optional) in `src/types/`
-- **Handoff Document** for Test-Writer in `.agents/artifacts/designer/handoffs/`
-
-### Phase 4: Handoff
-Once design is complete:
-- Design artifacts are saved
-- Handoff document prepared for Test-Writer
-- Ready to say: **"write tests for [feature]"**
+1. **ADR** (`docs/architecture/decisions/`) - Decision rationale and trade-offs
+2. **Design Doc** (`.agents/artifacts/designer/designs/`) - Complete technical specification
+3. **Handoff** (`.agents/artifacts/designer/handoffs/`) - Test guidance for Test-Writer
+4. **Type Stubs** (`src/types/`) - TypeScript interfaces (optional)
+5. **Updated Docs** - Glossary, Architecture Overview, API spec (if needed)
 
 ## Example Session
 
@@ -121,47 +104,19 @@ Once design is complete:
 > 
 > Ready for Test-Writer! Use: "write tests for opportunity-scoring"
 
-## Outputs
+## Output Artifacts
 
-### 1. Architecture Decision Record (ADR)
-**Location**: `docs/architecture/decisions/###-feature-name.md`
+> **📋 Complete Details**: See [system-prompt.md - Output Artifacts section](./system-prompt.md#output-artifacts) for full artifact specifications and content guidelines.
 
-Documents:
-- Context (why this decision?)
-- Options considered (with pros/cons)
-- Decision made
-- Rationale
-- Consequences
+| Artifact | Location | Purpose |
+|----------|----------|---------|
+| **ADR** | `docs/architecture/decisions/` | WHY - Decision rationale and consequences |
+| **Design Doc** | `.agents/artifacts/designer/designs/` | HOW - Complete technical specification |
+| **Handoff** | `.agents/artifacts/designer/handoffs/` | TEST WHAT - Guidance for Test-Writer |
+| **Type Stubs** | `src/types/` | TypeScript interfaces (optional) |
+| **Doc Updates** | Various | Glossary, Architecture, API updates (if needed) |
 
-### 2. Design Document
-**Location**: `.agents/artifacts/designer/designs/feature-name-design.md`
-
-Includes:
-- Data models (TypeScript + MongoDB)
-- API contracts
-- Sequence diagrams
-- Edge cases
-- Error handling
-- Performance considerations
-- Security notes
-
-### 3. Type Definitions (Optional)
-**Location**: `src/types/feature-name.ts`
-
-TypeScript interfaces/types for:
-- Domain entities
-- DTOs (Data Transfer Objects)
-- Service interfaces
-
-### 4. Handoff Document
-**Location**: `.agents/artifacts/designer/handoffs/feature-name-handoff.md`
-
-Provides Test-Writer with:
-- Entities to test
-- API contracts to test
-- Edge cases to cover
-- Integration dependencies
-- Acceptance criteria
+**Key Principle**: Each document has unique content with cross-references (no duplication). See [Documentation Strategy](../../docs/documentation-strategy.md) for details.
 
 ## Tips for Effective Design Sessions
 
@@ -183,17 +138,17 @@ Provides Test-Writer with:
 
 ```
 Designer → Test-Writer → Implementer → Reviewer
-   ↓
-  ADR
-  Design Doc
-  Type Stubs
-  Handoff
+   ↓           ↓            ↓            ↓
+ Handoff    ADR+Design    Design      ADR+Design
+              Doc          Doc        (Review)
 ```
 
-**Designer** outputs feed into:
-- **Test-Writer**: Uses handoff doc to write comprehensive tests
-- **Implementer**: References ADR and design doc for implementation
-- **Reviewer**: Checks implementation against design decisions
+**Workflow**: Designer outputs become inputs for downstream agents:
+- **Test-Writer** reads Handoff → writes failing tests
+- **Implementer** reads ADR + Design Doc → implements solution
+- **Reviewer** checks implementation against design decisions
+
+> **📋 Complete Workflow**: See [Agent Framework README](../../README.md) for full multi-agent workflow documentation.
 
 ## Example Use Cases
 
@@ -220,12 +175,16 @@ Designer → Test-Writer → Implementer → Reviewer
 
 ## References
 
-- [System Prompt](./system-prompt.md) - Full Designer Agent instructions
+### Agent System
+- **[System Prompt](./system-prompt.md)** - Complete Designer Agent AI instructions and workflow
 - [Design Guidelines](./context/design-guidelines.md) - Data modeling and API design principles
-- [ADR Template](./templates/adr-template.md) - Template for Architecture Decision Records
-- [Design Doc Template](./templates/design-doc-template.md) - Template for design documents
-- [Tech Stack](../../context/tech-stack.md) - Available technologies
-- [Project Glossary](../../context/project-glossary.md) - Domain terminology
+- [Documentation Templates](../../templates/documentation-templates.md) - Templates for ADR, Design Doc, Handoff
+
+### Project Documentation
+- [Tech Stack](../../../docs/tech-stack.md) - Available technologies and frameworks
+- [Project Glossary](../../../docs/project-glossary.md) - Domain and technical terminology
+- [Documentation Strategy](../../docs/documentation-strategy.md) - How to avoid duplication
+- [Architecture Overview](../../../docs/architecture/overview.md) - System architecture
 
 ## Quick Start
 

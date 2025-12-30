@@ -35,3 +35,4 @@
 
 - **Target**: Self-hosted (local hardware)
 - **Containerization**: Docker + Docker Compose
+

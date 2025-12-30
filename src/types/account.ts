@@ -130,6 +130,6 @@ export type UpdateAccountInput = Partial<Omit<Account, '_id' | 'profileId' | 'pl
  */
 export interface AccountWithProfile extends Account {
   /** Populated profile document */
-  profile: import('./profile').Profile;
+  profile: import('./profile.js').Profile;
 }
 

@@ -111,33 +111,29 @@ interface EntityName {
 
 ## 2. API Contracts
 
+> **📋 API Specification**: All REST API endpoints are documented in [docs/api/openapi.yaml](../../../docs/api/openapi.yaml). This section provides high-level overview and design rationale only.
+
 ### 2.1 {Endpoint/Method Name}
 
-**Purpose**: {What this does}
+**Purpose**: {What this does and why it's needed}
 
-**Request**:
-```typescript
-interface RequestSchema {
-  // ... complete schema
-}
-```
+**Endpoint**: `{METHOD} /api/{resource}/{path}`
 
-**Response** (Success):
-```typescript
-interface ResponseSchema {
-  // ... complete schema
-}
-```
+**Key Design Decisions**:
+- {Decision 1: e.g., "Uses POST not GET because it modifies state"}
+- {Decision 2: e.g., "Pagination via offset/limit for simplicity"}
+- {Decision 3: e.g., "Returns full object not just ID for client convenience"}
 
-**Errors**:
-- `400` - {Error condition}
-- `404` - {Error condition}
-- `500` - {Error condition}
+**Error Handling Strategy**:
+- Input validation errors → `400 Bad Request` with field-level details
+- Not found → `404 Not Found` with specific resource type
+- Server errors → `500 Internal Server Error` (logged, not exposed)
 
-**Example**:
-```typescript
-// Example request/response
-```
+**Complete API Specification**: See [openapi.yaml - {OperationId}](../../../docs/api/openapi.yaml) for:
+- Full request/response schemas
+- All error codes and formats
+- Example requests/responses
+- Authentication requirements
 
 ---
 
@@ -206,20 +202,24 @@ sequenceDiagram
 ## 6. References
 
 - **Decision Rationale**: [ADR-###](../../../docs/architecture/decisions/###-topic.md)
-- **Test Guidance**: [Handoff Document](../handoffs/{feature-name}-handoff.md)
+- **Test Guidance**: [Handoff Document](../handoffs/{number}-{feature-name}-handoff.md)
 - **Related Designs**: [Other Design](./other-design.md)
 ```
 
-**✅ This is the "source of truth"** for:
-- Complete data models
-- Full API schemas
+**✅ Design Doc is the "source of truth"** for:
+- Complete data models (MongoDB schemas, TypeScript interfaces)
+- Service architecture and internal APIs
 - Detailed implementation guidance
+
+**📋 Other Sources of Truth**:
+- REST API contracts → `docs/api/openapi.yaml`
+- Architecture decisions → `docs/architecture/decisions/` (ADRs)
 
 ---
 
 ## Template 3: Test-Writer Handoff
 
-**File**: `.agents/artifacts/designer/handoffs/{feature-name}-handoff.md`
+**File**: `.agents/artifacts/designer/handoffs/{number}-{feature-name}-handoff.md`
 **Purpose**: Guide Test-Writer on WHAT to test and acceptance criteria
 
 ```markdown
@@ -361,52 +361,77 @@ A test suite is complete when:
 
 **❌ Don't duplicate in Handoff**:
 - Complete TypeScript interfaces (link to Design Doc)
-- Full API request/response schemas (link to Design Doc)
+- Full API request/response schemas (link to OpenAPI Spec)
+- REST API error formats (link to OpenAPI Spec)
 - Implementation details (Test-Writer doesn't need these)
 
 **✅ Do include**:
 - Test-specific fixtures (minimal examples)
-- Clear acceptance criteria
-- Mock/stub guidance
-- Test priorities
+- Clear acceptance criteria (behavior-focused)
+- Mock/stub guidance (testing strategy)
+- Test priorities (critical path vs. nice-to-have)
+
+**📋 For API Testing**:
+- Test scenarios: "Should return 200 for valid request"
+- Acceptance criteria: "Response matches OpenAPI schema"
+- Reference: See [openapi.yaml - {operationId}](../../../docs/api/openapi.yaml) for complete request/response specs
 
 ---
 
 ## Key Principles
 
+### 0. Multiple Sources of Truth (Each Owns Its Domain)
+- **`docs/api/openapi.yaml`**: REST API contracts (endpoints, request/response, errors)
+- **Design Doc**: Data models (MongoDB, TypeScript) and service architecture
+- **ADR**: Architecture decisions and rationale
+- **Handoff**: Test scenarios and acceptance criteria
+
+**Never duplicate across sources** - always reference the authoritative source.
+
 ### 1. Write Once, Reference Everywhere
-- **ADR**: Strategic decisions (no code)
-- **Design Doc**: Complete technical details (source of truth)
-- **Handoff**: Testing guidance (links to Design Doc, doesn't duplicate)
+- **ADR**: Strategic decisions and rationale (no implementation details)
+- **Design Doc**: Data models + service architecture (internal source of truth)
+- **OpenAPI Spec**: REST API contracts (external source of truth)
+- **Handoff**: Testing guidance (links to Design Doc and OpenAPI, doesn't duplicate)
 
 ### 2. Cross-Reference Chain
 ```
-ADR ← Design Doc ← Handoff
- ↓         ↓          ↓
-Why      How       Test What
+        ADR ←─────── Design Doc ←────── Handoff
+         ↓              ↓                  ↓
+        Why   (Data + Services)      Test What
+                       ↓
+                  OpenAPI Spec
+                  (REST APIs)
 ```
+
+**Information Flow**:
+- ADR explains strategic decisions
+- Design Doc details data models and service architecture, references OpenAPI for REST APIs
+- OpenAPI Spec is the complete REST API contract (single source of truth)
+- Handoff references Design Doc and OpenAPI for test scenarios
 
 ### 3. Information Hierarchy
 
 | Document | Audience | Content Type | Detail Level |
 |----------|----------|--------------|--------------|
 | ADR | Architects, future team | Decisions + rationale | High-level |
-| Design Doc | All implementers | Technical specs | Complete detail |
+| Design Doc | All implementers | Data models + services | Complete detail |
+| OpenAPI Spec | API consumers, testers | REST API contracts | Machine-readable |
 | Handoff | Test-Writer Agent | Test scenarios | Test-focused |
 
 ### 4. When to Reference vs. Duplicate
 
-**Reference** (link to Design Doc):
-- Complete data schemas
-- Full API contracts
-- Complex algorithms
-- Implementation details
+**Reference** (link, don't duplicate):
+- REST API contracts → Link to `openapi.yaml`
+- Data models → Link to Design Doc
+- Service interfaces → Link to Design Doc
+- Architecture decisions → Link to ADR
 
-**Duplicate** (include in Handoff):
-- Minimal test fixtures
-- Acceptance criteria
-- Test-specific mock data
-- Test priorities
+**Include** (minimal duplication):
+- Test fixtures (simplified versions in Handoff)
+- Acceptance criteria (test-specific in Handoff)
+- Design rationale (high-level in Design Doc, detailed in ADR)
+- API design notes (high-level in Design Doc, complete spec in OpenAPI)
 
 ---
 
@@ -421,17 +446,29 @@ For "Account Configuration" feature:
    - Consequences: More flexible but more queries
    - ~150-200 lines
 
-2. **Design Doc** (`.agents/artifacts/designer/designs/account-configuration-design.md`)
-   - Complete `Account` and `Profile` interfaces
-   - All API endpoints with full schemas
-   - Sequence diagrams for linking/unlinking
-   - ~400-600 lines
+2. **OpenAPI Updates** (`docs/api/openapi.yaml`)
+   - Added `GET /api/profiles`, `POST /api/profiles`, `PUT /api/profiles/:id`, `DELETE /api/profiles/:id`
+   - Added `GET /api/accounts`, `POST /api/accounts`, `PUT /api/accounts/:id`, `DELETE /api/accounts/:id`
+   - Complete request/response schemas with examples
+   - All error codes (400, 404, 409, 500) and formats
+   - ~200-300 lines (incremental addition)
 
-3. **Handoff** (`.agents/artifacts/designer/handoffs/account-configuration-handoff.md`)
+3. **Design Doc** (`.agents/artifacts/designer/designs/account-configuration-design.md`)
+   - Complete `Account` and `Profile` TypeScript interfaces
+   - MongoDB schemas, indexes, query patterns
+   - Service interfaces (`ProfileService`, `AccountService`)
+   - Sequence diagrams for workflows
+   - High-level API overview with references to OpenAPI
+   - ~400-500 lines (reduced, no API duplication)
+
+4. **Handoff** (`.agents/artifacts/designer/handoffs/001-account-configuration-handoff.md`)
    - Test scenarios: "Should create account", "Should link profile"
    - Acceptance criteria for each
    - Links to Design Doc: "See Section 1.1 for Account schema"
+   - Links to OpenAPI: "See openapi.yaml for complete API specs"
    - ~200-300 lines
 
-**Total**: ~800 lines vs. ~1,500+ lines with duplication ✅ **47% reduction**
+**Total**: ~1,000-1,150 lines vs. ~1,800+ lines with duplication ✅ **44% reduction**
+
+**Key Improvement**: REST APIs maintained in single location (`openapi.yaml`), referenced from Design Doc and Handoff. No API duplication across documents.
 

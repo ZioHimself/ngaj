@@ -1,378 +1,160 @@
 # ngaj Project Structure
 
-This document outlines the complete project structure for ngaj.
+This document outlines the high-level project structure for ngaj. Internal organization within each major directory will be determined by test-writer and implementer agents during TDD cycles.
 
-## Directory Layout
+## Current Directory Layout (Phase 1)
 
 ```
 ngaj/
-├── .env.example                  # Environment variables template
 ├── .gitignore                    # Git ignore rules
-├── docker-compose.yml            # Docker services (MongoDB, ChromaDB)
 ├── package.json                  # Node.js dependencies and scripts
-├── tsconfig.json                 # TypeScript configuration (root)
+├── tsconfig.json                 # TypeScript configuration (base)
 ├── tsconfig.backend.json         # Backend-specific TypeScript config
 ├── tsconfig.frontend.json        # Frontend-specific TypeScript config
+├── vite.config.ts                # Vite build configuration
+├── vitest.config.ts              # Vitest test configuration
+├── playwright.config.ts          # Playwright E2E test configuration
+├── eslint.config.js              # ESLint configuration
+├── tailwind.config.js            # Tailwind CSS configuration
+├── postcss.config.js             # PostCSS configuration
 ├── README.md                     # Project overview
-├── CONTRIBUTING.md               # Contributing guidelines
 ├── LICENSE                       # MIT license
 │
-├── docs/                         # Documentation
+├── .agents/                      # Agent workflow artifacts (not in production)
+│   ├── README.md                 # Agent system documentation
+│   ├── config/                   # Agent configuration
+│   ├── context/                  # Project context (glossary, tech stack)
+│   ├── prompts/                  # Agent system prompts
+│   │   ├── designer/
+│   │   ├── test-writer/
+│   │   ├── implementer/
+│   │   └── reviewer/
+│   ├── artifacts/                # Agent outputs
+│   │   ├── designer/
+│   │   │   ├── designs/
+│   │   │   └── handoffs/
+│   │   ├── test-writer/
+│   │   │   ├── test-plans/
+│   │   │   └── handoffs/
+│   │   ├── implementer/
+│   │   │   └── handoffs/
+│   │   └── reviewer/
+│   │       └── review-reports/
+│   ├── docs/                     # Agent system documentation
+│   └── templates/                # Document templates
+│
+├── docs/                         # Project documentation
 │   ├── setup.md                  # Setup and installation guide
-│   ├── user-guide.md             # How to use ngaj
-│   └── architecture/             # Architecture documentation
-│       ├── overview.md           # System architecture overview
-│       ├── data-model.md         # Database schemas
-│       ├── api/openapi.yaml      # API specification
-│       ├── diagrams/             # Architecture diagrams
-│       │   ├── c4-context.png
-│       │   ├── c4-container.png
-│       │   └── component-diagram.png
-│       └── decisions/            # Architecture Decision Records
-│           ├── 001-mongodb-storage.md
-│           ├── 002-env-credentials.md
-│           ├── 003-typescript-stack.md
-│           ├── 004-chromadb-vectors.md
-│           └── 005-mvp-scope.md
+│   ├── project_structure.md      # This file
+│   ├── api/
+│   │   └── openapi.yaml          # API specification
+│   └── architecture/
+│       ├── overview.md           # System architecture
+│       └── decisions/            # Architecture Decision Records (ADRs)
 │
 ├── src/                          # Source code
-│   ├── backend/                  # Node.js backend
-│   │   ├── index.ts              # Backend entry point
-│   │   ├── api/                  # API routes
-│   │   │   ├── accounts.ts
-│   │   │   ├── opportunities.ts
-│   │   │   ├── knowledge.ts
-│   │   │   ├── responses.ts
-│   │   │   └── health.ts
-│   │   ├── services/             # Business logic
-│   │   │   ├── discovery.service.ts
-│   │   │   ├── response.service.ts
-│   │   │   ├── knowledge.service.ts
-│   │   │   └── bluesky.service.ts
-│   │   ├── models/               # Data models
-│   │   │   ├── account.model.ts
-│   │   │   ├── opportunity.model.ts
-│   │   │   ├── knowledge.model.ts
-│   │   │   └── response.model.ts
-│   │   ├── repositories/         # Database access layer
-│   │   │   ├── mongodb.repository.ts
-│   │   │   └── chroma.repository.ts
-│   │   ├── jobs/                 # Scheduled jobs
-│   │   │   └── discovery.job.ts
-│   │   ├── middleware/           # Express middleware
-│   │   │   ├── error-handler.ts
-│   │   │   ├── validation.ts
-│   │   │   └── logging.ts
-│   │   └── utils/                # Utilities
-│   │       ├── logger.ts
-│   │       ├── config.ts
-│   │       └── helpers.ts
+│   ├── types/                    # Shared TypeScript type definitions
+│   │   ├── index.ts              # Central type exports
+│   │   ├── account.ts            # Account types (ADR-006)
+│   │   └── profile.ts            # Profile types (ADR-006)
 │   │
-│   ├── frontend/                 # React frontend
-│   │   ├── index.html            # HTML entry point
-│   │   ├── main.tsx              # React entry point
-│   │   ├── App.tsx               # Root component
-│   │   ├── components/           # React components
-│   │   │   ├── common/           # Shared components
-│   │   │   │   ├── Button.tsx
-│   │   │   │   ├── Input.tsx
-│   │   │   │   ├── Card.tsx
-│   │   │   │   └── Modal.tsx
-│   │   │   ├── opportunities/    # Opportunity components
-│   │   │   │   ├── OpportunityList.tsx
-│   │   │   │   ├── OpportunityCard.tsx
-│   │   │   │   └── OpportunityDetail.tsx
-│   │   │   ├── knowledge/        # Knowledge base components
-│   │   │   │   ├── DocumentList.tsx
-│   │   │   │   ├── DocumentUpload.tsx
-│   │   │   │   └── DocumentCard.tsx
-│   │   │   ├── responses/        # Response components
-│   │   │   │   ├── ResponseEditor.tsx
-│   │   │   │   ├── ResponsePreview.tsx
-│   │   │   │   └── ResponseActions.tsx
-│   │   │   └── settings/         # Settings components
-│   │   │       ├── AccountSettings.tsx
-│   │   │       ├── DiscoverySettings.tsx
-│   │   │       └── VoiceSettings.tsx
-│   │   ├── pages/                # Page components
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Opportunities.tsx
-│   │   │   ├── Knowledge.tsx
-│   │   │   ├── Responses.tsx
-│   │   │   └── Settings.tsx
-│   │   ├── hooks/                # Custom React hooks
-│   │   │   ├── useOpportunities.ts
-│   │   │   ├── useKnowledge.ts
-│   │   │   ├── useResponses.ts
-│   │   │   └── useAccount.ts
-│   │   ├── api/                  # API client
-│   │   │   └── client.ts
-│   │   ├── styles/               # CSS/Tailwind
-│   │   │   └── globals.css
-│   │   └── utils/                # Frontend utilities
-│   │       ├── formatters.ts
-│   │       └── validators.ts
+│   ├── backend/                  # Node.js/Express backend
+│   │   ├── index.ts              # Server entry point
+│   │   └── config/
+│   │       └── database.ts       # MongoDB connection
 │   │
-│   └── shared/                   # Shared between FE/BE
-│       ├── types/                # TypeScript interfaces
-│       │   ├── account.types.ts
-│       │   ├── opportunity.types.ts
-│       │   ├── knowledge.types.ts
-│       │   ├── response.types.ts
-│       │   └── api.types.ts
-│       ├── constants/            # Shared constants
-│       │   └── index.ts
-│       └── validation/           # Shared validation schemas
-│           └── schemas.ts
+│   └── frontend/                 # React frontend
+│       ├── index.html            # HTML entry point
+│       ├── main.tsx              # React entry point
+│       ├── App.tsx               # Root component
+│       └── index.css             # Tailwind CSS imports
 │
-├── scripts/                      # Utility scripts
-│   ├── init-db.ts               # Initialize database
-│   ├── reset-db.ts              # Reset database
-│   └── seed-data.ts             # Seed sample data
-│
-├── tests/                        # Tests
-│   ├── unit/                     # Unit tests
-│   │   ├── backend/
-│   │   └── frontend/
+├── tests/                        # Test suites
+│   ├── unit/                     # Unit tests (Vitest)
+│   │   └── example.spec.ts
 │   ├── integration/              # Integration tests
-│   │   └── api/
-│   └── e2e/                      # End-to-end tests
-│       └── playwright/
+│   │   ├── api/
+│   │   └── database/
+│   └── e2e/                      # End-to-end tests (Playwright)
 │
-└── data/                         # Local data (not committed)
-    ├── uploads/                  # Uploaded documents
-    │   └── {accountId}/
-    ├── mongodb/                  # MongoDB data (Docker volume)
-    └── chroma/                   # ChromaDB data (Docker volume)
+└── dist/                         # Build output (gitignored)
+    ├── backend/                  # Compiled backend
+    └── frontend/                 # Compiled frontend assets
 ```
 
-## Key Directories
+## High-Level Structure Guidelines
 
-### `/src/backend`
-Node.js/TypeScript backend server handling:
-- REST API endpoints
-- Business logic (discovery, response generation)
-- Database operations (MongoDB, ChromaDB)
-- Platform integrations (Bluesky)
-- Scheduled jobs (discovery cron)
+### `/src/types` - Shared Type Definitions
+- TypeScript interfaces and types shared across backend and frontend
+- Type guards and validation helpers
+- Exported through `index.ts` for clean imports
+- Current: Account and Profile types (ADR-006)
 
-### `/src/frontend`
-React/TypeScript frontend application:
-- User interface components
-- Page layouts
-- API client
-- State management (React Query)
+### `/src/backend` - Node.js Backend
+- Express server with RESTful API
+- Business logic and data access layers
+- Integration with MongoDB and ChromaDB
+- Platform adapters (Bluesky, etc.)
+- Internal structure to be determined by implementer agent
 
-### `/src/shared`
-Code shared between frontend and backend:
-- TypeScript type definitions
-- Constants
-- Validation schemas (Zod)
+**Current Phase 1 Infrastructure:**
+- `index.ts` - Express server with health check and placeholder endpoints
+- `config/database.ts` - MongoDB connection management
 
-### `/docs`
-Project documentation:
-- Setup guides
-- Architecture documentation
-- API specifications
-- Architecture Decision Records
+### `/src/frontend` - React Frontend  
+- User interface built with React 18 and TypeScript
+- Styled with Tailwind CSS
+- Vite for development and building
+- Internal component organization to be determined by implementer agent
 
-### `/scripts`
-Utility scripts:
-- Database initialization
-- Data seeding
-- Maintenance tasks
+**Current Phase 1 Infrastructure:**
+- `index.html`, `main.tsx`, `App.tsx` - Basic app structure with health check UI
+- `index.css` - Tailwind imports
 
-### `/tests`
-Test suites:
-- Unit tests (Vitest)
-- Integration tests
-- E2E tests (Playwright)
+### `/tests` - Test Suites
+- **Unit tests**: Test individual functions/components in isolation (Vitest)
+- **Integration tests**: Test API endpoints and database interactions
+- **E2E tests**: Test complete user workflows (Playwright)
+- Test structure mirrors source structure where applicable
+
+### `/.agents` - Agent Workflow System
+- Not part of production application
+- Contains prompts, artifacts, and documentation for AI agent workflow
+- See `.agents/README.md` for complete documentation
+- Organized by agent role (designer, test-writer, implementer, reviewer)
+
+### `/docs` - Documentation
+- Architecture Decision Records (ADRs) documenting major design choices
+- API specifications (OpenAPI/Swagger)
+- Setup and user guides
+- Architecture overview and diagrams
 
 ## Configuration Files
 
-### TypeScript Configuration
+### TypeScript
+- **`tsconfig.json`** - Base configuration for shared types
+- **`tsconfig.backend.json`** - Backend compilation (NodeNext module resolution)
+- **`tsconfig.frontend.json`** - Frontend compilation (React JSX, DOM types)
 
-**tsconfig.json** (root)
-- Base configuration
-- Path mappings
-- Shared compiler options
+### Build & Development
+- **`package.json`** - Dependencies, scripts, metadata
+- **`vite.config.ts`** - Frontend dev server and build
+- **`vitest.config.ts`** - Unit test runner
+- **`playwright.config.ts`** - E2E test runner
 
-**tsconfig.backend.json**
-- Extends base config
-- Backend-specific settings
-- Output to `dist/backend`
+### Code Quality
+- **`eslint.config.js`** - Linting rules for TypeScript and React
+- **`tailwind.config.js`** - Tailwind CSS configuration
+- **`postcss.config.js`** - PostCSS configuration
 
-**tsconfig.frontend.json**
-- Extends base config
-- Frontend-specific settings
-- React JSX support
-
-### Build Configuration
-
-**package.json**
-- Dependencies
-- Scripts for dev/build/test
-- Project metadata
-
-**vite.config.ts**
-- Frontend build configuration
-- Development server
-- Plugin configuration
-
-### Linting & Formatting
-
-**eslint.config.js**
-- ESLint rules
-- TypeScript integration
-- React plugin configuration
-
-**.prettierrc**
-- Code formatting rules
-
-### Docker
-
-**docker-compose.yml**
-- MongoDB service
-- ChromaDB service
-- Volume mappings
-- Network configuration
-
-## Data Flow
-
-```
-User Request (Browser)
-    ↓
-Frontend (React)
-    ↓ HTTP/REST
-Backend (Express)
-    ↓
-Service Layer
-    ↓
-Repositories
-    ↓
-┌─────────────┬──────────────┐
-│  MongoDB    │  ChromaDB    │
-└─────────────┴──────────────┘
-```
-
-## Build Process
-
-### Development
-
-```bash
-npm run dev
-```
-
-Runs:
-- Backend: `tsx watch src/backend/index.ts`
-- Frontend: `vite` (dev server with HMR)
-
-### Production Build
-
-```bash
-npm run build
-```
-
-1. Compiles TypeScript (backend) → `dist/backend`
-2. Builds React (frontend) → `dist/frontend`
-3. Backend serves frontend assets in production
-
-### Production Run
-
-```bash
-npm start
-```
-
-Runs compiled backend, which serves frontend assets.
-
-## Environment Setup
-
-### Required Files
-
-1. `.env` (created from `.env.example`)
-2. Docker services running
-3. MongoDB initialized
-4. ChromaDB accessible
-
-### First-Time Setup
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Copy environment template
-cp .env.example .env
-
-# 3. Edit .env with credentials
-nano .env
-
-# 4. Start Docker services
-docker-compose up -d
-
-# 5. Initialize database
-npm run db:init
-
-# 6. Start development server
-npm run dev
-```
-
-## Development Workflow
-
-1. **Feature Branch**: Create from `develop`
-2. **Implementation**: Write code in appropriate directory
-3. **Testing**: Add/update tests
-4. **Linting**: Run `npm run lint`
-5. **Type Check**: Run `npm run type-check`
-6. **Documentation**: Update docs as needed
-7. **Pull Request**: Submit for review
-
-## Module Boundaries
-
-### Backend Modules
-
-- **API Layer**: HTTP endpoints, request/response handling
-- **Service Layer**: Business logic, orchestration
-- **Repository Layer**: Database access
-- **Models**: Data structures
-
-Dependencies flow: API → Service → Repository → Database
-
-### Frontend Modules
-
-- **Pages**: Top-level routes
-- **Components**: Reusable UI elements
-- **Hooks**: Reusable logic
-- **API Client**: Backend communication
-
-## Testing Strategy
-
-### Unit Tests
-- Service functions
-- Utility functions
-- React components (isolated)
-
-### Integration Tests
-- API endpoints
-- Database operations
-- Service integrations
-
-### E2E Tests
-- Complete user workflows
-- Critical paths
-
-## Deployment
-
-### Local Development
-- Docker Compose for services
-- npm scripts for app
-
-### Production (Future)
-- Containerized deployment
-- Environment-specific configs
-- CI/CD pipeline
+### Environment
+- **`.env`** (not committed) - Environment variables, created from `.env.example`
+- **`.gitignore`** - Files excluded from version control
 
 ## Related Documentation
 
-- [Architecture Overview](architecture/overview.md)
-- [API Specification](architecture/api-spec.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
+- [Setup Guide](setup.md) - Detailed setup instructions
+- [Architecture Overview](architecture/overview.md) - System architecture
+- [Architecture Decision Records](architecture/decisions/) - ADR-001 through ADR-006
+- [API Specification](api/openapi.yaml) - OpenAPI spec
+- [Agent System](.agents/README.md) - AI agent workflow documentation

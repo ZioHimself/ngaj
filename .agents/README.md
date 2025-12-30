@@ -177,7 +177,7 @@ User: "design opportunity discovery service"
 >    - Sequence diagram for discovery flow
 >    - References ADR-006 for decision rationale
 > 
-> 3. **Handoff** (`.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md`)
+> 3. **Handoff** (`.agents/artifacts/designer/handoffs/001-opportunity-discovery-handoff.md`)
 >    - **TEST WHAT**: Test scenarios and acceptance criteria
 >    - "Should discover posts above threshold (score ≥ 30)"
 >    - "Should deduplicate by (post_id, user_id)"
@@ -209,7 +209,7 @@ User: "write tests for opportunity discovery"
 **Test-Writer Agent**:
 > I'll write comprehensive tests for opportunity discovery. Let me check for design artifacts...
 > 
-> ✅ Found handoff document: `.agents/artifacts/designer/handoffs/opportunity-discovery-handoff.md`
+> ✅ Found handoff document: `.agents/artifacts/designer/handoffs/001-opportunity-discovery-handoff.md`
 > 
 > Reading design specs...
 
@@ -452,7 +452,7 @@ User: "review opportunity discovery"
 - Architecture compliance checks
 
 ### Clear Handoffs
-- Designer → Test-Writer: Handoff doc with acceptance criteria
+- Designer → Test-Writer: Numbered Handoff doc with acceptance criteria
 - Test-Writer → Implementer: Failing tests define requirements
 - Implementer → Reviewer: Working code + tests for review
 
@@ -520,13 +520,21 @@ For these cases, jump straight to:
 
 ## Additional Resources
 
+### Agent System
 - [Designer Agent Guide](.agents/prompts/designer/README.md)
+- [Designer Agent Prompt](.agents/prompts/designer/system-prompt.md)
 - [Test-Writer Agent Prompt](.agents/prompts/test-writer/system-prompt.md)
 - [Implementer Agent Prompt](.agents/prompts/implementer/system-prompt.md)
 - [Reviewer Agent Prompt](.agents/prompts/reviewer/system-prompt.md)
 - [Agent Configuration](.agents/config/agents.json)
 - [Cursor Rules](../.cursorrules)
 - **[Documentation Templates](.agents/templates/documentation-templates.md)** - Avoid duplication with proper structure
+
+### Project Documentation
+- [Tech Stack](../docs/tech-stack.md) - Technologies, frameworks, and tools
+- [Project Glossary](../docs/project-glossary.md) - Domain and technical terminology
+- [Architecture Overview](../docs/architecture/overview.md) - System architecture and design
+- [Setup Guide](../docs/setup.md) - Installation and configuration
 
 ---
 

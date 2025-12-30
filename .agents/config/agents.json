@@ -7,6 +7,7 @@
       "model": "claude-sonnet-4.5",
       "system_prompt_path": ".agents/prompts/designer/system-prompt.md",
       "context_paths": [
+        ".agents/context/escalation-guidelines.md",
         ".agents/prompts/designer/context/",
         ".agents/artifacts/designer/designs/",
         "docs/tech-stack.md",
@@ -39,6 +40,7 @@
       "model": "claude-sonnet-4.5",
       "system_prompt_path": ".agents/prompts/test-writer/system-prompt.md",
       "context_paths": [
+        ".agents/context/escalation-guidelines.md",
         ".agents/prompts/test-writer/context/",
         ".agents/artifacts/designer/handoffs/",
         ".agents/artifacts/designer/designs/",
@@ -70,6 +72,7 @@
       "model": "claude-sonnet-4.5",
       "system_prompt_path": ".agents/prompts/implementer/system-prompt.md",
       "context_paths": [
+        ".agents/context/escalation-guidelines.md",
         ".agents/prompts/implementer/context/",
         ".agents/artifacts/designer/designs/",
         "docs/architecture/overview.md",
@@ -99,6 +102,7 @@
       "model": "claude-opus-4.1",
       "system_prompt_path": ".agents/prompts/reviewer/system-prompt.md",
       "context_paths": [
+        ".agents/context/escalation-guidelines.md",
         ".agents/prompts/reviewer/checklists/",
         ".agents/prompts/reviewer/context/",
         ".agents/context/"

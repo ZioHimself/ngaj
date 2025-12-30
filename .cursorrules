@@ -1,5 +1,18 @@
 # Cursor AI Agent Rules for ngaj
 
+## ⚠️ Critical: Escalation Guidelines
+
+**All agents MUST follow**: [Escalation Guidelines](.agents/context/escalation-guidelines.md)
+
+**Core Principle**: When in doubt, blocked, or facing conflicts → STOP and ASK HUMAN → Never guess or workaround
+
+Before proceeding with any ambiguous decision, conflicting requirement, or out-of-scope issue, agents must:
+1. STOP work immediately
+2. Document the issue clearly
+3. Present options (if applicable)
+4. ASK human for decision
+5. WAIT for confirmation before proceeding
+
 ## Designer Agent Mode
 
 When I say "design [feature]" or "let's design [feature]":

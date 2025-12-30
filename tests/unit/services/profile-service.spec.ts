@@ -478,9 +478,12 @@ describe('ProfileService', () => {
       it('should return canDelete=true when no accounts linked', async () => {
         // Arrange
         const profileId = new ObjectId();
+        const profile = createMockProfile({ _id: profileId });
         const mockAccountsCollection = {
           countDocuments: vi.fn().mockResolvedValue(0)
         };
+        
+        mockCollection.findOne.mockResolvedValue(profile);
         mockDb.collection.mockImplementation((name: string) => {
           if (name === 'accounts') return mockAccountsCollection;
           return mockCollection;
@@ -497,9 +500,12 @@ describe('ProfileService', () => {
       it('should return canDelete=false when accounts linked', async () => {
         // Arrange
         const profileId = new ObjectId();
+        const profile = createMockProfile({ _id: profileId });
         const mockAccountsCollection = {
           countDocuments: vi.fn().mockResolvedValue(3)
         };
+        
+        mockCollection.findOne.mockResolvedValue(profile);
         mockDb.collection.mockImplementation((name: string) => {
           if (name === 'accounts') return mockAccountsCollection;
           return mockCollection;

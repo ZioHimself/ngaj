@@ -367,8 +367,10 @@ describe('Account Repository Integration', () => {
         { 
           $set: { 
             'discovery.lastAt': now,
-            'discovery.error': undefined,
             updatedAt: now
+          },
+          $unset: {
+            'discovery.error': '' // Remove error field on successful run
           }
         }
       );

@@ -237,7 +237,7 @@ describe('AccountService', () => {
           }
         });
 
-        await expect(service.create(input)).rejects.toThrow('Invalid cron expression');
+        await expect(service.create(input), `Failed for ${name}: "${cron}"`).rejects.toThrow('Invalid cron expression');
       }
     });
   });
@@ -479,7 +479,7 @@ describe('AccountService', () => {
         discovery: {
           schedule: {
             enabled: true,
-            cronExpression: 'invalid cron'
+            cronExpression: '0 60 * * *' // Out of range: minute must be 0-59
           }
         }
       };

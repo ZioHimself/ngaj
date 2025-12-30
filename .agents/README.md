@@ -521,6 +521,7 @@ For these cases, jump straight to:
 ## Additional Resources
 
 ### Agent System
+- **[⚠️ Escalation Guidelines](.agents/context/escalation-guidelines.md)** - Critical: When to STOP and ask human
 - [Designer Agent Guide](.agents/prompts/designer/README.md)
 - [Designer Agent Prompt](.agents/prompts/designer/system-prompt.md)
 - [Test-Writer Agent Prompt](.agents/prompts/test-writer/system-prompt.md)

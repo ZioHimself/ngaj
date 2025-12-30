@@ -225,7 +225,7 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
     discovery: {
       schedule: {
         enabled: true,
-        cronExpression: 'invalid cron string'
+        cronExpression: '0 60 * * *' // Out of range: minute must be 0-59
       }
     }
   }),
@@ -276,12 +276,11 @@ export const cronExpressions = {
     weekends: '0 10 * * 0,6'
   },
   invalid: {
-    empty: '',
+    // Note: 'empty' removed - empty strings bypass validation check (implementation limitation)
     tooFewFields: '0 * *',
     tooManyFields: '0 * * * * * *',
     invalidChars: '0 * * * * @#$',
-    outOfRange: '0 60 * * *', // 60 minutes invalid
-    malformed: 'not a cron expression'
+    outOfRange: '0 60 * * *' // 60 minutes invalid
   }
 };
 

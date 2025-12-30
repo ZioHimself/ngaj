@@ -86,8 +86,10 @@ Open your browser to http://localhost:3000
 - **Database**: MongoDB (config, queue, history)
 - **Vector Store**: ChromaDB (knowledge embeddings)
 - **AI**: Anthropic Claude API
-- **Social Platform**: Bluesky (AT Protocol)
+- **Social Platforms**: Bluesky (AT Protocol)
 - **Scheduler**: node-cron
+
+See [tech-stack.md](docs/tech-stack.md) for details.
 
 ## Project Principles
 

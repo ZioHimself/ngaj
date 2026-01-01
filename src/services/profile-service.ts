@@ -258,7 +258,7 @@ export class ProfileService {
     }
 
     for (const example of voice.examples) {
-      if (example.length > 500) {
+      if (typeof example === 'string' && example.length > 500) {
         throw new ValidationError('Each voice.example must not exceed 500 characters');
       }
     }

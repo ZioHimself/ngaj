@@ -16,7 +16,8 @@ import type {
   FileUpload,
   ProcessingOptions,
   KnowledgeQueryResult,
-  TextChunk
+  TextChunk,
+  KnowledgeDocumentProcessingMetadata
 } from '@/shared/types/knowledge-base';
 import {
   ValidationError,
@@ -318,7 +319,7 @@ export class KnowledgeBaseService {
       .sort({ uploadedAt: -1 })
       .toArray();
 
-    return docs.map(doc => this.mapMongoDocToKnowledgeDoc(doc));
+    return docs.map(doc => this.mapMongoDocToKnowledgeDoc(doc as Record<string, unknown>));
   }
 
   /**
@@ -334,7 +335,7 @@ export class KnowledgeBaseService {
       throw new NotFoundError('Document not found');
     }
 
-    const knowledgeDoc = this.mapMongoDocToKnowledgeDoc(doc);
+    const knowledgeDoc = this.mapMongoDocToKnowledgeDoc(doc as Record<string, unknown>);
 
     // Delete from MongoDB
     await collection.deleteOne({ id: documentId });
@@ -435,17 +436,17 @@ export class KnowledgeBaseService {
    */
   private mapMongoDocToKnowledgeDoc(doc: Record<string, unknown>): KnowledgeDocument {
     return {
-      id: doc._id || doc.id,
-      profileId: doc.profileId,
-      filename: doc.filename,
-      fileSizeBytes: doc.fileSizeBytes,
-      mimeType: doc.mimeType,
-      filePath: doc.filePath,
-      uploadedAt: doc.uploadedAt,
-      chunkCount: doc.chunkCount,
-      characterCount: doc.characterCount,
-      chromaCollection: doc.chromaCollection,
-      processingMetadata: doc.processingMetadata
+      id: (doc._id || doc.id) as string,
+      profileId: doc.profileId as string,
+      filename: doc.filename as string,
+      fileSizeBytes: doc.fileSizeBytes as number,
+      mimeType: doc.mimeType as 'application/pdf' | 'text/markdown' | 'text/plain',
+      filePath: doc.filePath as string,
+      uploadedAt: doc.uploadedAt as Date,
+      chunkCount: doc.chunkCount as number,
+      characterCount: doc.characterCount as number,
+      chromaCollection: doc.chromaCollection as string,
+      processingMetadata: doc.processingMetadata as KnowledgeDocumentProcessingMetadata
     };
   }
 }

@@ -161,12 +161,20 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
    - No unused imports or variables
    - Proper TypeScript types (no `any` unless justified)
 
-4. **Document Test Execution**:
+4. **Verify TypeScript Compilation**:
+   ```bash
+   npm run build
+   ```
+   - **Requirement**: Successful compilation with no type errors
+   - Ensures stubs and test files have correct TypeScript types
+   - Fix any type errors before handoff to Implementer
+
+5. **Document Test Execution**:
    - Capture test output showing failures
    - Note any unexpected behaviors or test setup issues
    - Document test run time (for performance baseline)
 
-5. **Create Test Plan Document**:
+6. **Create Test Plan Document**:
    - Save in `.agents/artifacts/test-writer/test-plans/{feature}-test-plan.md`
    - Include:
      - Test coverage summary

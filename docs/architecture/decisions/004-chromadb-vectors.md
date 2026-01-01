@@ -44,9 +44,9 @@ Use **ChromaDB** as the vector database for storing and querying knowledge embed
 
 ## Implementation
 
-**Collection Structure:** One per account (`account_{accountId}_kb`)  
-**Document Chunking:** ~500 tokens, 50-token overlap  
-**Embeddings:** OpenAI text-embedding-3-small API (v0.1)  
+**Collection Structure:** One per profile (`profile_{profileId}_kb`)  
+**Document Chunking:** ~500 tokens, 50-token overlap, respecting paragraph boundaries  
+**Embeddings:** Claude API (consistent with LLM choice)  
 **Persistence:** Docker volume mount for `/chroma/chroma`
 
 **Expected Performance:**

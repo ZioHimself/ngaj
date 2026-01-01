@@ -27,3 +27,26 @@ export type {
 } from './account.js';
 export { isAccount } from './account.js';
 
+// Knowledge Base types
+export type {
+  KnowledgeDocument,
+  KnowledgeDocumentProcessingMetadata,
+  DocumentChunk,
+  DocumentChunkMetadata,
+  KnowledgeQueryResult,
+  TextChunk,
+  FileUpload,
+  ProcessingOptions,
+  KnowledgeBaseConfig,
+} from './knowledge-base.js';
+export {
+  ValidationError,
+  StorageLimitError,
+  ProcessingError,
+  TimeoutError,
+  ExtractionError,
+  EmbeddingError,
+  DeletionError,
+  NotFoundError,
+} from './knowledge-base.js';
+

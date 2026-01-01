@@ -17,9 +17,17 @@
 
 ## Technical Terms
 
-- **Embedding**: Vector representation of text chunks used for semantic similarity search
-- **Vector Store**: Database (ChromaDB) that stores and queries document embeddings
-- **Chunk**: Segment of a document (~500 tokens) created during knowledge base processing
+- **Embedding**: Vector representation of text chunks used for semantic similarity search via Claude API
+- **Vector Store**: Database (ChromaDB) that stores and queries document embeddings for semantic search
+- **Chunk**: Segment of a document (~500 tokens) created during knowledge base processing, respecting paragraph boundaries
+- **Document Processing**: Pipeline that converts uploaded files into searchable chunks: extract text → chunk → embed → store
+- **Semantic Search**: Querying the knowledge base using natural language to find relevant chunks based on meaning (not keywords)
+- **Top-K Search**: Retrieval strategy that returns the K most similar chunks to a query (default K=5)
+- **Cosine Similarity**: Metric used to measure relevance between query and document chunks (0=unrelated, 1=identical)
+- **Synchronous Processing**: Upload workflow where user waits for processing to complete (vs. background job queue)
+- **Atomic Operation**: Database operation that either fully succeeds or fully fails with rollback (e.g., upload creates MongoDB + ChromaDB + filesystem entries together)
+- **Hard Delete**: Permanent removal of data from all systems (MongoDB, ChromaDB, filesystem) with no recovery option
+- **Storage Limit**: Configurable maximum disk space per profile (default: 100MB total, 10MB per file)
 - **Cron Job**: Scheduled task that runs discovery at regular intervals
 - **AT Protocol**: Bluesky's underlying protocol for decentralized social networking
 - **Local-First**: Architecture principle where all data and processing stays on the user's machine

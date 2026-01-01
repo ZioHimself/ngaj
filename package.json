@@ -25,6 +25,7 @@
     "type-check": "npm run type-check:backend && npm run type-check:frontend",
     "type-check:backend": "tsc -p tsconfig.backend.json --noEmit",
     "type-check:frontend": "tsc -p tsconfig.frontend.json --noEmit",
+    "ci:local": "npm run type-check && npm run lint && npm test && npm run build",
     "db:init": "tsx scripts/init-db.ts",
     "db:reset": "tsx scripts/reset-db.ts"
   },
@@ -95,7 +96,8 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "bash -c 'npm run type-check'"
     ],
     "*.{json,md}": [
       "prettier --write"

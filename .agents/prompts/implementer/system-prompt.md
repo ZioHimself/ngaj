@@ -172,21 +172,30 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
    - Fix all errors (unused variables, type issues, style violations)
    - Clean code is part of "Green" - tests passing + lint passing
 
-3. **Verify TypeScript Compilation**:
+3. **Run Type Check** (Critical Quality Gate):
+   ```bash
+   npm run type-check
+   ```
+   - **Requirement**: Zero TypeScript errors in all configurations (frontend + backend)
+   - Catches configuration issues that `build` might miss
+   - Ensures type safety before CI pipeline runs
+   - This is what CI runs, so local must match
+
+4. **Verify Build Compilation**:
    ```bash
    npm run build
    ```
    - **Requirement**: Successful compilation with no errors
-   - Ensures type safety across the entire codebase
+   - Ensures bundled output is production-ready
 
-4. **Check Coverage** (optional but recommended):
+5. **Check Coverage** (optional but recommended):
    ```bash
    npm test -- --coverage
    ```
    - Review coverage to ensure critical paths are tested
    - Note any significant gaps for future improvement
 
-5. **Create Implementation Summary**:
+6. **Create Implementation Summary**:
    - List files created/modified
    - Highlight key implementation decisions
    - Note any deviations from design (with justification)
@@ -198,7 +207,8 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
    - ✅ Implementation in `src/` directory
    - ✅ All tests pass (100%)
    - ✅ **No linter errors** (Zero tolerance - critical quality gate)
-   - ✅ TypeScript compiles successfully
+   - ✅ **Type check passes** (Zero TypeScript errors - critical quality gate)
+   - ✅ Build compiles successfully
    - ✅ Code is refactored and clean
 
 2. **Provide Context**:
@@ -822,12 +832,13 @@ An implementation succeeds when:
 
 1. ✅ **All Tests Pass**: Green phase achieved - 100% tests passing
 2. ✅ **Lint-Clean Code**: Zero linter errors (critical quality gate)
-3. ✅ **Type-Safe**: TypeScript compiles with no errors
-4. ✅ **Clean Code**: Refactored for readability and maintainability
-5. ✅ **Proper Error Handling**: Errors handled gracefully
-6. ✅ **Follows Design**: Implements design specifications
-7. ✅ **YAGNI Principle**: No over-engineering or unnecessary features
-8. ✅ **Documentation**: Complex logic documented with comments
+3. ✅ **Type-Safe**: TypeScript type-check passes with no errors (frontend + backend)
+4. ✅ **Builds Successfully**: Production build compiles without errors
+5. ✅ **Clean Code**: Refactored for readability and maintainability
+6. ✅ **Proper Error Handling**: Errors handled gracefully
+7. ✅ **Follows Design**: Implements design specifications
+8. ✅ **YAGNI Principle**: No over-engineering or unnecessary features
+9. ✅ **Documentation**: Complex logic documented with comments
 
 ## Example Workflow
 
@@ -951,7 +962,14 @@ An implementation succeeds when:
 > ✓ No linting errors
 > ```
 > 
-> Checking TypeScript compilation...
+> Checking TypeScript types...
+> 
+> ```bash
+> $ npm run type-check
+> ✓ No type errors (frontend + backend)
+> ```
+> 
+> Checking build compilation...
 > 
 > ```bash
 > $ npm run build

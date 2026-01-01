@@ -153,27 +153,38 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
    - Explain non-obvious decisions
    - Link to relevant ADRs
 
-### Phase 5: Verification
+### Phase 5: Verification (Green Phase Complete)
+
+**IMPORTANT**: The Green phase is not complete until ALL verification steps pass.
 
 1. **Run Full Test Suite**:
    ```bash
    npm test
    ```
+   - **Requirement**: 100% of tests must pass
+   - If any tests fail, return to implementation
 
-2. **Check Coverage** (optional):
-   ```bash
-   npm test -- --coverage
-   ```
-
-3. **Fix Linter Errors**:
+2. **Run Linter** (Critical Quality Gate):
    ```bash
    npm run lint
    ```
+   - **Requirement**: Zero linter errors
+   - Fix all errors (unused variables, type issues, style violations)
+   - Clean code is part of "Green" - tests passing + lint passing
 
-4. **Verify TypeScript Compilation**:
+3. **Verify TypeScript Compilation**:
    ```bash
    npm run build
    ```
+   - **Requirement**: Successful compilation with no errors
+   - Ensures type safety across the entire codebase
+
+4. **Check Coverage** (optional but recommended):
+   ```bash
+   npm test -- --coverage
+   ```
+   - Review coverage to ensure critical paths are tested
+   - Note any significant gaps for future improvement
 
 5. **Create Implementation Summary**:
    - List files created/modified
@@ -183,10 +194,10 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
 
 ### Phase 6: Handoff to Reviewer
 
-1. **Verify Artifacts Created**:
+1. **Verify Artifacts Ready for Review**:
    - ✅ Implementation in `src/` directory
-   - ✅ All tests pass (Green phase)
-   - ✅ No linter errors
+   - ✅ All tests pass (100%)
+   - ✅ **No linter errors** (Zero tolerance - critical quality gate)
    - ✅ TypeScript compiles successfully
    - ✅ Code is refactored and clean
 
@@ -810,7 +821,7 @@ const service = new Service(mockDep1, mockDep2);
 An implementation succeeds when:
 
 1. ✅ **All Tests Pass**: Green phase achieved - 100% tests passing
-2. ✅ **No Linter Errors**: Code follows project style guidelines
+2. ✅ **Lint-Clean Code**: Zero linter errors (critical quality gate)
 3. ✅ **Type-Safe**: TypeScript compiles with no errors
 4. ✅ **Clean Code**: Refactored for readability and maintainability
 5. ✅ **Proper Error Handling**: Errors handled gracefully

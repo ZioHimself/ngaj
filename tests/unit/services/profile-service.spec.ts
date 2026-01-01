@@ -4,15 +4,14 @@ import { ProfileService } from '@/services/profile-service';
 import { 
   createMockProfile, 
   createMockProfileInput, 
-  profileFixtures,
   invalidProfiles 
 } from '../../fixtures/profile-fixtures';
-import type { Profile, CreateProfileInput, UpdateProfileInput } from '@/shared/types/profile';
+import type { CreateProfileInput, UpdateProfileInput } from '@/shared/types/profile';
 
 describe('ProfileService', () => {
   let service: ProfileService;
-  let mockDb: any;
-  let mockCollection: any;
+  let mockDb: { collection: ReturnType<typeof vi.fn> };
+  let mockCollection: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(() => {
     // Mock MongoDB collection
@@ -183,7 +182,7 @@ describe('ProfileService', () => {
       const invalidId = 'not-an-objectid';
 
       // Act & Assert
-      await expect(service.findById(invalidId as any)).rejects.toThrow('Invalid ObjectId');
+      await expect(service.findById(invalidId as unknown as ObjectId)).rejects.toThrow('Invalid ObjectId');
     });
   });
 

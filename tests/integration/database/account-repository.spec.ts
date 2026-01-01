@@ -9,7 +9,7 @@ import {
   cronExpressions
 } from '../../fixtures/account-fixtures';
 import { createMockProfile } from '../../fixtures/profile-fixtures';
-import type { Account, CreateAccountInput } from '@/shared/types/account';
+import type { Account } from '@/shared/types/account';
 import type { Profile } from '@/shared/types/profile';
 
 /**
@@ -294,7 +294,7 @@ describe('Account Repository Integration', () => {
 
       // Act
       const startTime = Date.now();
-      const results = await db.collection('accounts')
+      await db.collection('accounts')
         .find({
           'discovery.schedule.enabled': true,
           status: 'active'

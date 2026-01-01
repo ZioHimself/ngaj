@@ -44,7 +44,7 @@ export class ProfileService {
     };
 
     // Insert into database
-    const result = await this.db.collection<Profile>('profiles').insertOne(profile as any);
+    const result = await this.db.collection<Profile>('profiles').insertOne(profile);
     
     return {
       ...profile,
@@ -64,7 +64,7 @@ export class ProfileService {
       throw new Error('Invalid ObjectId');
     }
 
-    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id } as any);
+    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id });
     return profile;
   }
 
@@ -75,7 +75,7 @@ export class ProfileService {
    * @returns Array of profiles (empty array if none found)
    */
   async findAll(filters?: { active?: boolean }): Promise<Profile[]> {
-    const query: any = {};
+    const query: { isActive?: boolean } = {};
     
     if (filters?.active !== undefined) {
       query.isActive = filters.active;
@@ -104,7 +104,7 @@ export class ProfileService {
       this.validateName(data.name);
       
       // Check for duplicate name (excluding current profile)
-      const duplicateProfile = await this.db.collection<Profile>('profiles').findOne({ name: data.name } as any);
+      const duplicateProfile = await this.db.collection<Profile>('profiles').findOne({ name: data.name });
       if (duplicateProfile && !duplicateProfile._id.equals(id)) {
         throw new ConflictError(`Profile with name '${data.name}' already exists`);
       }
@@ -121,7 +121,7 @@ export class ProfileService {
     };
 
     await this.db.collection<Profile>('profiles').updateOne(
-      { _id: id } as any,
+      { _id: id },
       { $set: updateDoc }
     );
 
@@ -144,14 +144,14 @@ export class ProfileService {
     }
 
     // Check for linked accounts
-    const accountCount = await this.db.collection('accounts').countDocuments({ profileId: id } as any);
+    const accountCount = await this.db.collection('accounts').countDocuments({ profileId: id });
     if (accountCount > 0) {
       throw new ConflictError('Cannot delete profile with active accounts');
     }
 
     // Soft delete
     await this.db.collection<Profile>('profiles').updateOne(
-      { _id: id } as any,
+      { _id: id },
       { 
         $set: { 
           isActive: false,
@@ -167,7 +167,7 @@ export class ProfileService {
    * @returns true if name is available, false if taken
    */
   async validateProfileName(name: string): Promise<boolean> {
-    const existingProfile = await this.db.collection<Profile>('profiles').findOne({ name } as any);
+    const existingProfile = await this.db.collection<Profile>('profiles').findOne({ name });
     return existingProfile === null;
   }
 
@@ -178,7 +178,7 @@ export class ProfileService {
    */
   async canDelete(id: ObjectId): Promise<{ canDelete: boolean; reason?: string }> {
     // Check if profile exists (query directly to avoid findById's ObjectId validation)
-    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id } as any);
+    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id });
     if (!profile) {
       return {
         canDelete: false,
@@ -187,7 +187,7 @@ export class ProfileService {
     }
 
     // Check for linked accounts
-    const accountCount = await this.db.collection('accounts').countDocuments({ profileId: id } as any);
+    const accountCount = await this.db.collection('accounts').countDocuments({ profileId: id });
     if (accountCount > 0) {
       return {
         canDelete: false,
@@ -232,7 +232,7 @@ export class ProfileService {
    * Validate voice configuration
    * @private
    */
-  private validateVoice(voice: any): void {
+  private validateVoice(voice: { tone?: string; style?: string; examples?: unknown[] }): void {
     if (!voice.tone) {
       throw new ValidationError('voice.tone is required');
     }

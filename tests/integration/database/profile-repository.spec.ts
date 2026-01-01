@@ -3,10 +3,9 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import { 
   createMockProfileInput, 
-  profileFixtures,
   createMockProfiles
 } from '../../fixtures/profile-fixtures';
-import type { Profile, CreateProfileInput } from '@/shared/types/profile';
+import type { Profile } from '@/shared/types/profile';
 
 /**
  * Integration tests for Profile MongoDB operations
@@ -216,7 +215,7 @@ describe('Profile Repository Integration', () => {
 
       // Act
       const startTime = Date.now();
-      const results = await db.collection('profiles')
+      await db.collection('profiles')
         .find({ isActive: true })
         .explain('executionStats');
       const duration = Date.now() - startTime;

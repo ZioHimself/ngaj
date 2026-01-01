@@ -35,7 +35,7 @@ export class AccountService {
     this.validateAccountData(data);
 
     // Check if profile exists
-    const profile = await this.db.collection('profiles').findOne({ _id: data.profileId } as any);
+    const profile = await this.db.collection('profiles').findOne({ _id: data.profileId });
     if (!profile) {
       throw new NotFoundError('Profile not found');
     }
@@ -44,7 +44,7 @@ export class AccountService {
     const existingAccount = await this.db.collection<Account>('accounts').findOne({
       platform: data.platform,
       handle: data.handle
-    } as any);
+    });
     if (existingAccount) {
       throw new ConflictError(
         `Account already exists for platform '${data.platform}' and handle '${data.handle}'`
@@ -69,7 +69,7 @@ export class AccountService {
     };
 
     // Insert into database
-    const result = await this.db.collection<Account>('accounts').insertOne(account as any);
+    const result = await this.db.collection<Account>('accounts').insertOne(account);
     
     return {
       ...account,
@@ -114,7 +114,7 @@ export class AccountService {
       return results[0] as AccountWithProfile || null;
     }
 
-    const account = await this.db.collection<Account>('accounts').findOne({ _id: id } as any);
+    const account = await this.db.collection<Account>('accounts').findOne({ _id: id });
     return account;
   }
 
@@ -128,7 +128,7 @@ export class AccountService {
     profileId?: ObjectId; 
     status?: AccountStatus 
   }): Promise<Account[]> {
-    const query: any = {};
+    const query: { profileId?: ObjectId; status?: AccountStatus } = {};
     
     if (filters?.profileId) {
       query.profileId = filters.profileId;
@@ -176,7 +176,7 @@ export class AccountService {
     };
 
     await this.db.collection<Account>('accounts').updateOne(
-      { _id: id } as any,
+      { _id: id },
       { $set: updateDoc }
     );
 
@@ -191,7 +191,7 @@ export class AccountService {
    * @throws NotFoundError - When account not found
    */
   async delete(id: ObjectId): Promise<void> {
-    const result = await this.db.collection<Account>('accounts').deleteOne({ _id: id } as any);
+    const result = await this.db.collection<Account>('accounts').deleteOne({ _id: id });
     
     if (result.deletedCount === 0) {
       throw new NotFoundError('Account not found');
@@ -244,7 +244,12 @@ export class AccountService {
     success: boolean, 
     error?: string
   ): Promise<void> {
-    const updateDoc: any = {
+    const updateDoc: {
+      updatedAt: Date;
+      'discovery.lastAt'?: Date;
+      'discovery.error'?: string;
+      status?: AccountStatus;
+    } = {
       updatedAt: new Date()
     };
 
@@ -257,7 +262,7 @@ export class AccountService {
     }
 
     await this.db.collection<Account>('accounts').updateOne(
-      { _id: id } as any,
+      { _id: id },
       { $set: updateDoc }
     );
   }
@@ -267,10 +272,10 @@ export class AccountService {
    * Checks if required environment variables are present.
    * 
    * @param platform - Platform identifier
-   * @param handle - Account handle
+   * @param _handle - Account handle (reserved for future use)
    * @returns true if credentials exist, false otherwise
    */
-  async validateCredentials(platform: Platform, handle: string): Promise<boolean> {
+  async validateCredentials(platform: Platform, _handle: string): Promise<boolean> {
     switch (platform) {
       case 'bluesky':
         // Check for Bluesky credentials in environment
@@ -332,7 +337,7 @@ export class AccountService {
     try {
       // Use cron-parser to validate
       CronExpressionParser.parse(cronExpression);
-    } catch (error) {
+    } catch {
       throw new ValidationError('Invalid cron expression');
     }
   }

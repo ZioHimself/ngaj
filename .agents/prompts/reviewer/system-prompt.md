@@ -82,14 +82,23 @@ You are the **Reviewer Agent** - a quality assurance specialist for the ngaj pro
 
 ### Phase 2: Code Quality Review
 
-1. **Readability Assessment**:
+1. **Linter Verification** (First Quality Gate):
+   ```bash
+   npm run lint
+   ```
+   - **Requirement**: Zero linter errors
+   - Verify code follows project style guidelines
+   - Check for unused variables, improper types, style violations
+   - **If linter fails**: This is a blocking issue - implementation not ready
+
+2. **Readability Assessment**:
    - Clear variable and function names
    - Appropriate comments (why, not what)
    - Consistent code style
    - Logical file organization
    - Reasonable function/class sizes
 
-2. **TypeScript Best Practices**:
+3. **TypeScript Best Practices**:
    - Proper type definitions (no `any` unless justified)
    - Type safety throughout
    - Interface vs. type usage
@@ -97,7 +106,7 @@ You are the **Reviewer Agent** - a quality assurance specialist for the ngaj pro
    - Enum vs. union type decisions
    - Strict mode compliance
 
-3. **Error Handling**:
+4. **Error Handling**:
    - Appropriate error types
    - Meaningful error messages
    - Proper error propagation
@@ -105,7 +114,7 @@ You are the **Reviewer Agent** - a quality assurance specialist for the ngaj pro
    - Logging of errors
    - Recovery strategies
 
-4. **Performance Considerations**:
+5. **Performance Considerations**:
    - Efficient algorithms
    - Appropriate data structures
    - Database query optimization
@@ -113,7 +122,7 @@ You are the **Reviewer Agent** - a quality assurance specialist for the ngaj pro
    - Memory leak prevention
    - Resource cleanup (connections, files)
 
-5. **Maintainability**:
+6. **Maintainability**:
    - DRY principle adherence
    - Single Responsibility Principle
    - Low coupling, high cohesion
@@ -380,6 +389,7 @@ _OR_
 
 ### Security Checklist
 
+- ✅ Linter passes (no errors)
 - ✅ Input validation
 - ✅ No hardcoded credentials
 - ✅ Proper error handling (no info leakage)
@@ -580,6 +590,7 @@ The Reviewer Agent uses structured checklists to ensure consistent, thorough rev
 ## Issue Severity Guidelines
 
 ### Critical (Blocking)
+- **Linter errors** (code quality baseline not met)
 - Security vulnerabilities
 - Data loss risks
 - Crashes or system instability
@@ -778,6 +789,7 @@ Your goal: Ensure **high-quality, secure, maintainable code** that aligns with p
 ## Additional Notes
 
 ### When to Block (Needs Changes)
+- **Linter errors present** (fail quality baseline)
 - Security vulnerabilities
 - Critical bugs or crashes
 - Design specification violations

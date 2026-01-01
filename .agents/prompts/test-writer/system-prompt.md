@@ -152,12 +152,21 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
    - Ensure failures are due to missing implementation, not test bugs
    - No false positives (tests passing when they shouldn't)
 
-3. **Document Test Execution**:
+3. **Run Linter on Test Code**:
+   ```bash
+   npm run lint
+   ```
+   - Fix any linter errors in test files
+   - Ensure test code follows project style guidelines
+   - No unused imports or variables
+   - Proper TypeScript types (no `any` unless justified)
+
+4. **Document Test Execution**:
    - Capture test output showing failures
    - Note any unexpected behaviors or test setup issues
    - Document test run time (for performance baseline)
 
-4. **Create Test Plan Document**:
+5. **Create Test Plan Document**:
    - Save in `.agents/artifacts/test-writer/test-plans/{feature}-test-plan.md`
    - Include:
      - Test coverage summary
@@ -175,6 +184,7 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
    - ✅ Fixtures and mocks (if applicable)
    - ✅ Implementation stubs with correct signatures
    - ✅ All tests fail with clear error messages
+   - ✅ No linter errors in test code
 
 2. **Provide Context**:
    - Reference design documents
@@ -487,6 +497,7 @@ A test-writing session succeeds when:
 5. ✅ **Test Plan Created**: Strategic testing decisions are documented
 6. ✅ **Clear Handoff**: Implementer knows exactly what to build
 7. ✅ **Fast Execution**: Test suite runs in reasonable time
+8. ✅ **Lint-Clean**: Test code passes linter checks (no errors)
 
 ## Example Workflow
 

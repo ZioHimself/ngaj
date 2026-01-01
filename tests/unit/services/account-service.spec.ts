@@ -9,13 +9,13 @@ import {
   cronExpressions
 } from '../../fixtures/account-fixtures';
 import { createMockProfile } from '../../fixtures/profile-fixtures';
-import type { Account, CreateAccountInput, UpdateAccountInput, Platform } from '@/shared/types/account';
+import type { CreateAccountInput, UpdateAccountInput, Platform } from '@/shared/types/account';
 
 describe('AccountService', () => {
   let service: AccountService;
-  let mockDb: any;
-  let mockAccountsCollection: any;
-  let mockProfilesCollection: any;
+  let mockDb: { collection: ReturnType<typeof vi.fn> };
+  let mockAccountsCollection: Record<string, ReturnType<typeof vi.fn>>;
+  let mockProfilesCollection: Record<string, ReturnType<typeof vi.fn>>;
   let testProfileId: ObjectId;
 
   beforeEach(() => {
@@ -207,7 +207,7 @@ describe('AccountService', () => {
       });
 
       // Act & Assert - All should succeed
-      for (const [name, cron] of Object.entries(cronExpressions.valid)) {
+      for (const [, cron] of Object.entries(cronExpressions.valid)) {
         const input = createMockAccountInput(testProfileId, {
           discovery: {
             schedule: {
@@ -294,7 +294,7 @@ describe('AccountService', () => {
       const invalidId = 'not-an-objectid';
 
       // Act & Assert
-      await expect(service.findById(invalidId as any)).rejects.toThrow('Invalid ObjectId');
+      await expect(service.findById(invalidId as unknown as ObjectId)).rejects.toThrow('Invalid ObjectId');
     });
   });
 
@@ -320,7 +320,6 @@ describe('AccountService', () => {
     it('should filter by profileId when provided', async () => {
       // Arrange
       const profile1Id = new ObjectId();
-      const profile2Id = new ObjectId();
       const profile1Accounts = [
         createMockAccount(profile1Id, { handle: '@user1.bsky.social' })
       ];
@@ -566,7 +565,7 @@ describe('AccountService', () => {
         });
 
         // Act
-        const result = await service.findAccountsForDiscovery();
+        await service.findAccountsForDiscovery();
 
         // Assert
         expect(mockAccountsCollection.aggregate).toHaveBeenCalledWith(

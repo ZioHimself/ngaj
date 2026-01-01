@@ -3,8 +3,7 @@ import type {
   Account, 
   CreateAccountInput, 
   Platform, 
-  AccountStatus,
-  AccountDiscoveryConfig 
+  AccountStatus
 } from '@/shared/types/account';
 
 /**

@@ -263,10 +263,12 @@ describe('Account Repository Integration', () => {
         fixtures.recentDiscovery      // Should match
       ]);
 
-      // Act
+      // Act - Updated for ADR-008: Check if ANY schedule is enabled
       const discoveryAccounts = await db.collection('accounts')
         .find({
-          'discovery.schedule.enabled': true,
+          'discovery.schedules': {
+            $elemMatch: { enabled: true }
+          },
           status: 'active'
         })
         .toArray();

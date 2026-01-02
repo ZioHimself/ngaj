@@ -18,10 +18,20 @@ export const createMockAccount = (
   platform: 'bluesky',
   handle: '@test.bsky.social',
   discovery: {
-    schedule: {
-      enabled: true,
-      cronExpression: '0 */2 * * *' // Every 2 hours
-    },
+    schedules: [
+      {
+        type: 'replies',
+        enabled: true,
+        cronExpression: '*/15 * * * *', // Every 15 minutes
+        lastRunAt: undefined
+      },
+      {
+        type: 'search',
+        enabled: true,
+        cronExpression: '0 */2 * * *', // Every 2 hours
+        lastRunAt: undefined
+      }
+    ],
     lastAt: undefined,
     error: undefined
   },
@@ -42,10 +52,20 @@ export const createMockAccountInput = (
   platform: 'bluesky',
   handle: '@test.bsky.social',
   discovery: {
-    schedule: {
-      enabled: true,
-      cronExpression: '0 */2 * * *'
-    }
+    schedules: [
+      {
+        type: 'replies',
+        enabled: true,
+        cronExpression: '*/15 * * * *',
+        lastRunAt: undefined
+      },
+      {
+        type: 'search',
+        enabled: true,
+        cronExpression: '0 */2 * * *',
+        lastRunAt: undefined
+      }
+    ]
   },
   status: 'active',
   ...overrides
@@ -63,10 +83,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: '@user.bsky.social',
     status: 'active',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 */2 * * *'
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: undefined
+        }
+      ]
     }
   }),
 
@@ -78,10 +108,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: '@paused.bsky.social',
     status: 'paused',
     discovery: {
-      schedule: {
-        enabled: false,
-        cronExpression: '0 */2 * * *'
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: false,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: false,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: undefined
+        }
+      ]
     }
   }),
 
@@ -93,10 +133,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: '@error.bsky.social',
     status: 'error',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 */2 * * *'
-      },
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: undefined
+        }
+      ],
       error: 'Authentication failed: Invalid credentials'
     }
   }),
@@ -109,10 +159,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: '@recent.bsky.social',
     status: 'active',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 */2 * * *'
-      },
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: new Date('2025-01-01T12:00:00Z')
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: new Date('2025-01-01T10:00:00Z')
+        }
+      ],
       lastAt: new Date('2025-01-01T12:00:00Z')
     }
   }),
@@ -125,10 +185,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: 'user@example.com',
     status: 'active',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 9,17 * * 1-5' // 9am and 5pm, weekdays
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 9,17 * * 1-5', // 9am and 5pm, weekdays
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 12 * * 1-5', // Noon, weekdays
+          lastRunAt: undefined
+        }
+      ]
     }
   }),
 
@@ -140,10 +210,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     handle: 'u/testuser',
     status: 'active',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 * * * *' // Every hour
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 * * * *', // Every hour
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *', // Every 2 hours
+          lastRunAt: undefined
+        }
+      ]
     }
   }),
 
@@ -154,10 +234,20 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     platform: 'bluesky',
     handle: '@hourly.bsky.social',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 * * * *' // Every hour
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 * * * *', // Every hour
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *', // Every 2 hours
+          lastRunAt: undefined
+        }
+      ]
     }
   }),
 
@@ -168,10 +258,68 @@ export const createAccountFixtures = (profileId: ObjectId) => ({
     platform: 'bluesky',
     handle: '@business.bsky.social',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 9-17 * * 1-5' // 9am-5pm, weekdays
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 9-17 * * 1-5', // 9am-5pm, weekdays (hourly during business hours)
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 10,14 * * 1-5', // 10am and 2pm, weekdays
+          lastRunAt: undefined
+        }
+      ]
+    }
+  }),
+
+  /**
+   * Account with only replies enabled
+   */
+  repliesOnly: createMockAccount(profileId, {
+    platform: 'bluesky',
+    handle: '@repliesonly.bsky.social',
+    discovery: {
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: false,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: undefined
+        }
+      ]
+    }
+  }),
+
+  /**
+   * Account with only search enabled
+   */
+  searchOnly: createMockAccount(profileId, {
+    platform: 'bluesky',
+    handle: '@searchonly.bsky.social',
+    discovery: {
+      schedules: [
+        {
+          type: 'replies',
+          enabled: false,
+          cronExpression: '*/15 * * * *',
+          lastRunAt: undefined
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *',
+          lastRunAt: undefined
+        }
+      ]
     }
   })
 });
@@ -187,10 +335,18 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
     platform: 'bluesky',
     handle: '@test.bsky.social',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 */2 * * *'
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *'
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *'
+        }
+      ]
     },
     status: 'active'
   },
@@ -209,10 +365,18 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
     profileId,
     platform: 'bluesky',
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 */2 * * *'
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '*/15 * * * *'
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *'
+        }
+      ]
     },
     status: 'active'
   },
@@ -222,10 +386,18 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
    */
   invalidCron: createMockAccountInput(profileId, {
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 60 * * *' // Out of range: minute must be 0-59
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 60 * * *' // Out of range: minute must be 0-59
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *'
+        }
+      ]
     }
   }),
 
@@ -234,10 +406,18 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
    */
   emptyCron: createMockAccountInput(profileId, {
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: ''
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: ''
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *'
+        }
+      ]
     }
   }),
 
@@ -253,10 +433,18 @@ export const createInvalidAccounts = (profileId: ObjectId) => ({
    */
   malformedCron: createMockAccountInput(profileId, {
     discovery: {
-      schedule: {
-        enabled: true,
-        cronExpression: '0 * *' // Too few fields
-      }
+      schedules: [
+        {
+          type: 'replies',
+          enabled: true,
+          cronExpression: '0 * *' // Too few fields
+        },
+        {
+          type: 'search',
+          enabled: true,
+          cronExpression: '0 */2 * * *'
+        }
+      ]
     }
   })
 });

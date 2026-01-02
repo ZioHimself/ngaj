@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ScoringService } from '@/services/scoring-service';
-import { createMockRawPost, createMockRawAuthor, scoringScenarios } from '@/tests/fixtures/opportunity-fixtures';
-import type { RawPost, RawAuthor } from '@/tests/fixtures/opportunity-fixtures';
+import { createMockRawPost, createMockRawAuthor, scoringScenarios } from '@tests/fixtures/opportunity-fixtures';
 
 describe('ScoringService', () => {
   let scoringService: ScoringService;
@@ -26,12 +25,13 @@ describe('ScoringService', () => {
       const score = scoringService.scoreOpportunity(post, author);
 
       // Assert
-      expect(score.recency).toBeGreaterThanOrEqual(99);
-      expect(score.recency).toBeLessThanOrEqual(101);
+      // For 2-minute old post: e^(-2/30) * 100 ≈ 93.5%
+      expect(score.recency).toBeGreaterThanOrEqual(92);
+      expect(score.recency).toBeLessThanOrEqual(95);
       expect(score.impact).toBeGreaterThanOrEqual(30);
       expect(score.impact).toBeLessThanOrEqual(36);
-      expect(score.total).toBeGreaterThanOrEqual(70);
-      expect(score.total).toBeLessThanOrEqual(76);
+      expect(score.total).toBeGreaterThanOrEqual(67);
+      expect(score.total).toBeLessThanOrEqual(71);
     });
 
     it('should return low recency score for old post (6 hours old)', () => {
@@ -71,10 +71,12 @@ describe('ScoringService', () => {
       const score = scoringService.scoreOpportunity(post, author);
 
       // Assert
+      // For 30-minute old post: e^(-30/30) * 100 ≈ 36.8%
       expect(score.recency).toBeGreaterThanOrEqual(35);
       expect(score.recency).toBeLessThanOrEqual(40);
+      // Impact: log10(10000)*10 + log10(21)*3 + log10(11)*3 ≈ 47.1
       expect(score.impact).toBeGreaterThanOrEqual(43);
-      expect(score.impact).toBeLessThanOrEqual(47);
+      expect(score.impact).toBeLessThanOrEqual(48);
       expect(score.total).toBeGreaterThanOrEqual(38);
       expect(score.total).toBeLessThanOrEqual(42);
     });

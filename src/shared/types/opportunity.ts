@@ -279,3 +279,52 @@ export interface UpdateOpportunityInput {
  */
 export type UpsertAuthorInput = Omit<Author, '_id' | 'lastUpdatedAt'>;
 
+/**
+ * Raw post data from platform adapter (before transformation to Opportunity)
+ */
+export interface RawPost {
+  /** Platform-specific post identifier (e.g., AT URI for Bluesky) */
+  id: string;
+  
+  /** Direct URL to the post */
+  url: string;
+  
+  /** Post text content */
+  text: string;
+  
+  /** When the post was created */
+  createdAt: Date;
+  
+  /** Platform-specific author identifier */
+  authorId: string;
+  
+  /** Number of likes */
+  likes: number;
+  
+  /** Number of reposts */
+  reposts: number;
+  
+  /** Number of replies */
+  replies: number;
+}
+
+/**
+ * Raw author data from platform adapter (before transformation to Author)
+ */
+export interface RawAuthor {
+  /** Platform-specific user identifier */
+  id: string;
+  
+  /** Platform handle/username */
+  handle: string;
+  
+  /** Display name */
+  displayName: string;
+  
+  /** Bio/description (optional) */
+  bio?: string;
+  
+  /** Follower count */
+  followerCount: number;
+}
+

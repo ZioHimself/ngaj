@@ -1,35 +1,28 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import {
   createMockOpportunity,
   createMockAuthor,
   createMockOpportunities
-} from '@/tests/fixtures/opportunity-fixtures';
-import { createMockAccount } from '@/tests/fixtures/account-fixtures';
-import { createMockProfile } from '@/tests/fixtures/profile-fixtures';
+} from '@tests/fixtures/opportunity-fixtures';
 
+/**
+ * Integration tests for Opportunity Repository MongoDB operations
+ * Uses MongoMemoryServer for isolated testing
+ */
 describe('Opportunity Repository - Database Integration', () => {
+  let mongoServer: MongoMemoryServer;
   let client: MongoClient;
   let db: Db;
-  const testDbName = 'ngaj_test_opportunity_discovery';
 
-  beforeEach(async () => {
-    // Connect to test database
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
-    client = await MongoClient.connect(mongoUri);
-    db = client.db(testDbName);
+  beforeAll(async () => {
+    // Start in-memory MongoDB server
+    mongoServer = await MongoMemoryServer.create();
+    const uri = mongoServer.getUri();
+    client = await MongoClient.connect(uri);
+    db = client.db('ngaj_test_opportunity_discovery');
 
-    // Create collections and indexes
-    await setupTestDatabase(db);
-  });
-
-  afterEach(async () => {
-    // Clean up test database
-    await db.dropDatabase();
-    await client.close();
-  });
-
-  async function setupTestDatabase(db: Db) {
     // Create opportunities collection with indexes
     const opportunities = db.collection('opportunities');
     await opportunities.createIndex(
@@ -63,7 +56,18 @@ describe('Opportunity Repository - Database Integration', () => {
       { handle: 1 },
       { name: 'handle' }
     );
-  }
+  });
+
+  afterAll(async () => {
+    await client.close();
+    await mongoServer.stop();
+  });
+
+  afterEach(async () => {
+    // Clean collections between tests
+    await db.collection('opportunities').deleteMany({});
+    await db.collection('authors').deleteMany({});
+  });
 
   describe('Opportunity Indexes', () => {
     it('should use compound index for prioritized opportunity queries', async () => {

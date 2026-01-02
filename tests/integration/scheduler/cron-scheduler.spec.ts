@@ -2,22 +2,31 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ObjectId } from 'mongodb';
 import { CronScheduler } from '@/scheduler/cron-scheduler';
 import type { IDiscoveryService } from '@/services/discovery-service';
-import { createMockAccount } from '@/tests/fixtures/account-fixtures';
-import { createMockProfile } from '@/tests/fixtures/profile-fixtures';
+import { createMockAccount } from '@tests/fixtures/account-fixtures';
 
 describe('CronScheduler', () => {
   let cronScheduler: CronScheduler;
   let mockDb: any;
   let mockDiscoveryService: IDiscoveryService;
+  let mockAccountsCollection: any;
 
   beforeEach(() => {
-    // Mock database
+    // Create a mock query object that will be returned by find()
+    const mockQuery = {
+      toArray: vi.fn()
+    };
+
+    // Create cached accounts collection mock
+    mockAccountsCollection = {
+      find: vi.fn(() => mockQuery)
+    };
+
+    // Mock database with collection cache
     mockDb = {
-      collection: vi.fn((name: string) => ({
-        find: vi.fn(() => ({
-          toArray: vi.fn()
-        }))
-      }))
+      collection: vi.fn((name: string) => {
+        if (name === 'accounts') return mockAccountsCollection;
+        throw new Error(`Unknown collection: ${name}`);
+      })
     };
 
     // Mock discovery service
@@ -84,8 +93,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account1, account2]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account1, account2]);
 
       // Act
       await cronScheduler.initialize();
@@ -117,8 +126,8 @@ describe('CronScheduler', () => {
         }
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account]);
 
       // Act
       await cronScheduler.initialize();
@@ -146,8 +155,8 @@ describe('CronScheduler', () => {
         }
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account]);
 
       // Act
       await cronScheduler.initialize();
@@ -181,8 +190,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account]);
 
       // Act
       await cronScheduler.initialize();
@@ -194,8 +203,8 @@ describe('CronScheduler', () => {
 
     it('should handle empty accounts list', async () => {
       // Arrange
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([]);
 
       // Act
       await cronScheduler.initialize();
@@ -240,8 +249,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray
         .mockResolvedValueOnce([account1]) // Initial load
         .mockResolvedValueOnce([account1, account2]); // After reload
 
@@ -303,8 +312,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray
         .mockResolvedValueOnce([account1])
         .mockResolvedValueOnce([account2]);
 
@@ -382,8 +391,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account]);
 
       await cronScheduler.initialize();
 
@@ -426,8 +435,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account]);
 
       // Act
       await cronScheduler.initialize();
@@ -473,8 +482,8 @@ describe('CronScheduler', () => {
         status: 'active'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.find().toArray.mockResolvedValue([account1, account2]);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.find().toArray.mockResolvedValue([account1, account2]);
 
       (mockDiscoveryService.discover as any)
         .mockRejectedValueOnce(new Error('Job 1 failed')) // First job fails

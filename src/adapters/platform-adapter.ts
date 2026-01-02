@@ -1,4 +1,4 @@
-import type { RawPost, RawAuthor } from '@/tests/fixtures/opportunity-fixtures';
+import type { RawPost, RawAuthor } from '@/shared/types/opportunity';
 
 /**
  * Fetch options for platform adapter methods

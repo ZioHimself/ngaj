@@ -276,7 +276,7 @@ describe('Account Repository Integration', () => {
       // Assert
       expect(discoveryAccounts).toHaveLength(2);
       expect(discoveryAccounts.every(a => 
-        a.discovery.schedule.enabled === true && 
+        a.discovery.schedules.some((s: any) => s.enabled === true) && 
         a.status === 'active'
       )).toBe(true);
     });
@@ -288,7 +288,9 @@ describe('Account Repository Integration', () => {
       
       // Randomly set enabled/status
       accounts.forEach(acc => {
-        acc.discovery.schedule.enabled = Math.random() > 0.5;
+        if (acc.discovery.schedules && acc.discovery.schedules.length > 0) {
+          acc.discovery.schedules[0].enabled = Math.random() > 0.5;
+        }
         acc.status = Math.random() > 0.7 ? 'paused' : 'active';
       });
       

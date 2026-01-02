@@ -4,8 +4,6 @@ import type {
   Author,
   OpportunityWithAuthor,
   CreateOpportunityInput,
-  OpportunityScore,
-  DiscoveryType,
   OpportunityStatus,
   UpsertAuthorInput
 } from '@/shared/types/opportunity';
@@ -21,13 +19,17 @@ export const createMockOpportunity = (
 ): Opportunity => {
   const discoveredAt = new Date('2026-01-01T12:00:00Z');
   const expiresAt = new Date(discoveredAt.getTime() + 48 * 60 * 60 * 1000); // 48 hours later
+  
+  // Generate unique postId by default (can be overridden)
+  const uniqueId = new ObjectId().toString();
+  const defaultPostId = `at://did:plc:abc123/app.bsky.feed.post/${uniqueId}`;
 
   return {
     _id: new ObjectId(),
     accountId,
     platform: 'bluesky',
-    postId: 'at://did:plc:abc123/app.bsky.feed.post/xyz789',
-    postUrl: 'https://bsky.app/profile/author.bsky.social/post/xyz789',
+    postId: defaultPostId,
+    postUrl: `https://bsky.app/profile/author.bsky.social/post/${uniqueId}`,
     content: {
       text: 'Great post about TypeScript! What are your thoughts on...',
       createdAt: new Date('2026-01-01T11:45:00Z')
@@ -93,12 +95,16 @@ export const createMockOpportunityInput = (
 ): CreateOpportunityInput => {
   const discoveredAt = new Date('2026-01-01T12:00:00Z');
   const expiresAt = new Date(discoveredAt.getTime() + 48 * 60 * 60 * 1000);
+  
+  // Generate unique postId by default (can be overridden)
+  const uniqueId = new ObjectId().toString();
+  const defaultPostId = `at://did:plc:abc123/app.bsky.feed.post/${uniqueId}`;
 
   return {
     accountId,
     platform: 'bluesky',
-    postId: 'at://did:plc:abc123/app.bsky.feed.post/xyz789',
-    postUrl: 'https://bsky.app/profile/author.bsky.social/post/xyz789',
+    postId: defaultPostId,
+    postUrl: `https://bsky.app/profile/author.bsky.social/post/${uniqueId}`,
     content: {
       text: 'Great post about TypeScript!',
       createdAt: new Date('2026-01-01T11:45:00Z')
@@ -368,30 +374,8 @@ export const authorFixtures = {
   })
 };
 
-/**
- * Mock RawPost data from platform adapter
- */
-export interface RawPost {
-  id: string;
-  url: string;
-  text: string;
-  createdAt: Date;
-  authorId: string;
-  likes: number;
-  reposts: number;
-  replies: number;
-}
-
-/**
- * Mock RawAuthor data from platform adapter
- */
-export interface RawAuthor {
-  id: string;
-  handle: string;
-  displayName: string;
-  bio?: string;
-  followerCount: number;
-}
+// Re-export types from shared for backwards compatibility
+export type { RawPost, RawAuthor } from '@/shared/types/opportunity';
 
 /**
  * Factory to create RawPost (platform adapter output)
@@ -481,9 +465,9 @@ export const scoringScenarios = {
       followerCount: 1000
     }),
     expectedScore: {
-      recency: 100, // ~100
+      recency: 93.5, // e^(-2/30) * 100 ≈ 93.5
       impact: 33, // ~33
-      total: 73 // 0.6*100 + 0.4*33
+      total: 69 // 0.6*93.5 + 0.4*33 ≈ 69.3
     }
   },
 

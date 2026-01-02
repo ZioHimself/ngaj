@@ -59,7 +59,7 @@ export class AccountService {
       platform: data.platform,
       handle: data.handle,
       discovery: {
-        schedule: data.discovery.schedule,
+        schedules: data.discovery.schedules,
         lastAt: undefined,
         error: undefined
       },
@@ -165,8 +165,12 @@ export class AccountService {
     }
 
     // Validate update data
-    if (data.discovery?.schedule?.cronExpression) {
-      this.validateCronExpression(data.discovery.schedule.cronExpression);
+    if (data.discovery?.schedules && Array.isArray(data.discovery.schedules)) {
+      for (const schedule of data.discovery.schedules) {
+        if (schedule.cronExpression) {
+          this.validateCronExpression(schedule.cronExpression);
+        }
+      }
     }
 
     // Update account
@@ -209,7 +213,9 @@ export class AccountService {
     const accounts = await this.db.collection<Account>('accounts').aggregate([
       {
         $match: {
-          'discovery.schedule.enabled': true,
+          'discovery.schedules': {
+            $elemMatch: { enabled: true }
+          },
           status: 'active'
         }
       },
@@ -319,9 +325,13 @@ export class AccountService {
       throw new ValidationError('handle is required');
     }
 
-    // Validate cron expression
-    if (data.discovery?.schedule?.cronExpression) {
-      this.validateCronExpression(data.discovery.schedule.cronExpression);
+    // Validate cron expressions in schedules
+    if (data.discovery?.schedules && Array.isArray(data.discovery.schedules)) {
+      for (const schedule of data.discovery.schedules) {
+        if (schedule.cronExpression) {
+          this.validateCronExpression(schedule.cronExpression);
+        }
+      }
     }
   }
 

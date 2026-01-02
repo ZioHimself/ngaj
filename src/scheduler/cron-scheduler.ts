@@ -1,6 +1,9 @@
-import type { Db, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
+import type { Db } from 'mongodb';
+import * as cron from 'node-cron';
 import type { IDiscoveryService } from '@/services/discovery-service';
 import type { DiscoveryType, Opportunity } from '@/shared/types/opportunity';
+import type { Account } from '@/shared/types/account';
 
 /**
  * Cron scheduler interface
@@ -12,6 +15,7 @@ export interface ICronScheduler {
   reload(): Promise<void>;
   triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]>;
   isRunning(): boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getRegisteredJobs(): Map<string, any>;
 }
 
@@ -30,6 +34,7 @@ export interface ICronScheduler {
  * @see ADR-008: Opportunity Discovery Architecture
  */
 export class CronScheduler implements ICronScheduler {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private jobs: Map<string, any> = new Map();
   private running: boolean = false;
 
@@ -43,21 +48,59 @@ export class CronScheduler implements ICronScheduler {
    * Registers cron jobs for each enabled discovery type
    */
   async initialize(): Promise<void> {
-    throw new Error('Not implemented');
+    // Load all active accounts from database
+    const accountsCollection = this.db.collection<Account>('accounts');
+    const accounts = await accountsCollection.find().toArray();
+
+    // Register jobs for each enabled schedule
+    for (const account of accounts) {
+      // Skip non-active accounts
+      if (account.status !== 'active') {
+        continue;
+      }
+
+      // Register a job for each enabled schedule
+      for (const schedule of account.discovery.schedules) {
+        if (!schedule.enabled) {
+          continue;
+        }
+
+        const jobKey = this.getJobKey(account._id, schedule.type);
+        
+        // Create cron job
+        const job = cron.schedule(
+          schedule.cronExpression,
+          async () => {
+            await this.executeDiscovery(account._id, schedule.type);
+          },
+          {
+            scheduled: false // Don't start automatically
+          }
+        );
+
+        this.jobs.set(jobKey, job);
+      }
+    }
   }
 
   /**
    * Start all cron jobs
    */
   start(): void {
-    throw new Error('Not implemented');
+    this.running = true;
+    for (const job of this.jobs.values()) {
+      job.start();
+    }
   }
 
   /**
    * Stop all cron jobs
    */
   stop(): void {
-    throw new Error('Not implemented');
+    this.running = false;
+    for (const job of this.jobs.values()) {
+      job.stop();
+    }
   }
 
   /**
@@ -65,7 +108,17 @@ export class CronScheduler implements ICronScheduler {
    * Stops all jobs, clears map, re-initializes from database
    */
   async reload(): Promise<void> {
-    throw new Error('Not implemented');
+    // Stop and clear existing jobs
+    this.stop();
+    this.jobs.clear();
+    
+    // Re-initialize from database
+    await this.initialize();
+    
+    // Start if was running
+    if (this.running) {
+      this.start();
+    }
   }
 
   /**
@@ -76,21 +129,42 @@ export class CronScheduler implements ICronScheduler {
    * @returns Created opportunities
    */
   async triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]> {
-    throw new Error('Not implemented');
+    return await this.discoveryService.discover(accountId, discoveryType);
   }
 
   /**
    * Check if scheduler is running
    */
   isRunning(): boolean {
-    throw new Error('Not implemented');
+    return this.running;
   }
 
   /**
    * Get registered jobs map (for testing)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getRegisteredJobs(): Map<string, any> {
-    throw new Error('Not implemented');
+    return this.jobs;
+  }
+
+  /**
+   * Execute discovery for an account and type
+   * Handles errors gracefully to prevent crashing the scheduler
+   */
+  private async executeDiscovery(accountId: ObjectId, discoveryType: DiscoveryType): Promise<void> {
+    try {
+      await this.discoveryService.discover(accountId, discoveryType);
+    } catch (error) {
+      // Log error but don't crash the scheduler
+      console.error(`Discovery failed for ${accountId}:${discoveryType}:`, error);
+    }
+  }
+
+  /**
+   * Generate job key from account ID and discovery type
+   */
+  private getJobKey(accountId: ObjectId, discoveryType: DiscoveryType): string {
+    return `${accountId.toString()}:${discoveryType}`;
   }
 }
 

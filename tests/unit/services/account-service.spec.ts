@@ -230,10 +230,14 @@ describe('AccountService', () => {
       for (const [name, cron] of Object.entries(cronExpressions.invalid)) {
         const input = createMockAccountInput(testProfileId, {
           discovery: {
-            schedule: {
-              enabled: true,
-              cronExpression: cron
-            }
+            schedules: [
+              {
+                type: 'replies',
+                enabled: true,
+                cronExpression: cron,
+                lastRunAt: undefined
+              }
+            ]
           }
         });
 
@@ -476,10 +480,14 @@ describe('AccountService', () => {
       const existingAccount = createMockAccount(testProfileId);
       const updateData: UpdateAccountInput = {
         discovery: {
-          schedule: {
-            enabled: true,
-            cronExpression: '0 60 * * *' // Out of range: minute must be 0-59
-          }
+          schedules: [
+            {
+              type: 'replies',
+              enabled: true,
+              cronExpression: '0 60 * * *', // Out of range: minute must be 0-59
+              lastRunAt: undefined
+            }
+          ]
         }
       };
       
@@ -541,7 +549,7 @@ describe('AccountService', () => {
         // Assert
         expect(result).toHaveLength(2);
         expect(result.every(a => 
-          a.discovery.schedule.enabled === true && 
+          a.discovery.schedules.some((s: any) => s.enabled === true) && 
           a.status === 'active'
         )).toBe(true);
         
@@ -550,7 +558,9 @@ describe('AccountService', () => {
           expect.arrayContaining([
             expect.objectContaining({
               $match: expect.objectContaining({
-                'discovery.schedule.enabled': true,
+                'discovery.schedules': {
+                  $elemMatch: { enabled: true }
+                },
                 status: 'active'
               })
             })

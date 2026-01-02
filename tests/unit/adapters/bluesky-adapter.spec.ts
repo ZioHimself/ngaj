@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BlueskyAdapter } from '@/adapters/bluesky-adapter';
-import { createMockRawPost, createMockRawAuthor } from '@/tests/fixtures/opportunity-fixtures';
-import type { BskyAgent } from '@atproto/api';
 
 // Mock @atproto/api
 vi.mock('@atproto/api', () => ({

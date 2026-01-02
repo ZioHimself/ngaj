@@ -7,38 +7,64 @@ import {
   createMockOpportunity,
   createMockAuthor,
   createMockRawPost,
-  createMockRawAuthor,
-  createOpportunityFixtures
-} from '@/tests/fixtures/opportunity-fixtures';
-import { createMockAccount } from '@/tests/fixtures/account-fixtures';
-import { createMockProfile } from '@/tests/fixtures/profile-fixtures';
+  createMockRawAuthor
+} from '@tests/fixtures/opportunity-fixtures';
+import { createMockAccount } from '@tests/fixtures/account-fixtures';
+import { createMockProfile } from '@tests/fixtures/profile-fixtures';
 
 describe('DiscoveryService', () => {
   let discoveryService: DiscoveryService;
   let mockDb: any;
   let mockPlatformAdapter: IPlatformAdapter;
   let mockScoringService: ScoringService;
+  let mockAccountsCollection: any;
+  let mockProfilesCollection: any;
+  let mockOpportunitiesCollection: any;
+  let mockAuthorsCollection: any;
 
   beforeEach(() => {
-    // Mock database collections
-    mockDb = {
-      collection: vi.fn((name: string) => ({
-        findOne: vi.fn(),
-        find: vi.fn(() => ({
-          sort: vi.fn(() => ({
-            limit: vi.fn(() => ({
-              skip: vi.fn(() => ({
-                toArray: vi.fn()
-              }))
+    // Create collection mocks
+    mockAccountsCollection = {
+      findOne: vi.fn(),
+      updateOne: vi.fn()
+    };
+
+    mockProfilesCollection = {
+      findOne: vi.fn()
+    };
+
+    mockOpportunitiesCollection = {
+      findOne: vi.fn(),
+      find: vi.fn(() => ({
+        sort: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            skip: vi.fn(() => ({
+              toArray: vi.fn()
             }))
-          })),
-          toArray: vi.fn()
+          }))
         })),
-        insertOne: vi.fn(),
-        updateOne: vi.fn(),
-        updateMany: vi.fn(),
-        countDocuments: vi.fn()
-      }))
+        toArray: vi.fn()
+      })),
+      insertOne: vi.fn(),
+      updateOne: vi.fn(),
+      updateMany: vi.fn(),
+      countDocuments: vi.fn()
+    };
+
+    mockAuthorsCollection = {
+      findOne: vi.fn(),
+      updateOne: vi.fn()
+    };
+
+    // Mock database with collection cache
+    mockDb = {
+      collection: vi.fn((name: string) => {
+        if (name === 'accounts') return mockAccountsCollection;
+        if (name === 'profiles') return mockProfilesCollection;
+        if (name === 'opportunities') return mockOpportunitiesCollection;
+        if (name === 'authors') return mockAuthorsCollection;
+        throw new Error(`Unknown collection: ${name}`);
+      })
     };
 
     // Mock platform adapter
@@ -123,20 +149,31 @@ describe('DiscoveryService', () => {
       ];
 
       // Mock database responses
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.findOne.mockResolvedValue(null); // No duplicates
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.findOne.mockResolvedValue(null); // No duplicates
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      // Mock findOne to return author after upsert (called for each post)
+      mockAuthors.forEach((rawAuthor) => {
+        const author = createMockAuthor({
+          platformUserId: rawAuthor.id,
+          handle: rawAuthor.handle,
+          displayName: rawAuthor.displayName,
+          bio: rawAuthor.bio,
+          followerCount: rawAuthor.followerCount
+        });
+        mockAuthorsCollection.findOne.mockResolvedValueOnce(author);
+      });
 
-      opportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockOpportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Mock adapter responses
       (mockPlatformAdapter.fetchReplies as any).mockResolvedValue(mockPosts);
@@ -155,10 +192,10 @@ describe('DiscoveryService', () => {
       });
       expect(mockPlatformAdapter.getAuthor).toHaveBeenCalledTimes(3);
       expect(mockScoringService.scoreOpportunity).toHaveBeenCalledTimes(3);
-      expect(authorsCollection.updateOne).toHaveBeenCalledTimes(3); // All authors upserted
-      expect(opportunitiesCollection.insertOne).toHaveBeenCalledTimes(2); // Only 2 above threshold
+      expect(mockAuthorsCollection.updateOne).toHaveBeenCalledTimes(3); // All authors upserted
+      expect(mockOpportunitiesCollection.insertOne).toHaveBeenCalledTimes(2); // Only 2 above threshold
       expect(opportunities).toHaveLength(2);
-      expect(accountsCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockAccountsCollection.updateOne).toHaveBeenCalledWith(
         { _id: accountId },
         expect.objectContaining({
           $set: expect.objectContaining({
@@ -194,14 +231,14 @@ describe('DiscoveryService', () => {
         }
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
       (mockPlatformAdapter.fetchReplies as any).mockResolvedValue([]);
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       await discoveryService.discover(accountId, 'replies');
@@ -244,36 +281,40 @@ describe('DiscoveryService', () => {
         postId: 'at://did:plc:author1/app.bsky.feed.post/duplicate'
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.findOne
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.findOne
         .mockResolvedValueOnce(existingOpportunity) // First post is duplicate
         .mockResolvedValueOnce(null); // Second post is new
 
       (mockPlatformAdapter.fetchReplies as any).mockResolvedValue(mockPosts);
-      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(createMockRawAuthor());
+      const rawAuthor = createMockRawAuthor();
+      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(rawAuthor);
       (mockScoringService.scoreOpportunity as any).mockReturnValue({
         recency: 80,
         impact: 50,
         total: 70
       });
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      mockAuthorsCollection.findOne.mockResolvedValue(createMockAuthor({
+        platformUserId: rawAuthor.id
+      }));
 
-      opportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockOpportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       const opportunities = await discoveryService.discover(accountId, 'replies');
 
       // Assert
-      expect(opportunitiesCollection.insertOne).toHaveBeenCalledTimes(1); // Only 1 inserted
+      expect(mockOpportunitiesCollection.insertOne).toHaveBeenCalledTimes(1); // Only 1 inserted
       expect(opportunities).toHaveLength(1);
     });
 
@@ -292,29 +333,33 @@ describe('DiscoveryService', () => {
       // All scores below threshold
       const mockScore = { recency: 10, impact: 15, total: 12 };
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.findOne.mockResolvedValue(null);
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.findOne.mockResolvedValue(null);
 
       (mockPlatformAdapter.fetchReplies as any).mockResolvedValue(mockPosts);
-      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(createMockRawAuthor());
+      const rawAuthor = createMockRawAuthor();
+      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(rawAuthor);
       (mockScoringService.scoreOpportunity as any).mockReturnValue(mockScore);
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      mockAuthorsCollection.findOne.mockResolvedValue(createMockAuthor({
+        platformUserId: rawAuthor.id
+      }));
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       const opportunities = await discoveryService.discover(accountId, 'replies');
 
       // Assert
       expect(opportunities).toEqual([]);
-      expect(opportunitiesCollection.insertOne).not.toHaveBeenCalled();
+      expect(mockOpportunitiesCollection.insertOne).not.toHaveBeenCalled();
     });
 
     it('should update account.discovery.error on platform API failure', async () => {
@@ -324,21 +369,21 @@ describe('DiscoveryService', () => {
       const profile = createMockProfile({ _id: profileId });
       const account = createMockAccount(profileId, { _id: accountId });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
       const error = new Error('Rate limit exceeded');
       (mockPlatformAdapter.fetchReplies as any).mockRejectedValue(error);
 
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act & Assert
       await expect(discoveryService.discover(accountId, 'replies')).rejects.toThrow('Rate limit exceeded');
 
-      expect(accountsCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockAccountsCollection.updateOne).toHaveBeenCalledWith(
         { _id: accountId },
         {
           $set: {
@@ -355,20 +400,20 @@ describe('DiscoveryService', () => {
       const profile = createMockProfile({ _id: profileId });
       const account = createMockAccount(profileId, { _id: accountId });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
       (mockPlatformAdapter.fetchReplies as any).mockRejectedValue(new Error('API Error'));
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act & Assert
       await expect(discoveryService.discover(accountId, 'replies')).rejects.toThrow();
 
       // Should only set error, not lastAt or lastRunAt
-      expect(accountsCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockAccountsCollection.updateOne).toHaveBeenCalledWith(
         { _id: accountId },
         {
           $set: {
@@ -417,28 +462,32 @@ describe('DiscoveryService', () => {
         createMockRawPost({ id: 'post2', text: 'GraphQL best practices', authorId: 'author2' })
       ];
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.findOne.mockResolvedValue(null);
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.findOne.mockResolvedValue(null);
 
       (mockPlatformAdapter.searchPosts as any).mockResolvedValue(mockPosts);
-      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(createMockRawAuthor());
+      const rawAuthor = createMockRawAuthor();
+      (mockPlatformAdapter.getAuthor as any).mockResolvedValue(rawAuthor);
       (mockScoringService.scoreOpportunity as any).mockReturnValue({
         recency: 80,
         impact: 50,
         total: 70
       });
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      mockAuthorsCollection.findOne.mockResolvedValue(createMockAuthor({
+        platformUserId: rawAuthor.id
+      }));
 
-      opportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockOpportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       const opportunities = await discoveryService.discover(accountId, 'search');
@@ -469,13 +518,13 @@ describe('DiscoveryService', () => {
       });
       const account = createMockAccount(profileId, { _id: accountId });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       const opportunities = await discoveryService.discover(accountId, 'search');
@@ -499,18 +548,18 @@ describe('DiscoveryService', () => {
         createMockOpportunity(accountId, authorId, { scoring: { recency: 70, impact: 30, total: 52 } })
       ];
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
+      // Use mockOpportunitiesCollection directly
       const mockQuery = {
         sort: vi.fn(() => mockQuery),
         limit: vi.fn(() => mockQuery),
         skip: vi.fn(() => mockQuery),
         toArray: vi.fn().mockResolvedValue(mockOpportunities)
       };
-      opportunitiesCollection.find.mockReturnValue(mockQuery);
-      opportunitiesCollection.countDocuments.mockResolvedValue(3);
+      mockOpportunitiesCollection.find.mockReturnValue(mockQuery);
+      mockOpportunitiesCollection.countDocuments.mockResolvedValue(3);
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.findOne.mockResolvedValue(author);
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.findOne.mockResolvedValue(author);
 
       // Act
       const result = await discoveryService.getOpportunities(accountId, {
@@ -520,7 +569,7 @@ describe('DiscoveryService', () => {
       });
 
       // Assert
-      expect(opportunitiesCollection.find).toHaveBeenCalledWith({
+      expect(mockOpportunitiesCollection.find).toHaveBeenCalledWith({
         accountId,
         status: 'pending'
       });
@@ -540,15 +589,15 @@ describe('DiscoveryService', () => {
       // Arrange
       const accountId = new ObjectId();
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
+      // Use mockOpportunitiesCollection directly
       const mockQuery = {
         sort: vi.fn(() => mockQuery),
         limit: vi.fn(() => mockQuery),
         skip: vi.fn(() => mockQuery),
         toArray: vi.fn().mockResolvedValue([])
       };
-      opportunitiesCollection.find.mockReturnValue(mockQuery);
-      opportunitiesCollection.countDocuments.mockResolvedValue(0);
+      mockOpportunitiesCollection.find.mockReturnValue(mockQuery);
+      mockOpportunitiesCollection.countDocuments.mockResolvedValue(0);
 
       // Act
       await discoveryService.getOpportunities(accountId, {
@@ -558,7 +607,7 @@ describe('DiscoveryService', () => {
       });
 
       // Assert
-      expect(opportunitiesCollection.find).toHaveBeenCalledWith({
+      expect(mockOpportunitiesCollection.find).toHaveBeenCalledWith({
         accountId,
         status: { $in: ['pending', 'responded'] }
       });
@@ -575,18 +624,18 @@ describe('DiscoveryService', () => {
         createMockOpportunity(accountId, author2Id)
       ];
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
+      // Use mockOpportunitiesCollection directly
       const mockQuery = {
         sort: vi.fn(() => mockQuery),
         limit: vi.fn(() => mockQuery),
         skip: vi.fn(() => mockQuery),
         toArray: vi.fn().mockResolvedValue(mockOpportunities)
       };
-      opportunitiesCollection.find.mockReturnValue(mockQuery);
-      opportunitiesCollection.countDocuments.mockResolvedValue(2);
+      mockOpportunitiesCollection.find.mockReturnValue(mockQuery);
+      mockOpportunitiesCollection.countDocuments.mockResolvedValue(2);
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.findOne
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.findOne
         .mockResolvedValueOnce(createMockAuthor({ _id: author1Id }))
         .mockResolvedValueOnce(createMockAuthor({ _id: author2Id }));
 
@@ -594,7 +643,7 @@ describe('DiscoveryService', () => {
       const result = await discoveryService.getOpportunities(accountId);
 
       // Assert
-      expect(authorsCollection.findOne).toHaveBeenCalledTimes(2);
+      expect(mockAuthorsCollection.findOne).toHaveBeenCalledTimes(2);
       expect(result.opportunities[0].author).toBeDefined();
       expect(result.opportunities[1].author).toBeDefined();
     });
@@ -605,14 +654,14 @@ describe('DiscoveryService', () => {
       // Arrange
       const opportunityId = new ObjectId();
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       await discoveryService.updateStatus(opportunityId, 'dismissed');
 
       // Assert
-      expect(opportunitiesCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockOpportunitiesCollection.updateOne).toHaveBeenCalledWith(
         { _id: opportunityId },
         {
           $set: {
@@ -627,14 +676,14 @@ describe('DiscoveryService', () => {
       // Arrange
       const opportunityId = new ObjectId();
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       await discoveryService.updateStatus(opportunityId, 'responded');
 
       // Assert
-      expect(opportunitiesCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockOpportunitiesCollection.updateOne).toHaveBeenCalledWith(
         { _id: opportunityId },
         {
           $set: {
@@ -649,8 +698,8 @@ describe('DiscoveryService', () => {
       // Arrange
       const opportunityId = new ObjectId();
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 0 });
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.updateOne.mockResolvedValue({ modifiedCount: 0 });
 
       // Act & Assert
       await expect(
@@ -662,14 +711,14 @@ describe('DiscoveryService', () => {
   describe('expireOpportunities()', () => {
     it('should expire pending opportunities past TTL', async () => {
       // Arrange
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.updateMany.mockResolvedValue({ modifiedCount: 2 });
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.updateMany.mockResolvedValue({ modifiedCount: 2 });
 
       // Act
       const count = await discoveryService.expireOpportunities();
 
       // Assert
-      expect(opportunitiesCollection.updateMany).toHaveBeenCalledWith(
+      expect(mockOpportunitiesCollection.updateMany).toHaveBeenCalledWith(
         {
           status: 'pending',
           expiresAt: { $lt: expect.any(Date) }
@@ -686,8 +735,8 @@ describe('DiscoveryService', () => {
 
     it('should return 0 when no opportunities to expire', async () => {
       // Arrange
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.updateMany.mockResolvedValue({ modifiedCount: 0 });
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.updateMany.mockResolvedValue({ modifiedCount: 0 });
 
       // Act
       const count = await discoveryService.expireOpportunities();
@@ -712,14 +761,14 @@ describe('DiscoveryService', () => {
         followerCount: 5000
       });
 
-      const accountsCollection = mockDb.collection('accounts');
-      accountsCollection.findOne.mockResolvedValue(account);
+      // Use mockAccountsCollection directly
+      mockAccountsCollection.findOne.mockResolvedValue(account);
 
-      const profilesCollection = mockDb.collection('profiles');
-      profilesCollection.findOne.mockResolvedValue(profile);
+      // Use mockProfilesCollection directly
+      mockProfilesCollection.findOne.mockResolvedValue(profile);
 
-      const opportunitiesCollection = mockDb.collection('opportunities');
-      opportunitiesCollection.findOne.mockResolvedValue(null);
+      // Use mockOpportunitiesCollection directly
+      mockOpportunitiesCollection.findOne.mockResolvedValue(null);
 
       (mockPlatformAdapter.fetchReplies as any).mockResolvedValue([mockPost]);
       (mockPlatformAdapter.getAuthor as any).mockResolvedValue(mockAuthor);
@@ -729,17 +778,22 @@ describe('DiscoveryService', () => {
         total: 70
       });
 
-      const authorsCollection = mockDb.collection('authors');
-      authorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      // Use mockAuthorsCollection directly
+      mockAuthorsCollection.updateOne.mockResolvedValue({ upsertedId: new ObjectId() });
+      mockAuthorsCollection.findOne.mockResolvedValue(createMockAuthor({
+        platformUserId: mockAuthor.id,
+        handle: mockAuthor.handle,
+        followerCount: mockAuthor.followerCount
+      }));
 
-      opportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
-      accountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+      mockOpportunitiesCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId() });
+      mockAccountsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
       // Act
       await discoveryService.discover(accountId, 'replies');
 
       // Assert
-      expect(authorsCollection.updateOne).toHaveBeenCalledWith(
+      expect(mockAuthorsCollection.updateOne).toHaveBeenCalledWith(
         {
           platform: 'bluesky',
           platformUserId: 'did:plc:author123'

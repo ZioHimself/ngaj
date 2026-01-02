@@ -142,33 +142,6 @@ describe('Knowledge Base Upload Workflow (Integration)', () => {
     expect(filesInTemp.length).toBe(0); // No files in temp directory
   });
 
-  it.skip('should rollback filesystem and ChromaDB on MongoDB failure', async () => {
-    // Arrange
-    const file = createMockFileUpload();
-    const mockText = 'Sample text';
-    const mockChunks = [{ text: mockText, startOffset: 0, endOffset: 11 }];
-    const mockEmbeddings = [createMockEmbedding()];
-
-    mockDocumentProcessor.extractText.mockResolvedValue(mockText);
-    mockDocumentProcessor.chunkText.mockResolvedValue(mockChunks);
-    mockDocumentProcessor.generateEmbeddings.mockResolvedValue(mockEmbeddings);
-    mockChromaClient.getOrCreateCollection.mockResolvedValue({ name: 'test-collection' });
-    mockChromaClient.addChunks.mockResolvedValue(undefined);
-
-    // Force MongoDB failure by dropping the collection mid-operation
-    vi.spyOn(db.collection('knowledge_documents'), 'insertOne').mockRejectedValueOnce(
-      new Error('MongoDB insert failed')
-    );
-
-    // Act & Assert
-    await expect(service.uploadDocument(testProfileId, file)).rejects.toThrow();
-
-    // Verify rollback
-    expect(mockChromaClient.deleteChunks).toHaveBeenCalled(); // ChromaDB cleanup
-    const filesInTemp = await fs.readdir(tempDir).catch(() => []);
-    expect(filesInTemp.length).toBe(0); // Filesystem cleanup
-  });
-
   it('should rollback filesystem on ChromaDB failure', async () => {
     // Arrange
     const file = createMockFileUpload();

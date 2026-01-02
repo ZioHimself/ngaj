@@ -60,10 +60,13 @@ paths:
                   name: "My Tech Commentary Account"
                   discovery:
                     interests: ["AI", "TypeScript"]
-                    scheduleConfig:
-                      enabled: true
-                      cronExpression: "0 */2 * * *"
-                      maxOpportunities: 10
+                    schedules:
+                      - type: "replies"
+                        enabled: true
+                        cronExpression: "*/15 * * * *"
+                      - type: "search"
+                        enabled: true
+                        cronExpression: "0 */2 * * *"
                   voice:
                     tonePreset: "technical"
                     customInstructions: "Always cite sources"
@@ -691,30 +694,49 @@ components:
       type: object
       required:
         - interests
-        - scheduleConfig
+        - schedules
       properties:
         interests:
           type: array
           items:
             type: string
           description: Topics of interest
-        scheduleConfig:
-          type: object
-          required:
-            - enabled
-            - cronExpression
-            - maxOpportunities
-          properties:
-            enabled:
-              type: boolean
-            cronExpression:
-              type: string
-              description: Cron expression for scheduling
-              example: "0 */2 * * *"
-            maxOpportunities:
-              type: integer
-              minimum: 1
-              maximum: 100
+        schedules:
+          type: array
+          description: Array of typed discovery schedules (one per discovery type). Per ADR-008, accounts have multiple independent schedules.
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DiscoveryTypeSchedule'
+        lastAt:
+          type: string
+          format: date-time
+          description: Last successful discovery (any type)
+        error:
+          type: string
+          description: Last discovery error message
+    
+    DiscoveryTypeSchedule:
+      type: object
+      required:
+        - type
+        - enabled
+        - cronExpression
+      properties:
+        type:
+          type: string
+          enum: [replies, search]
+          description: Discovery source type
+        enabled:
+          type: boolean
+          description: Whether this discovery type is enabled
+        cronExpression:
+          type: string
+          description: Cron expression for this discovery type
+          example: "*/15 * * * *"
+        lastRunAt:
+          type: string
+          format: date-time
+          description: When this specific discovery type last ran
 
     VoiceConfig:
       type: object

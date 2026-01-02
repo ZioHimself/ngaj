@@ -12,7 +12,7 @@ ngaj's core value proposition is helping users find and engage with high-value c
 - **Time-sensitive**: Replies to user's posts need near-real-time discovery (< 30 minutes)
 - **Keyword-driven**: Search for topics matching user interests, but less urgent (2-4 hour windows acceptable)
 - **Prioritized**: Most urgent/relevant opportunities shown first (recency > impact)
-- **Efficient**: Don't waste API rate limits; different sources need different schedules
+- **Efficient**: Don't waste API rate limits; **different sources need different schedules** (one account → multiple schedules)
 - **Extensible**: v0.2 will add LinkedIn and Reddit; design should accommodate multi-platform
 
 **Constraints:**
@@ -96,7 +96,7 @@ interface DiscoveryTypeSchedule {
 
 We will implement **Option B: Multiple Schedules per Discovery Type**.
 
-Each account can configure independent schedules for different discovery sources (replies, search). The system runs separate cron jobs per schedule type, allowing time-sensitive replies to be checked frequently while less urgent searches run less often.
+**Each account can have multiple independent schedules** - one per discovery type (replies, search). Each schedule has its own cron expression, enabled flag, and last run timestamp. The system runs separate cron jobs per schedule type, allowing time-sensitive replies to be checked frequently (every 15 minutes) while less urgent searches run less often (every 2 hours).
 
 **Default Configuration** (v0.1):
 - **Replies**: Every 15 minutes (`*/15 * * * *`)

@@ -139,7 +139,7 @@ Once the app is running:
 
 ### 2. Configure Discovery Settings
 
-Set your interests and discovery schedule:
+Set your interests and discovery schedules:
 
 ```json
 {
@@ -149,17 +149,27 @@ Set your interests and discovery schedule:
     "developer tools",
     "software engineering"
   ],
-  "scheduleConfig": {
-    "enabled": true,
-    "cronExpression": "0 */2 * * *",  // Every 2 hours
-    "maxOpportunities": 10
-  }
+  "schedules": [
+    {
+      "type": "replies",
+      "enabled": true,
+      "cronExpression": "*/15 * * * *"  // Every 15 minutes
+    },
+    {
+      "type": "search",
+      "enabled": true,
+      "cronExpression": "0 */2 * * *"  // Every 2 hours
+    }
+  ]
 }
 ```
 
-**Cron Expression Guide**:
+**Note**: Per ADR-008, each account can have **multiple independent schedules** - one for each discovery type (replies, search). This allows time-sensitive replies to be checked frequently while less urgent searches run less often.
+
+**Cron Expression Guide** (configure per discovery type):
+- `*/15 * * * *` - Every 15 minutes (recommended for replies)
 - `0 */1 * * *` - Every hour
-- `0 */2 * * *` - Every 2 hours
+- `0 */2 * * *` - Every 2 hours (recommended for search)
 - `0 9,12,15,18 * * *` - At 9am, 12pm, 3pm, 6pm
 - `*/30 * * * *` - Every 30 minutes
 

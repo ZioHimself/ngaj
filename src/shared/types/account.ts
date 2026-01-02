@@ -80,8 +80,8 @@ export interface AccountDiscoveryConfig {
    * 
    * Example:
    * [
-   *   { type: 'replies', enabled: true, cronExpression: '*/15 * * * *' },
-   *   { type: 'search', enabled: true, cronExpression: '0 */2 * * *' }
+   *   { type: 'replies', enabled: true, cronExpression: '*\/15 * * * *' },
+   *   { type: 'search', enabled: true, cronExpression: '0 *\/2 * * *' }
    * ]
    */
   schedules: DiscoveryTypeSchedule[];
@@ -118,8 +118,8 @@ export interface DiscoveryTypeSchedule {
    * Cron expression defining schedule frequency.
    * 
    * Examples:
-   * - '*/15 * * * *'   - Every 15 minutes
-   * - '0 */2 * * *'    - Every 2 hours
+   * - '*\/15 * * * *'   - Every 15 minutes
+   * - '0 *\/2 * * *'    - Every 2 hours
    * - '0 9,17 * * *'   - 9am and 5pm daily
    * - '0 9-17 * * 1-5' - Hourly, weekdays, business hours
    * 

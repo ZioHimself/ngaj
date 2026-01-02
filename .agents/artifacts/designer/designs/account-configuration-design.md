@@ -94,6 +94,7 @@ interface Profile {
 ```typescript
 type Platform = 'bluesky' | 'linkedin' | 'reddit';
 type AccountStatus = 'active' | 'paused' | 'error';
+type DiscoveryType = 'replies' | 'search';
 
 interface Account {
   _id: ObjectId;                    // MongoDB document ID
@@ -103,11 +104,19 @@ interface Account {
   handle: string;                   // "@user.bsky.social", "u/username"
   
   discovery: {
-    schedule: {
-      enabled: boolean;             // Is discovery enabled?
-      cronExpression: string;       // '0 */2 * * *' (every 2 hours)
-    };
-    lastAt?: Date;                  // Last successful discovery
+    /**
+     * Array of typed discovery schedules.
+     * Each discovery type (replies, search) has independent scheduling.
+     * Per ADR-008, one account can have multiple schedules.
+     * 
+     * Example:
+     * [
+     *   { type: 'replies', enabled: true, cronExpression: '*/15 * * * *' },
+     *   { type: 'search', enabled: true, cronExpression: '0 */2 * * *' }
+     * ]
+     */
+    schedules: DiscoveryTypeSchedule[];
+    lastAt?: Date;                  // Last successful discovery (any type)
     error?: string;                 // Last discovery error message
   };
   
@@ -116,6 +125,17 @@ interface Account {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/**
+ * Typed discovery schedule with independent cron expression.
+ * Enables different schedules for different discovery sources.
+ */
+interface DiscoveryTypeSchedule {
+  type: DiscoveryType;              // 'replies' | 'search'
+  enabled: boolean;                 // Whether this discovery type is enabled
+  cronExpression: string;           // Cron expression for this type
+  lastRunAt?: Date;                 // When this specific type last ran
+}
 ```
 
 **MongoDB Schema Notes**:
@@ -123,22 +143,27 @@ interface Account {
 - Indexes:
   - `{ profileId: 1 }` - Find all accounts for a profile
   - `{ platform: 1, handle: 1 }` - **Unique constraint**: one handle per platform
-  - `{ "discovery.schedule.enabled": 1, status: 1 }` - Find accounts to poll
+  - `{ status: 1 }` - Find active accounts for discovery scheduling
 - Relationships:
   - `profileId` → `profiles._id` (many-to-one)
+
+**Note on Discovery Scheduling**: Per ADR-008, the cron scheduler loads accounts and registers separate cron jobs for each enabled schedule in the `schedules` array. This allows replies to run every 15 minutes while searches run every 2 hours.
 
 **Validation Rules**:
 - `profileId`: Required, must reference existing profile
 - `platform`: Required, must be 'bluesky' | 'linkedin' | 'reddit'
 - `handle`: Required, platform-specific format (regex validation)
-- `discovery.schedule.enabled`: Required boolean
-- `discovery.schedule.cronExpression`: Required, valid cron syntax
+- `discovery.schedules`: Required array, must have at least one schedule
+- `discovery.schedules[].type`: Required, must be 'replies' | 'search'
+- `discovery.schedules[].enabled`: Required boolean
+- `discovery.schedules[].cronExpression`: Required, valid cron syntax
 - `status`: Required, must be 'active' | 'paused' | 'error'
 
 **Design Decisions**:
+- **Multiple schedules per account** (ADR-008): Each discovery type has independent cron expression
 - Credentials (passwords, tokens) stored in `.env` per ADR-002, not in MongoDB
 - `handle` is non-sensitive, safe to store in DB
-- Feature-oriented `discovery` structure groups schedule, status, errors
+- Feature-oriented `discovery` structure groups schedules array, status, errors
 - No `platformSettings` field for v0.1 (all platforms use profile discovery config)
 
 ## API Contracts
@@ -384,10 +409,20 @@ GET /api/accounts?profileId=507f1f77bcf86cd799439011&status=active
       "platform": "bluesky",
       "handle": "@user.bsky.social",
       "discovery": {
-        "schedule": {
-          "enabled": true,
-          "cronExpression": "0 */2 * * *"
-        },
+        "schedules": [
+          {
+            "type": "replies",
+            "enabled": true,
+            "cronExpression": "*/15 * * * *",
+            "lastRunAt": "2025-12-29T12:00:00Z"
+          },
+          {
+            "type": "search",
+            "enabled": true,
+            "cronExpression": "0 */2 * * *",
+            "lastRunAt": "2025-12-29T10:00:00Z"
+          }
+        ],
         "lastAt": "2025-12-29T12:00:00Z",
         "error": null
       },
@@ -452,10 +487,18 @@ Content-Type: application/json
   "platform": "bluesky",
   "handle": "@user.bsky.social",
   "discovery": {
-    "schedule": {
-      "enabled": true,
-      "cronExpression": "0 */2 * * *"
-    }
+    "schedules": [
+      {
+        "type": "replies",
+        "enabled": true,
+        "cronExpression": "*/15 * * * *"
+      },
+      {
+        "type": "search",
+        "enabled": true,
+        "cronExpression": "0 */2 * * *"
+      }
+    ]
   },
   "status": "active"
 }
@@ -469,10 +512,18 @@ Content-Type: application/json
   "platform": "bluesky",
   "handle": "@user.bsky.social",
   "discovery": {
-    "schedule": {
-      "enabled": true,
-      "cronExpression": "0 */2 * * *"
-    },
+    "schedules": [
+      {
+        "type": "replies",
+        "enabled": true,
+        "cronExpression": "*/15 * * * *"
+      },
+      {
+        "type": "search",
+        "enabled": true,
+        "cronExpression": "0 */2 * * *"
+      }
+    ],
     "lastAt": null,
     "error": null
   },
@@ -488,7 +539,7 @@ Content-Type: application/json
   "error": "ValidationError",
   "message": "Invalid cron expression",
   "details": {
-    "field": "discovery.schedule.cronExpression",
+    "field": "discovery.schedules[0].cronExpression",
     "value": "invalid cron",
     "constraint": "valid cron syntax"
   }
@@ -524,10 +575,18 @@ Content-Type: application/json
 
 {
   "discovery": {
-    "schedule": {
-      "enabled": false,  // Pause discovery
-      "cronExpression": "0 */2 * * *"
-    }
+    "schedules": [
+      {
+        "type": "replies",
+        "enabled": false,  // Disable replies discovery
+        "cronExpression": "*/15 * * * *"
+      },
+      {
+        "type": "search",
+        "enabled": false,  // Disable search discovery
+        "cronExpression": "0 */2 * * *"
+      }
+    ]
   },
   "status": "paused"
 }
@@ -541,10 +600,20 @@ Content-Type: application/json
   "platform": "bluesky",
   "handle": "@user.bsky.social",
   "discovery": {
-    "schedule": {
-      "enabled": false,  // Updated
-      "cronExpression": "0 */2 * * *"
-    },
+    "schedules": [
+      {
+        "type": "replies",
+        "enabled": false,  // Updated - disabled
+        "cronExpression": "*/15 * * * *",
+        "lastRunAt": "2025-12-29T12:00:00Z"
+      },
+      {
+        "type": "search",
+        "enabled": false,  // Updated - disabled
+        "cronExpression": "0 */2 * * *",
+        "lastRunAt": "2025-12-29T10:00:00Z"
+      }
+    ],
     "lastAt": "2025-12-29T12:00:00Z",
     "error": null
   },

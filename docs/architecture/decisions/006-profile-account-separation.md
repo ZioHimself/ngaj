@@ -32,12 +32,13 @@ ngaj needs to store configuration for social media accounts including platform c
 
 **Collection: `accounts`**  
 - Stores platform-specific connection details
-- Contains: platform, handle, scheduling, sync status
+- Contains: platform, handle, **multiple discovery schedules** (one per discovery type), sync status
 - Represents: "Where I post and when"
 
 **Relationship**: One Profile → Many Accounts
 - Profile owns: voice, discovery preferences, knowledge base (future)
-- Account owns: platform, handle, scheduling, sync status
+- Account owns: platform, handle, **multiple typed schedules** (replies, search, etc.), sync status
+- **Note**: Each account has an **array of schedules**, not a single schedule (see ADR-008)
 - Credentials stored in `.env` per ADR-002 (not in MongoDB)
 
 **Key Constraints**:
@@ -46,6 +47,8 @@ ngaj needs to store configuration for social media accounts including platform c
 - Cannot delete profile with active accounts
 
 **Indexes**: Unique constraint on `accounts(platform, handle)`, index on `profiles.name`, performance index on account discovery queries.
+
+**Discovery Scheduling**: Per ADR-008, each account has **multiple independent schedules** (array of `DiscoveryTypeSchedule` objects), enabling different discovery types (replies, search) to run at different frequencies (e.g., replies every 15 minutes, search every 2 hours).
 
 > 📋 **Complete schemas, API endpoints, and validation rules**: See [Design Document - Data Models Section](../../../.agents/artifacts/designer/designs/account-configuration-design.md#data-models)
 

@@ -43,9 +43,11 @@ export class BlueskyAdapter implements IPlatformAdapter {
     const posts: RawPost[] = [];
     for (const notif of replyNotifications) {
       try {
-        const postData = await this.agent.getPost({ uri: notif.uri });
-        const post = this.transformPost(postData.data);
-        posts.push(post);
+        const { data } = await this.agent.app.bsky.feed.getPosts({ uris: [notif.uri] });
+        if (data.posts.length > 0) {
+          const post = this.transformPost(data.posts[0]);
+          posts.push(post);
+        }
       } catch (error) {
         // Skip posts that can't be fetched
         console.error(`Failed to fetch post ${notif.uri}:`, error);
@@ -84,7 +86,7 @@ export class BlueskyAdapter implements IPlatformAdapter {
         for (const post of data.posts) {
           // Filter by since date if provided
           if (since) {
-            const postDate = new Date(post.record.createdAt);
+            const postDate = new Date((post.record as any).createdAt);
             if (postDate < since) continue;
           }
 

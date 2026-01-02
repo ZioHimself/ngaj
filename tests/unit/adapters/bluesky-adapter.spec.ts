@@ -14,12 +14,12 @@ describe('BlueskyAdapter', () => {
     // Create mock BskyAgent
     mockAgent = {
       listNotifications: vi.fn(),
-      getPost: vi.fn(),
       getProfile: vi.fn(),
       app: {
         bsky: {
           feed: {
-            searchPosts: vi.fn()
+            searchPosts: vi.fn(),
+            getPosts: vi.fn()
           }
         }
       }
@@ -49,42 +49,39 @@ describe('BlueskyAdapter', () => {
       };
 
       const mockPost1 = {
-        data: {
-          uri: 'at://did:plc:author1/app.bsky.feed.post/reply1',
-          record: {
-            text: 'Great post! I have a question...',
-            createdAt: '2026-01-01T11:55:00Z'
-          },
-          author: {
-            did: 'did:plc:author1',
-            handle: 'author1.bsky.social'
-          },
-          likeCount: 5,
-          repostCount: 2,
-          replyCount: 1
-        }
+        uri: 'at://did:plc:author1/app.bsky.feed.post/reply1',
+        record: {
+          text: 'Great post! I have a question...',
+          createdAt: '2026-01-01T11:55:00Z'
+        },
+        author: {
+          did: 'did:plc:author1',
+          handle: 'author1.bsky.social'
+        },
+        likeCount: 5,
+        repostCount: 2,
+        replyCount: 1
       };
 
       const mockPost2 = {
-        data: {
-          uri: 'at://did:plc:author2/app.bsky.feed.post/reply2',
-          record: {
-            text: 'Interesting perspective!',
-            createdAt: '2026-01-01T12:05:00Z'
-          },
-          author: {
-            did: 'did:plc:author2',
-            handle: 'author2.bsky.social'
-          },
-          likeCount: 10,
-          repostCount: 3,
-          replyCount: 2
-        }
+        uri: 'at://did:plc:author2/app.bsky.feed.post/reply2',
+        record: {
+          text: 'Interesting perspective!',
+          createdAt: '2026-01-01T12:05:00Z'
+        },
+        author: {
+          did: 'did:plc:author2',
+          handle: 'author2.bsky.social'
+        },
+        likeCount: 10,
+        repostCount: 3,
+        replyCount: 2
       };
 
       mockAgent.listNotifications.mockResolvedValue(mockNotifications);
-      mockAgent.getPost.mockResolvedValueOnce(mockPost1);
-      mockAgent.getPost.mockResolvedValueOnce(mockPost2);
+      mockAgent.app.bsky.feed.getPosts
+        .mockResolvedValueOnce({ data: { posts: [mockPost1] } })
+        .mockResolvedValueOnce({ data: { posts: [mockPost2] } });
 
       // Act
       const posts = await adapter.fetchReplies({ limit: 100 });
@@ -119,24 +116,22 @@ describe('BlueskyAdapter', () => {
       };
 
       const mockPost = {
-        data: {
-          uri: 'at://did:plc:author2/app.bsky.feed.post/new',
-          record: {
-            text: 'Recent reply',
-            createdAt: '2026-01-01T12:30:00Z'
-          },
-          author: {
-            did: 'did:plc:author2',
-            handle: 'author2.bsky.social'
-          },
-          likeCount: 3,
-          repostCount: 1,
-          replyCount: 0
-        }
+        uri: 'at://did:plc:author2/app.bsky.feed.post/new',
+        record: {
+          text: 'Recent reply',
+          createdAt: '2026-01-01T12:30:00Z'
+        },
+        author: {
+          did: 'did:plc:author2',
+          handle: 'author2.bsky.social'
+        },
+        likeCount: 3,
+        repostCount: 1,
+        replyCount: 0
       };
 
       mockAgent.listNotifications.mockResolvedValue(mockNotifications);
-      mockAgent.getPost.mockResolvedValue(mockPost);
+      mockAgent.app.bsky.feed.getPosts.mockResolvedValue({ data: { posts: [mockPost] } });
 
       // Act
       const posts = await adapter.fetchReplies({ since: sinceDate, limit: 100 });
@@ -144,7 +139,7 @@ describe('BlueskyAdapter', () => {
       // Assert
       expect(posts).toHaveLength(1);
       expect(posts[0].id).toBe('at://did:plc:author2/app.bsky.feed.post/new');
-      expect(mockAgent.getPost).toHaveBeenCalledTimes(1);
+      expect(mockAgent.app.bsky.feed.getPosts).toHaveBeenCalledTimes(1);
     });
 
     it('should filter out non-reply notifications', async () => {
@@ -172,24 +167,22 @@ describe('BlueskyAdapter', () => {
       };
 
       const mockPost = {
-        data: {
-          uri: 'at://did:plc:author2/app.bsky.feed.post/reply',
-          record: {
-            text: 'Reply notification',
-            createdAt: '2026-01-01T11:55:00Z'
-          },
-          author: {
-            did: 'did:plc:author2',
-            handle: 'author2.bsky.social'
-          },
-          likeCount: 1,
-          repostCount: 0,
-          replyCount: 0
-        }
+        uri: 'at://did:plc:author2/app.bsky.feed.post/reply',
+        record: {
+          text: 'Reply notification',
+          createdAt: '2026-01-01T11:55:00Z'
+        },
+        author: {
+          did: 'did:plc:author2',
+          handle: 'author2.bsky.social'
+        },
+        likeCount: 1,
+        repostCount: 0,
+        replyCount: 0
       };
 
       mockAgent.listNotifications.mockResolvedValue(mockNotifications);
-      mockAgent.getPost.mockResolvedValue(mockPost);
+      mockAgent.app.bsky.feed.getPosts.mockResolvedValue({ data: { posts: [mockPost] } });
 
       // Act
       const posts = await adapter.fetchReplies({ limit: 100 });
@@ -220,7 +213,7 @@ describe('BlueskyAdapter', () => {
 
       // Assert
       expect(posts).toEqual([]);
-      expect(mockAgent.getPost).not.toHaveBeenCalled();
+      expect(mockAgent.app.bsky.feed.getPosts).not.toHaveBeenCalled();
     });
 
     it('should construct correct Bluesky URLs', async () => {
@@ -238,24 +231,22 @@ describe('BlueskyAdapter', () => {
       };
 
       const mockPost = {
-        data: {
-          uri: 'at://did:plc:author1/app.bsky.feed.post/xyz789',
-          record: {
-            text: 'Test post',
-            createdAt: '2026-01-01T11:55:00Z'
-          },
-          author: {
-            did: 'did:plc:author1',
-            handle: 'testuser.bsky.social'
-          },
-          likeCount: 0,
-          repostCount: 0,
-          replyCount: 0
-        }
+        uri: 'at://did:plc:author1/app.bsky.feed.post/xyz789',
+        record: {
+          text: 'Test post',
+          createdAt: '2026-01-01T11:55:00Z'
+        },
+        author: {
+          did: 'did:plc:author1',
+          handle: 'testuser.bsky.social'
+        },
+        likeCount: 0,
+        repostCount: 0,
+        replyCount: 0
       };
 
       mockAgent.listNotifications.mockResolvedValue(mockNotifications);
-      mockAgent.getPost.mockResolvedValue(mockPost);
+      mockAgent.app.bsky.feed.getPosts.mockResolvedValue({ data: { posts: [mockPost] } });
 
       // Act
       const posts = await adapter.fetchReplies({ limit: 100 });

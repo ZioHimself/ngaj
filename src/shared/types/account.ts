@@ -60,39 +60,78 @@ export interface Account {
 }
 
 /**
+ * Discovery type identifier for opportunity sources.
+ * 
+ * v0.1: 'replies' and 'search'
+ * v0.2+: May add 'mentions', 'hashtags', 'follows'
+ */
+export type DiscoveryType = 'replies' | 'search';
+
+/**
  * Discovery configuration for a specific account.
- * Groups scheduling, status tracking, and error handling.
+ * Groups multiple typed schedules, status tracking, and error handling.
+ * 
+ * @see ADR-008: Opportunity Discovery Architecture
  */
 export interface AccountDiscoveryConfig {
-  /** Scheduling configuration */
-  schedule: DiscoverySchedule;
+  /**
+   * Array of typed discovery schedules.
+   * Each discovery type (replies, search) has independent scheduling.
+   * 
+   * Example:
+   * [
+   *   { type: 'replies', enabled: true, cronExpression: '*/15 * * * *' },
+   *   { type: 'search', enabled: true, cronExpression: '0 */2 * * *' }
+   * ]
+   */
+  schedules: DiscoveryTypeSchedule[];
   
-  /** Timestamp of last successful discovery operation */
+  /**
+   * Timestamp of last successful discovery (any type)
+   * Used for dashboard display
+   */
   lastAt?: Date;
   
-  /** Last error message from discovery operation */
+  /**
+   * Last error message from any discovery type
+   * Cleared on successful run
+   */
   error?: string;
 }
 
 /**
- * Discovery schedule configuration using cron expressions.
+ * Typed discovery schedule with independent cron expression.
+ * Enables different schedules for different discovery sources.
  */
-export interface DiscoverySchedule {
-  /** Whether discovery is enabled for this account */
+export interface DiscoveryTypeSchedule {
+  /**
+   * Discovery source type
+   * 'replies': Fetch replies to user's posts (via notifications/mentions)
+   * 'search': Search for keywords from profile interests
+   */
+  type: DiscoveryType;
+  
+  /** Whether this discovery type is enabled */
   enabled: boolean;
   
   /**
-   * Cron expression defining discovery frequency.
+   * Cron expression defining schedule frequency.
    * 
    * Examples:
-   * - '0 * * * *'     - Every hour
-   * - '0 *\/2 * * *'  - Every 2 hours
-   * - '0 9,17 * * *'  - 9am and 5pm daily
+   * - '*/15 * * * *'   - Every 15 minutes
+   * - '0 */2 * * *'    - Every 2 hours
+   * - '0 9,17 * * *'   - 9am and 5pm daily
    * - '0 9-17 * * 1-5' - Hourly, weekdays, business hours
    * 
    * @see https://crontab.guru/ for cron syntax
    */
   cronExpression: string;
+  
+  /**
+   * When this specific discovery type last ran
+   * Used to calculate "since" parameter for API calls
+   */
+  lastRunAt?: Date;
 }
 
 /**

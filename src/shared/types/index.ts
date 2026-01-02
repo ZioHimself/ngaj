@@ -20,7 +20,8 @@ export type {
   AccountStatus,
   Account,
   AccountDiscoveryConfig,
-  DiscoverySchedule,
+  DiscoveryTypeSchedule,
+  DiscoveryType,
   CreateAccountInput,
   UpdateAccountInput,
   AccountWithProfile,
@@ -49,4 +50,18 @@ export {
   DeletionError,
   NotFoundError,
 } from './knowledge-base.js';
+
+// Opportunity types
+export type {
+  Opportunity,
+  OpportunityScore,
+  OpportunityStatus,
+  OpportunityWithAuthor,
+  OpportunityFilters,
+  Author,
+  CreateOpportunityInput,
+  UpdateOpportunityInput,
+  UpsertAuthorInput,
+} from './opportunity.js';
+export { isOpportunity, isAuthor } from './opportunity.js';
 

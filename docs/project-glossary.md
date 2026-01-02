@@ -4,15 +4,19 @@
 
 - **Profile**: A cross-platform persona defining voice, discovery preferences, and knowledge base. Represents "who you are" across platforms
 - **Account**: A connection to a specific social media platform (Bluesky, LinkedIn, Reddit) with platform-specific credentials and scheduling. Represents "where you post"
-- **Opportunity**: A discovered social media post that matches user interests and could be a good engagement target
-- **Discovery**: Automated process of finding relevant social media posts based on user-configured interests and keywords
+- **Opportunity**: A discovered social media post that matches user interests and could be a good engagement target. Has status (pending, responded, dismissed, expired) and composite score.
+- **Discovery**: Automated process of finding relevant social media posts based on user-configured interests and keywords. Runs on independent schedules per discovery type (replies, search).
+- **Discovery Type**: Category of discovery source - 'replies' (responses to user's posts) or 'search' (keyword-based searches). Each has independent scheduling.
+- **Author**: Social media user who created a discovered post. Stored separately with profile data (follower count, bio, handle) and updated on each discovery.
 - **Knowledge Base**: Collection of user's uploaded reference materials (PDFs, markdown, text files) used to ground AI responses
 - **Response**: AI-generated suggested reply to an opportunity, grounded in the user's knowledge base and voice
 - **Engagement**: The act of responding to or interacting with social media posts
 - **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Part of a profile configuration
 - **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with
-- **Scoring**: Algorithm that ranks opportunities by relevance using impact, recency, and keyword matching
-- **Queue**: Prioritized list of pending opportunities awaiting user review
+- **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 60% recency (exponential decay) + 40% impact (reach and engagement)
+- **Recency Score**: Time-based score component (0-100) using exponential decay. Posts < 2 min = ~100, 30 min = ~37, 2 hours = ~1.
+- **Impact Score**: Reach/engagement score component (0-100) using logarithmic scale of author followers + post likes + reposts
+- **Queue**: Prioritized list of pending opportunities awaiting user review, sorted by total score descending
 - **Handle**: Platform-specific username or identifier (e.g., @user.bsky.social for Bluesky, u/username for Reddit)
 
 ## Technical Terms
@@ -28,10 +32,15 @@
 - **Atomic Operation**: Database operation that either fully succeeds or fully fails with rollback (e.g., upload creates MongoDB + ChromaDB + filesystem entries together)
 - **Hard Delete**: Permanent removal of data from all systems (MongoDB, ChromaDB, filesystem) with no recovery option
 - **Storage Limit**: Configurable maximum disk space per profile (default: 100MB total, 10MB per file)
-- **Cron Job**: Scheduled task that runs discovery at regular intervals
+- **Cron Job**: Scheduled task that runs discovery at regular intervals. Multiple schedules supported per account (e.g., replies every 15 min, search every 2 hours).
+- **Cron Expression**: Time schedule format (e.g., '*/15 * * * *' = every 15 minutes, '0 */2 * * *' = every 2 hours)
 - **AT Protocol**: Bluesky's underlying protocol for decentralized social networking
 - **Local-First**: Architecture principle where all data and processing stays on the user's machine
 - **Draft**: Initial status of a generated response before user review and posting
+- **Platform Adapter**: Interface abstraction for platform-specific API calls, enabling multi-platform support. Implements fetchReplies, searchPosts, getAuthor methods.
+- **Upsert**: Database operation that updates a document if it exists, inserts if it doesn't. Used for author records to keep data fresh.
+- **Exponential Decay**: Mathematical function (e^(-age/factor)) used for recency scoring. Older posts decay rapidly, recent posts score high.
+- **Opportunity TTL**: Time-to-live for pending opportunities before automatic expiration (default: 48 hours from discovery)
 
 ## Development Terms
 

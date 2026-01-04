@@ -15,6 +15,19 @@ export interface Profile {
   /** Human-readable name (e.g., "Professional Tech Persona") */
   name: string;
   
+  /**
+   * Core principles and values that shape all AI-generated responses.
+   * Freeform text describing user's beliefs, values, communication ethics.
+   * 
+   * Example: "I value transparency, evidence-based reasoning, and kindness.
+   *           I avoid snark and tribal language. I aim to bridge divides."
+   * 
+   * Always included in response generation prompts (not semantically searched).
+   * 
+   * @see ADR-009: Response Suggestion Architecture
+   */
+  principles?: string;
+  
   /** Voice configuration for AI-generated responses */
   voice: VoiceConfig;
   
@@ -33,6 +46,11 @@ export interface Profile {
 
 /**
  * Voice configuration defines how the AI should respond in this profile's style.
+ * 
+ * For Response Suggestion (ADR-009):
+ * - `style` field is used as the "Voice & Style" section in generation prompts
+ * - `tone` provides additional context
+ * - `examples` can be referenced in future versions for style learning
  */
 export interface VoiceConfig {
   /**
@@ -44,7 +62,9 @@ export interface VoiceConfig {
   /**
    * Free-text style description
    * Example: "I use clear explanations with occasional technical depth. 
-   * I avoid jargon unless the audience is technical."
+   * I avoid jargon unless the audience is technical. Keep responses under 200 chars."
+   * 
+   * Used in Response Suggestion generation prompts as "Voice & Style" guidance.
    */
   style: string;
   

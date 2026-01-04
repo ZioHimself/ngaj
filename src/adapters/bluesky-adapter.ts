@@ -1,6 +1,7 @@
 import type { BskyAgent } from '@atproto/api';
 import type { IPlatformAdapter, FetchOptions } from './platform-adapter';
 import type { RawPost, RawAuthor } from '@/shared/types/opportunity';
+import type { PlatformConstraints } from '@/shared/types/response';
 
 /**
  * Bluesky platform adapter implementation
@@ -157,6 +158,19 @@ export class BlueskyAdapter implements IPlatformAdapter {
       likes: post.likeCount || 0,
       reposts: post.repostCount || 0,
       replies: post.replyCount || 0
+    };
+  }
+
+  /**
+   * Get platform-specific constraints for response generation
+   * 
+   * Bluesky enforces a 300-character limit for posts.
+   * 
+   * @returns Platform constraints
+   */
+  getConstraints(): PlatformConstraints {
+    return {
+      maxLength: 300, // Bluesky character limit
     };
   }
 

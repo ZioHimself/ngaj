@@ -9,9 +9,10 @@
 - **Discovery Type**: Category of discovery source - 'replies' (responses to user's posts) or 'search' (keyword-based searches). Each has independent scheduling.
 - **Author**: Social media user who created a discovered post. Stored separately with profile data (follower count, bio, handle) and updated on each discovery.
 - **Knowledge Base**: Collection of user's uploaded reference materials (PDFs, markdown, text files) used to ground AI responses
-- **Response**: AI-generated suggested reply to an opportunity, grounded in the user's knowledge base and voice
+- **Response**: AI-generated suggested reply to an opportunity, grounded in the user's knowledge base, principles, and voice. Has status (draft, posted, dismissed) and version number for multi-draft support.
+- **Principles**: Core values and beliefs that shape all AI-generated responses. Stored as freeform text in user profile. Always included in generation prompts (e.g., "I value evidence-based reasoning and kindness").
+- **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Freeform text field in profile (e.g., "Friendly but professional. Technical but accessible.").
 - **Engagement**: The act of responding to or interacting with social media posts
-- **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Part of a profile configuration
 - **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with
 - **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 60% recency (exponential decay) + 40% impact (reach and engagement)
 - **Recency Score**: Time-based score component (0-100) using exponential decay. Posts < 2 min = ~100, 30 min = ~37, 2 hours = ~1.
@@ -41,6 +42,11 @@
 - **Upsert**: Database operation that updates a document if it exists, inserts if it doesn't. Used for author records to keep data fresh.
 - **Exponential Decay**: Mathematical function (e^(-age/factor)) used for recency scoring. Older posts decay rapidly, recent posts score high.
 - **Opportunity TTL**: Time-to-live for pending opportunities before automatic expiration (default: 48 hours from discovery)
+- **Platform Constraints**: Platform-specific rules for response generation (character limits, formatting support). Provided by Platform Adapters. v0.1: Only maxLength (Bluesky: 300 chars).
+- **Two-Stage Pipeline**: Response generation architecture using two AI calls: (1) Analysis stage extracts concepts/keywords from opportunity, (2) Generation stage creates response using KB chunks found via keywords.
+- **Prompt Protection**: Security mechanism using boundary markers to prevent prompt injection attacks. Untrusted opportunity text placed after `--- USER INPUT BEGINS ---` marker and treated as data, not instructions. **First-occurrence rule**: Only the first boundary marker is processed; subsequent occurrences in user content are treated as literal text, preventing "escape" attacks.
+- **Response Version**: Sequential number for multiple drafts of the same opportunity. Enables "regenerate" feature and multi-draft comparison in future versions.
+- **Draft**: Initial status of a generated response before user review. User can edit, post, or dismiss drafts.
 
 ## Development Terms
 

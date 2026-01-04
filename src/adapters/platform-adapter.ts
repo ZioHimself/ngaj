@@ -1,4 +1,5 @@
 import type { RawPost, RawAuthor } from '@/shared/types/opportunity';
+import type { PlatformConstraints } from '@/shared/types/response';
 
 /**
  * Fetch options for platform adapter methods
@@ -55,5 +56,17 @@ export interface IPlatformAdapter {
    * @throws PlatformApiError on failure
    */
   getAuthor(platformUserId: string): Promise<RawAuthor>;
+
+  /**
+   * Get platform-specific constraints for response generation
+   * 
+   * Returns constraints like character limits, formatting support, etc.
+   * Used by Response Suggestion feature to ensure generated responses
+   * comply with platform rules.
+   * 
+   * @returns Platform constraints (maxLength, etc.)
+   * @see ADR-009: Response Suggestion Architecture
+   */
+  getConstraints(): PlatformConstraints;
 }
 

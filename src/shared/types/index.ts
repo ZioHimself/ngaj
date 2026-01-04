@@ -65,3 +65,15 @@ export type {
 } from './opportunity.js';
 export { isOpportunity, isAuthor } from './opportunity.js';
 
+// Response types
+export type {
+  Response,
+  ResponseStatus,
+  ResponseMetadata,
+  OpportunityAnalysis,
+  PlatformConstraints,
+  CreateResponseInput,
+  UpdateResponseInput,
+} from './response.js';
+export { isResponse, isOpportunityAnalysis } from './response.js';
+

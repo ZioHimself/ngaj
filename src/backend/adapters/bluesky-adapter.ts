@@ -174,6 +174,29 @@ export class BlueskyAdapter implements IPlatformAdapter {
   }
 
   /**
+   * Post a response to a specific opportunity.
+   * 
+   * Handles Bluesky-specific threading mechanics internally:
+   * - Fetches parent post to get reply.root (for thread continuation)
+   * - Constructs reply structure with parent and root references
+   * - Posts response as threaded reply
+   * 
+   * @param parentPostId - AT URI of post being replied to
+   * @param responseText - Text content of the response
+   * @returns Posted response metadata from Bluesky
+   * 
+   * @throws {AuthenticationError} Invalid or expired credentials
+   * @throws {RateLimitError} Platform rate limit exceeded (429)
+   * @throws {PostNotFoundError} Parent post no longer exists (404)
+   * @throws {PlatformPostingError} Other posting failures
+   * 
+   * @see ADR-010: Response Draft Posting
+   */
+  async post(parentPostId: string, responseText: string): Promise<import('./platform-adapter').PostResult> {
+    throw new Error('Not implemented');
+  }
+
+  /**
    * Normalize handle to include @ prefix
    */
   private normalizeHandle(handle: string): string {

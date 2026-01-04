@@ -123,7 +123,9 @@ export const createResponseFixtures = (opportunityId: ObjectId, accountId: Objec
     status: 'posted',
     text: 'This response was posted to the platform.',
     version: 1,
-    postedAt: new Date('2026-01-01T12:05:00Z')
+    postedAt: new Date('2026-01-01T12:05:00Z'),
+    platformPostId: 'at://did:plc:user123.../app.bsky.feed.post/xyz789',
+    platformPostUrl: 'https://bsky.app/profile/user.bsky.social/post/xyz789'
   }),
 
   /**
@@ -525,4 +527,58 @@ export const createMockKBChunks = (count: number = 3) => {
     }
   }));
 };
+
+/**
+ * Helper to create mock PostResult for platform posting tests
+ */
+export const createMockPostResult = (overrides?: Partial<{
+  postId: string;
+  postUrl: string;
+  postedAt: Date;
+}>) => {
+  return {
+    postId: 'at://did:plc:user123.../app.bsky.feed.post/xyz789',
+    postUrl: 'https://bsky.app/profile/user.bsky.social/post/xyz789',
+    postedAt: new Date('2026-01-04T12:00:00.000Z'),
+    ...overrides
+  };
+};
+
+/**
+ * Posted response fixtures with platform metadata
+ */
+export const postedResponseFixtures = (opportunityId: ObjectId, accountId: ObjectId) => ({
+  /**
+   * Response posted to Bluesky (with AT URI)
+   */
+  blueskyPosted: createMockResponse(opportunityId, accountId, {
+    status: 'posted',
+    text: 'This was posted to Bluesky.',
+    postedAt: new Date('2026-01-04T12:00:00Z'),
+    platformPostId: 'at://did:plc:user123.../app.bsky.feed.post/xyz789',
+    platformPostUrl: 'https://bsky.app/profile/user.bsky.social/post/xyz789'
+  }),
+
+  /**
+   * Response posted to LinkedIn (future - different ID format)
+   */
+  linkedinPosted: createMockResponse(opportunityId, accountId, {
+    status: 'posted',
+    text: 'This was posted to LinkedIn.',
+    postedAt: new Date('2026-01-04T12:00:00Z'),
+    platformPostId: 'urn:li:share:123456789',
+    platformPostUrl: 'https://www.linkedin.com/feed/update/urn:li:share:123456789'
+  }),
+
+  /**
+   * Response posted with Unicode/emoji
+   */
+  unicodePosted: createMockResponse(opportunityId, accountId, {
+    status: 'posted',
+    text: '🚀 Great idea! 你好',
+    postedAt: new Date('2026-01-04T12:00:00Z'),
+    platformPostId: 'at://did:plc:user.../post/unicode',
+    platformPostUrl: 'https://bsky.app/profile/user/post/unicode'
+  })
+});
 

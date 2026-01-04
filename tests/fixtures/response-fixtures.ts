@@ -8,8 +8,7 @@ import type {
   OpportunityAnalysis
 } from '@/shared/types/response';
 import {
-  createMockOpportunity,
-  createMockAuthor
+  createMockOpportunity
 } from './opportunity-fixtures';
 
 /**

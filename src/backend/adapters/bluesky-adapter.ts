@@ -13,8 +13,7 @@ import type { PlatformConstraints } from '@/shared/types/response';
  */
 export class BlueskyAdapter implements IPlatformAdapter {
   constructor(
-    private agent: BskyAgent,
-    private userDid: string
+    private agent: BskyAgent
   ) {}
 
   /**

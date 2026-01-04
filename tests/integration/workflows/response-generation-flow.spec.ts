@@ -102,7 +102,6 @@ describe('Response Generation Flow - Integration Tests', () => {
       mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
 
       // Stage 1: Analysis
-      const startAnalysis = Date.now();
       mockClaudeClient.analyze.mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate 100ms
         return createMockAnalysis({

@@ -20,9 +20,13 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "paths": {
+      "@/backend/*": ["./src/backend/*"],
+      "@/frontend/*": ["./src/frontend/*"],
+      "@/shared/*": ["./src/shared/*"],
       "@/*": ["./src/*"],
       "@tests/*": ["./tests/*"]
-    }
+    },
+    "baseUrl": "."
   },
   "include": ["src/shared/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist", ".agents", "src/backend", "src/frontend"]

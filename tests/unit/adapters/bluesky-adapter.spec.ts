@@ -25,7 +25,7 @@ describe('BlueskyAdapter', () => {
       }
     };
 
-    adapter = new BlueskyAdapter(mockAgent, 'did:plc:testuser123');
+    adapter = new BlueskyAdapter(mockAgent);
   });
 
   describe('fetchReplies()', () => {

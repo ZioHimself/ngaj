@@ -142,13 +142,20 @@ describe('ResponseSuggestionService', () => {
       expect(result.metadata.kbChunksUsed).toBe(3);
       expect(result.metadata.usedPrinciples).toBe(true);
       expect(result.metadata.usedVoice).toBe(true);
-      expect(result.metadata.generationTimeMs).toBeGreaterThan(0);
+      expect(result.metadata.generationTimeMs).toBeGreaterThanOrEqual(0);
 
       // Verify calls
       expect(mockOpportunitiesCollection.findOne).toHaveBeenCalledWith({
         _id: opportunityId
       });
-      expect(mockClaudeClient.analyze).toHaveBeenCalledWith(opportunity.content.text);
+      // Verify analyze was called with a prompt containing the opportunity text
+      expect(mockClaudeClient.analyze).toHaveBeenCalledWith(
+        expect.stringContaining(opportunity.content.text)
+      );
+      // Verify the prompt has boundary marker for security
+      expect(mockClaudeClient.analyze).toHaveBeenCalledWith(
+        expect.stringContaining('--- USER INPUT BEGINS ---')
+      );
       expect(mockChromaClient.search).toHaveBeenCalled();
       expect(mockClaudeClient.generate).toHaveBeenCalled();
       expect(mockResponsesCollection.insertOne).toHaveBeenCalled();

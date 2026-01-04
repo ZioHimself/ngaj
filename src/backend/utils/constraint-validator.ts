@@ -41,6 +41,15 @@ export function validateConstraints(
   responseText: string,
   constraints: PlatformConstraints
 ): ConstraintValidationResult {
-  throw new Error('Not implemented');
+  if (responseText.length > constraints.maxLength) {
+    return {
+      valid: false,
+      violation: 'maxLength',
+      actual: responseText.length,
+      limit: constraints.maxLength
+    };
+  }
+
+  return { valid: true };
 }
 

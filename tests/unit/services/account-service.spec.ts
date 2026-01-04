@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { AccountService } from '@/services/account-service';
+import { AccountService } from '@/backend/services/account-service';
 import { 
   createMockAccount, 
   createMockAccountInput,

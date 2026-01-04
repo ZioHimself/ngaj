@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { DiscoveryService } from '@/services/discovery-service';
-import type { ScoringService } from '@/services/scoring-service';
-import type { IPlatformAdapter } from '@/adapters/platform-adapter';
+import { DiscoveryService } from '@/backend/services/discovery-service';
+import type { ScoringService } from '@/backend/services/scoring-service';
+import type { IPlatformAdapter } from '@/backend/adapters/platform-adapter';
 import {
   createMockOpportunity,
   createMockAuthor,

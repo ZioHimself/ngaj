@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { KnowledgeBaseService } from '@/services/knowledge-base-service';
+import { KnowledgeBaseService } from '@/backend/services/knowledge-base-service';
 import {
   createMockDocument,
   createMockFileUpload,

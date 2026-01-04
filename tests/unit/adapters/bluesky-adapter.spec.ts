@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BlueskyAdapter } from '@/adapters/bluesky-adapter';
+import { BlueskyAdapter } from '@/backend/adapters/bluesky-adapter';
 
 // Mock @atproto/api
 vi.mock('@atproto/api', () => ({

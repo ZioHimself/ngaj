@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateConstraints, type ConstraintValidationResult } from '@/utils/constraint-validator';
+import { validateConstraints, type ConstraintValidationResult } from '@/backend/utils/constraint-validator';
 import { createMockConstraints } from '@tests/fixtures/response-fixtures';
 
 describe('Constraint Validator', () => {

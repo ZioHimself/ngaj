@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { CronScheduler } from '@/scheduler/cron-scheduler';
-import type { IDiscoveryService } from '@/services/discovery-service';
+import { CronScheduler } from '@/backend/scheduler/cron-scheduler';
+import type { IDiscoveryService } from '@/backend/services/discovery-service';
 import { createMockAccount } from '@tests/fixtures/account-fixtures';
 
 describe('CronScheduler', () => {

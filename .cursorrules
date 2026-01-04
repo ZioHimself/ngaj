@@ -44,7 +44,10 @@ When I say "write tests for [requirement]":
 When I say "implement [requirement]":
 1. Load system prompt from `.agents/prompts/implementer/system-prompt.md`
 2. Read failing tests
-3. Implement in `src/` directory
+3. Implement in appropriate directory:
+   - Backend code: `src/backend/` directory
+   - Frontend code: `src/frontend/` directory
+   - Shared code: `src/shared/` directory
 4. Run tests to verify they pass (Green phase)
 
 ## Reviewer Agent Mode

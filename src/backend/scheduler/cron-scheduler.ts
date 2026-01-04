@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import type { Db } from 'mongodb';
 import * as cron from 'node-cron';
-import type { IDiscoveryService } from '@/services/discovery-service';
+import type { IDiscoveryService } from '@/backend/services/discovery-service';
 import type { DiscoveryType, Opportunity } from '@/shared/types/opportunity';
 import type { Account } from '@/shared/types/account';
 

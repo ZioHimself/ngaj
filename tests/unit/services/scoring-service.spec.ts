@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ScoringService } from '@/services/scoring-service';
+import { ScoringService } from '@/backend/services/scoring-service';
 import { createMockRawPost, createMockRawAuthor, scoringScenarios } from '@tests/fixtures/opportunity-fixtures';
 
 describe('ScoringService', () => {

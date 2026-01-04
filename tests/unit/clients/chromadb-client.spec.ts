@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { ChromaDBClient } from '@/clients/chromadb-client';
+import { ChromaDBClient } from '@/backend/clients/chromadb-client';
 import { createMockEmbedding } from '../../fixtures/knowledge-base-fixtures';
 
 describe('ChromaDBClient', () => {

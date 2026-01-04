@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { ProfileService } from '@/services/profile-service';
+import { ProfileService } from '@/backend/services/profile-service';
 import { 
   createMockProfile, 
   createMockProfileInput, 

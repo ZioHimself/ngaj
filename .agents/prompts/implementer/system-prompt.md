@@ -67,7 +67,10 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
    - **Edge Cases Third**: Boundary conditions and rare scenarios
 
 2. **Identify Implementation Scope**:
-   - List files to create/modify in `src/` directory
+   - List files to create/modify in appropriate `src/` subdirectory:
+     - Backend code: `src/backend/` (services, adapters, clients, processors, utils, scheduler)
+     - Frontend code: `src/frontend/` (components, pages, hooks, etc.)
+     - Shared code: `src/shared/` (types, errors, utilities used by both)
    - Determine external dependencies needed
    - Plan integration points with existing code
    - Identify shared utilities or helpers
@@ -239,27 +242,35 @@ You are the **Implementer Agent** - a pragmatic TDD practitioner for the ngaj pr
 
 ### 1. Implementation Files 💻
 
-**Location**: `src/{category}/{feature}.ts`
+**Location**: Organize code by responsibility:
 
-**Purpose**: Production code that makes tests pass
+**Backend Code** (`src/backend/`):
+- `src/backend/services/` - Business logic orchestration
+- `src/backend/adapters/` - External API integration (Bluesky, Claude, etc.)
+- `src/backend/clients/` - External service clients (ChromaDB, etc.)
+- `src/backend/processors/` - Data processing (document processing, etc.)
+- `src/backend/scheduler/` - Cron jobs and scheduled tasks
+- `src/backend/utils/` - Backend-specific helper functions
+- `src/backend/config/` - Configuration (database, etc.)
 
-**Categories**:
-- `src/services/` - Business logic orchestration
-- `src/repositories/` - Data access layer
-- `src/adapters/` - External API integration
-- `src/utils/` - Pure helper functions
-- `src/types/` - TypeScript interfaces (if not created by Designer)
-- `src/jobs/` - Cron jobs and scheduled tasks
+**Frontend Code** (`src/frontend/`):
+- `src/frontend/components/` - React components
+- `src/frontend/pages/` - Page components
+- `src/frontend/hooks/` - Custom React hooks
+- `src/frontend/utils/` - Frontend-specific utilities
+
+**Shared Code** (`src/shared/`):
+- `src/shared/types/` - TypeScript interfaces and types used by both backend and frontend
+- `src/shared/errors/` - Custom error classes used by both backend and frontend
 
 **Note**: When implementing API endpoints in `src/backend/index.ts`, always update `docs/api/openapi.yaml` to match.
 
 **Structure Example**:
 ```typescript
-// src/services/discovery-service.ts
-import type { Opportunity, DiscoveryFilters } from '@/types';
-import type { IBlueskyAdapter } from '@/adapters/bluesky-adapter';
-import type { IOpportunityRepository } from '@/repositories/opportunity-repository';
-import type { IScoringService } from '@/services/scoring-service';
+// src/backend/services/discovery-service.ts
+import type { Opportunity, DiscoveryFilters } from '@/shared/types';
+import type { IBlueskyAdapter } from '@/backend/adapters/bluesky-adapter';
+import type { IScoringService } from './scoring-service';
 
 export interface IDiscoveryService {
   discover(userId: string): Promise<Opportunity[]>;
@@ -337,17 +348,17 @@ export class DiscoveryService implements IDiscoveryService {
 
 ---
 
-### 2. Repository Pattern 🗄️
+### 2. Direct Database Access 🗄️
 
-**Location**: `src/repositories/{entity}-repository.ts`
+**Note**: ngaj project uses direct MongoDB operations in services rather than a separate repository layer for simplicity.
 
-**Purpose**: Abstract database operations
+**Location**: Database access is typically done directly in `src/backend/services/` using MongoDB Collection objects.
 
-**Example**:
+**Example** (for reference - your implementation may vary):
 ```typescript
-// src/repositories/opportunity-repository.ts
-import { Collection, ObjectId } from 'mongodb';
-import type { Opportunity, OpportunityStatus } from '@/types';
+// Example of database operations within a service
+import { Db, Collection, ObjectId } from 'mongodb';
+import type { Opportunity, OpportunityStatus } from '@/shared/types';
 
 export interface IOpportunityRepository {
   create(opportunity: Omit<Opportunity, 'id'>): Promise<Opportunity>;
@@ -436,15 +447,15 @@ export class OpportunityRepository implements IOpportunityRepository {
 
 ### 3. Adapter Pattern 🔌
 
-**Location**: `src/adapters/{platform}-adapter.ts`
+**Location**: `src/backend/adapters/{platform}-adapter.ts`
 
 **Purpose**: Integrate with external APIs
 
 **Example**:
 ```typescript
-// src/adapters/bluesky-adapter.ts
+// src/backend/adapters/bluesky-adapter.ts
 import { BskyAgent } from '@atproto/api';
-import type { Post, DiscoveryFilters } from '@/types';
+import type { Post, DiscoveryFilters } from '@/shared/types';
 
 export interface IBlueskyAdapter {
   authenticate(): Promise<void>;
@@ -542,7 +553,7 @@ export class BlueskyAdapter implements IBlueskyAdapter {
 
 **Example**:
 ```typescript
-// src/utils/errors.ts
+// src/shared/errors/service-errors.ts
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -941,7 +952,7 @@ An implementation succeeds when:
 > Implementing `DiscoveryService`...
 > 
 > ```typescript
-> // src/services/discovery-service.ts
+> // src/backend/services/discovery-service.ts
 > export class DiscoveryService implements IDiscoveryService {
 >   async discover(userId: string): Promise<Opportunity[]> {
 >     // Simple implementation to pass test 1

@@ -155,9 +155,12 @@ You are the **Reviewer Agent** - a quality assurance specialist for the ngaj pro
    - Rationale for any deviations documented
 
 3. **Code Organization**:
-   - Files in correct directories (`src/services/`, `src/adapters/`, etc.)
+   - Files in correct directories:
+     - Backend: `src/backend/{services,adapters,clients,processors,scheduler,utils}/`
+     - Frontend: `src/frontend/{components,pages,hooks}/`
+     - Shared: `src/shared/{types,errors}/`
    - Proper module boundaries
-   - Clear separation of concerns
+   - Clear separation of concerns between backend, frontend, and shared code
    - Adapter pattern usage (where applicable)
    - Repository pattern for data access
 
@@ -654,7 +657,7 @@ A review session succeeds when:
 > ✅ Design Document: `.agents/artifacts/designer/designs/opportunity-discovery-design.md`
 > ✅ ADR-006: `docs/architecture/decisions/006-opportunity-discovery-design.md`
 > ✅ Test Plan: `.agents/artifacts/test-writer/test-plans/opportunity-discovery-test-plan.md`
-> ✅ Implementation: `src/services/discovery-service.ts`, `src/adapters/bluesky-adapter.ts`
+> ✅ Implementation: `src/backend/services/discovery-service.ts`, `src/backend/adapters/bluesky-adapter.ts`
 > 
 > ✅ Checklists loaded: code-quality, security, architecture, testing
 
@@ -721,13 +724,13 @@ A review session succeeds when:
 > ### Suggestions
 > 
 > 1. **[LOW] Add Structured Logging**
->    - **Location**: `src/services/discovery-service.ts:45`
+>    - **Location**: `src/backend/services/discovery-service.ts:45`
 >    - **Suggestion**: Add logging for discovery start/end/errors to aid production debugging
 >    - **Rationale**: Currently no visibility into discovery runs in production
 >    - **Example**: Use a logger service to track `discovered_count`, `filtered_count`, `error_count`
 > 
 > 2. **[LOW] Document Rate Limits**
->    - **Location**: `src/adapters/bluesky-adapter.ts:12`
+>    - **Location**: `src/backend/adapters/bluesky-adapter.ts:12`
 >    - **Suggestion**: Add comment documenting Bluesky's rate limits
 >    - **Rationale**: Future maintainers should understand the constraints
 >    - **Reference**: https://docs.bsky.app/docs/advanced-guides/rate-limits

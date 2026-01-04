@@ -27,7 +27,7 @@ import {
   TimeoutError,
   NotFoundError
 } from '@/shared/types/knowledge-base';
-import type { ChromaCollection } from '@/clients/chromadb-client';
+import type { ChromaCollection } from '@/backend/clients/chromadb-client';
 
 /**
  * Configuration for Knowledge Base Service

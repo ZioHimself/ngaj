@@ -44,28 +44,23 @@ npm test -- --watch
 
 ```
 src/
-├── services/          # Business logic orchestration
-│   ├── discovery-service.ts
-│   ├── scoring-service.ts
-│   └── response-service.ts
-├── repositories/      # Data access layer (MongoDB)
-│   ├── opportunity-repository.ts
-│   ├── profile-repository.ts
-│   └── knowledge-base-repository.ts
-├── adapters/          # External API integration
-│   ├── bluesky-adapter.ts
-│   ├── claude-adapter.ts
-│   └── chromadb-adapter.ts
-├── utils/             # Pure helper functions
-│   ├── rate-limiter.ts
-│   ├── text-processing.ts
-│   └── date-helpers.ts
-├── types/             # TypeScript interfaces
-│   ├── opportunity.ts
-│   ├── profile.ts
-│   └── index.ts
-└── jobs/              # Cron jobs and scheduled tasks
-    └── discovery-cron.ts
+├── backend/           # All backend code
+│   ├── services/      # Business logic orchestration
+│   ├── adapters/      # External API integration
+│   ├── clients/       # External service clients
+│   ├── processors/    # Data processing
+│   ├── scheduler/     # Cron jobs and scheduled tasks
+│   ├── utils/         # Backend-specific helper functions
+│   ├── config/        # Configuration
+│   └── index.ts       # Express server entry point
+├── frontend/          # All frontend code
+│   ├── components/    # React components
+│   ├── pages/         # Page components
+│   ├── hooks/         # Custom React hooks
+│   └── utils/         # Frontend-specific utilities
+└── shared/            # Code shared between backend and frontend
+    ├── types/         # TypeScript interfaces
+    └── errors/        # Custom error classes
 ```
 
 ### File Naming Conventions

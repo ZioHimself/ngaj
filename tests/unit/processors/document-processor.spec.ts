@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { DocumentProcessor } from '@/processors/document-processor';
+import { DocumentProcessor } from '@/backend/processors/document-processor';
 import {
   mockExtractedText,
   createMockEmbedding

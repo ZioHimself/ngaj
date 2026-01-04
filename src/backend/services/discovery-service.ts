@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import type { Db } from 'mongodb';
-import type { IPlatformAdapter } from '@/adapters/platform-adapter';
+import type { IPlatformAdapter } from '@/backend/adapters/platform-adapter';
 import type { ScoringService } from './scoring-service';
 import type {
   Opportunity,

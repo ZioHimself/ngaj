@@ -92,7 +92,11 @@ Create documents in this order to enable proper cross-referencing:
      🔗 **Technical Specs**: [Design Document](../designs/{feature}-design.md)
      ```
 
-4. **Update Project Glossary** (`docs/project-glossary.md`):
+4. **Create Type Definitions** (if applicable):
+   - Add shared types in `src/shared/types/` for backend/frontend interfaces
+   - Add custom errors in `src/shared/errors/` if needed
+
+5. **Update Project Glossary** (`docs/project-glossary.md`):
    - Add new domain terms
    - Update technical terms if introducing new patterns
 
@@ -110,7 +114,7 @@ Create documents in this order to enable proper cross-referencing:
    - **Don't duplicate**: Link to Design Doc for schemas, link to ADR for rationale
 
 2. Create stub files if needed:
-   - TypeScript type definitions in `src/types/`
+   - TypeScript type definitions in `src/shared/types/` (for shared interfaces)
    - OpenAPI snippets in `docs/api/`
 
 3. Verify cross-references work:
@@ -191,7 +195,7 @@ The Designer creates three complementary documents, each serving a distinct purp
 ---
 
 ### 4. Type Definitions (if applicable)
-**Location**: `src/types/{entity}.ts`
+**Location**: `src/shared/types/{entity}.ts` (for types shared between backend and frontend)
 **Content**: TypeScript interfaces/types for data models
 **Note**: These match the models documented in the Design Document
 

@@ -84,18 +84,21 @@ You are the **Test-Writer Agent** - a test-driven development specialist for the
 1. **Set Up Test Structure**:
    ```
    tests/
-   ├── unit/
-   │   ├── services/
-   │   ├── adapters/
-   │   ├── utils/
-   │   └── types/
-   ├── integration/
-   │   ├── api/
-   │   ├── database/
-   │   └── workflows/
-   ├── e2e/
-   │   └── features/
-   └── fixtures/
+   ├── unit/              # Unit tests for individual modules
+   │   ├── services/      # Test backend services
+   │   ├── adapters/      # Test platform adapters
+   │   ├── clients/       # Test external service clients
+   │   ├── processors/    # Test data processors
+   │   ├── utils/         # Test utility functions
+   │   └── components/    # Test React components
+   ├── integration/       # Integration tests
+   │   ├── api/           # Test API endpoints
+   │   ├── database/      # Test database operations
+   │   ├── workflows/     # Test complete workflows
+   │   └── scheduler/     # Test scheduled tasks
+   ├── e2e/               # End-to-end tests
+   │   └── features/      # Test complete user flows
+   └── fixtures/          # Test data and factories
        └── {entity}-fixtures.ts
    ```
 
@@ -341,8 +344,8 @@ export const opportunityFixtures = {
 
 **Example**:
 ```typescript
-// src/services/discovery-service.ts
-import type { Opportunity, DiscoveryFilters } from '@/types';
+// src/backend/services/discovery-service.ts
+import type { Opportunity, DiscoveryFilters } from '@/shared/types';
 
 export class DiscoveryService {
   async discover(userId: string): Promise<Opportunity[]> {
@@ -562,7 +565,7 @@ A test-writing session succeeds when:
 > Creating implementation stubs...
 > 
 > ```typescript
-> // src/services/discovery-service.ts
+> // src/backend/services/discovery-service.ts
 > export class DiscoveryService {
 >   async discover(userId: string): Promise<Opportunity[]> {
 >     throw new Error('Not implemented');

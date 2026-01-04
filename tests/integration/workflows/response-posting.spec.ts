@@ -51,7 +51,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId, platform: 'bluesky' });
+      const account = createMockAccount(new ObjectId(), { _id: accountId, platform: 'bluesky' });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://did:plc:parent.../post/123',
@@ -113,7 +113,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://did:plc:parent.../post/123'
@@ -148,7 +148,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -184,7 +184,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -225,7 +225,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -269,7 +269,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://did:plc:deleted.../post/123'
@@ -303,7 +303,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -338,7 +338,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -415,7 +415,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -444,7 +444,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent'
@@ -473,7 +473,7 @@ describe('Response Posting Workflow (Integration)', () => {
       const opportunityId = new ObjectId();
       const responseId = new ObjectId();
 
-      const account = createMockAccount({ _id: accountId });
+      const account = createMockAccount(new ObjectId(), { _id: accountId });
       const opportunity = createMockOpportunity(accountId, new ObjectId(), {
         _id: opportunityId,
         postId: 'at://parent',

@@ -27,7 +27,7 @@ export class ResponsePostingService {
   private accountsCollection;
 
   constructor(
-    private db: Db,
+    db: Db,
     private platformAdapter: IPlatformAdapter
   ) {
     this.responsesCollection = db.collection('responses');
@@ -50,7 +50,62 @@ export class ResponsePostingService {
    * @throws {PlatformPostingError} For other posting failures
    */
   async postResponse(responseId: ObjectId): Promise<Response> {
-    throw new Error('Not implemented');
+    // 1. Load response from database
+    const response = await this.responsesCollection.findOne({ _id: responseId });
+    if (!response) {
+      throw new Error(`Response with ID ${responseId.toString()} not found`);
+    }
+
+    // 2. Validate response is eligible for posting (must be draft)
+    validateResponseForPosting(response as Response);
+
+    // 3. Load opportunity (to get parent post ID for threading)
+    const opportunity = await this.opportunitiesCollection.findOne({ _id: response.opportunityId });
+    if (!opportunity) {
+      throw new Error(`Opportunity with ID ${response.opportunityId.toString()} not found`);
+    }
+
+    // 4. Load account (to verify it exists)
+    const account = await this.accountsCollection.findOne({ _id: response.accountId });
+    if (!account) {
+      throw new Error(`Account with ID ${response.accountId.toString()} not found`);
+    }
+
+    // 5. Post to platform (adapter handles platform-specific logic)
+    const postResult = await this.platformAdapter.post(opportunity.postId, response.text);
+
+    // 6. Validate post result
+    validatePostResult(postResult);
+
+    // 7. Update response with platform metadata
+    const now = new Date();
+    await this.responsesCollection.updateOne(
+      { _id: responseId },
+      {
+        $set: {
+          status: 'posted',
+          postedAt: postResult.postedAt,
+          platformPostId: postResult.postId,
+          platformPostUrl: postResult.postUrl,
+          updatedAt: now,
+        },
+      }
+    );
+
+    // 8. Update opportunity status to "responded"
+    await this.opportunitiesCollection.updateOne(
+      { _id: opportunity._id },
+      {
+        $set: {
+          status: 'responded',
+          updatedAt: now,
+        },
+      }
+    );
+
+    // 9. Return updated response
+    const updatedResponse = await this.responsesCollection.findOne({ _id: responseId });
+    return updatedResponse as Response;
   }
 }
 

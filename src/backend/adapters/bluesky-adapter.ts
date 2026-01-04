@@ -2,6 +2,12 @@ import type { BskyAgent } from '@atproto/api';
 import type { IPlatformAdapter, FetchOptions } from './platform-adapter';
 import type { RawPost, RawAuthor } from '@/shared/types/opportunity';
 import type { PlatformConstraints } from '@/shared/types/response';
+import {
+  AuthenticationError,
+  RateLimitError,
+  PostNotFoundError,
+  PlatformPostingError
+} from '@/shared/errors/platform-posting-errors';
 
 /**
  * Bluesky platform adapter implementation
@@ -193,7 +199,77 @@ export class BlueskyAdapter implements IPlatformAdapter {
    * @see ADR-010: Response Draft Posting
    */
   async post(parentPostId: string, responseText: string): Promise<import('./platform-adapter').PostResult> {
-    throw new Error('Not implemented');
+    try {
+      // 1. Fetch parent post to get CID and reply.root (for threading)
+      const parentPost = await (this.agent as any).getPost({ uri: parentPostId });
+
+      if (!parentPost || !parentPost.value) {
+        throw new PostNotFoundError('bluesky', parentPostId);
+      }
+
+      // 2. Construct reply structure
+      const reply = {
+        parent: {
+          uri: parentPost.value.uri as string,
+          cid: parentPost.value.cid as string,
+        },
+        root: parentPost.value.reply?.root || {
+          uri: parentPost.value.uri as string,
+          cid: parentPost.value.cid as string,
+        },
+      };
+
+      // 3. Post response as threaded reply
+      const result = await (this.agent as any).post({
+        text: responseText,
+        reply,
+      });
+
+      // 4. Construct public URL
+      const handle = (this.agent as any).session?.handle || 'unknown';
+      const rkey = result.uri.split('/').pop();
+      const postUrl = `https://bsky.app/profile/${handle}/post/${rkey}`;
+
+      // 5. Return PostResult with platform metadata
+      return {
+        postId: result.uri,
+        postUrl,
+        postedAt: new Date(result.createdAt),
+      };
+    } catch (error: any) {
+      // Map Bluesky errors to platform posting errors
+      if (error instanceof PostNotFoundError) {
+        throw error;
+      }
+
+      // Authentication errors (401, invalid session)
+      if (error.status === 401 || error.message?.includes('authentication') || error.message?.includes('session')) {
+        throw new AuthenticationError('bluesky', error.message || 'Authentication failed');
+      }
+
+      // Rate limit errors (429)
+      if (error.status === 429) {
+        const retryAfter = error.headers?.['retry-after'] ? parseInt(error.headers['retry-after'], 10) : 60;
+        throw new RateLimitError('bluesky', retryAfter);
+      }
+
+      // Post not found (404)
+      if (error.status === 404 || error.message?.includes('not found') || error.message?.includes('NotFoundError')) {
+        throw new PostNotFoundError('bluesky', parentPostId);
+      }
+
+      // Network errors (timeout, connection refused)
+      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+        throw new PlatformPostingError('bluesky', 'Network timeout', true);
+      }
+
+      if (error.code === 'ECONNREFUSED' || error.message?.includes('connection refused')) {
+        throw new PlatformPostingError('bluesky', 'Connection refused', true);
+      }
+
+      // Generic platform error
+      throw new PlatformPostingError('bluesky', error.message || 'Post failed', true);
+    }
   }
 
   /**

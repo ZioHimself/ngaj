@@ -28,7 +28,8 @@ export class PlatformPostingError extends Error {
  */
 export class AuthenticationError extends PlatformPostingError {
   constructor(platform: string, message: string) {
-    throw new Error('Not implemented');
+    super(platform, `Authentication failed: ${message}. Please reconnect your account.`, false);
+    this.name = 'AuthenticationError';
   }
 }
 
@@ -41,8 +42,13 @@ export class AuthenticationError extends PlatformPostingError {
 export class RateLimitError extends PlatformPostingError {
   public readonly retryAfter: number; // seconds
 
-  constructor(platform: string, retryAfter?: number) {
-    throw new Error('Not implemented');
+  constructor(platform: string, retryAfter: number = 60) {
+    const timeStr = retryAfter >= 60 
+      ? `${Math.round(retryAfter / 60)} minute${Math.round(retryAfter / 60) !== 1 ? 's' : ''}`
+      : `${retryAfter} second${retryAfter !== 1 ? 's' : ''}`;
+    super(platform, `Rate limit exceeded. Please retry after ${timeStr} (${retryAfter} seconds).`, true);
+    this.name = 'RateLimitError';
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -56,7 +62,12 @@ export class PostNotFoundError extends PlatformPostingError {
   public readonly postId?: string;
 
   constructor(platform: string, postId?: string) {
-    throw new Error('Not implemented');
+    const message = postId 
+      ? `Post not found or was deleted: ${postId}`
+      : 'Post not found or was deleted';
+    super(platform, message, false);
+    this.name = 'PostNotFoundError';
+    this.postId = postId;
   }
 }
 
@@ -70,7 +81,12 @@ export class ContentViolationError extends PlatformPostingError {
   public readonly violationReason?: string;
 
   constructor(platform: string, violationReason?: string) {
-    throw new Error('Not implemented');
+    const message = violationReason
+      ? `Content violation: ${violationReason}`
+      : 'Content violation detected';
+    super(platform, message, false);
+    this.name = 'ContentViolationError';
+    this.violationReason = violationReason;
   }
 }
 
@@ -85,7 +101,19 @@ export class InvalidStatusError extends Error {
   public readonly expectedStatus: string | string[];
 
   constructor(currentStatus: string, expectedStatus: string | string[]) {
-    throw new Error('Not implemented');
+    const expectedStr = Array.isArray(expectedStatus) 
+      ? expectedStatus.join(' or ') 
+      : expectedStatus;
+    
+    // Special message for already posted responses
+    const message = currentStatus === 'posted'
+      ? `Cannot post response with status 'posted' - already posted. Expected status: ${expectedStr}.`
+      : `Cannot post response with status '${currentStatus}'. Expected status: ${expectedStr}.`;
+    
+    super(message);
+    this.name = 'InvalidStatusError';
+    this.currentStatus = currentStatus;
+    this.expectedStatus = expectedStatus;
   }
 }
 

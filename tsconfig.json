@@ -20,7 +20,8 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
     }
   },
   "include": ["src/shared/**/*", "tests/**/*"],

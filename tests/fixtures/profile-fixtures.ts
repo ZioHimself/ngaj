@@ -7,6 +7,7 @@ import type { Profile, CreateProfileInput } from '@/shared/types/profile';
 export const createMockProfile = (overrides?: Partial<Profile>): Profile => ({
   _id: new ObjectId(),
   name: 'Test Professional Persona',
+  principles: 'I value evidence-based reasoning, transparency, and constructive dialogue. I aim to be helpful while acknowledging uncertainty.',
   voice: {
     tone: 'professional-friendly',
     style: 'Clear technical explanations with occasional humor',
@@ -34,6 +35,7 @@ export const createMockProfileInput = (
   overrides?: Partial<CreateProfileInput>
 ): CreateProfileInput => ({
   name: 'Test Professional Persona',
+  principles: 'I value evidence-based reasoning, transparency, and constructive dialogue. I aim to be helpful while acknowledging uncertainty.',
   voice: {
     tone: 'professional-friendly',
     style: 'Clear technical explanations with occasional humor',
@@ -114,6 +116,63 @@ export const profileFixtures = {
         'Use async/await for cleaner code.',
         'Type safety prevents runtime errors.',
         'Composition over inheritance.'
+      ]
+    }
+  }),
+
+  /**
+   * Profile with empty principles (for testing optional field)
+   */
+  noPrinciples: createMockProfile({
+    name: 'No Principles Persona',
+    principles: undefined
+  }),
+
+  /**
+   * Profile with empty principles and minimal voice (for constraint testing)
+   */
+  minimalProfile: createMockProfile({
+    name: 'Minimal Persona',
+    principles: '',
+    voice: {
+      tone: 'casual',
+      style: '',
+      examples: ['Ok', 'Sure', 'Thanks']
+    }
+  }),
+
+  /**
+   * Profile with verbose principles and voice (for constraint violation testing)
+   */
+  verboseProfile: createMockProfile({
+    name: 'Verbose Persona',
+    principles: 'I believe in comprehensive, detailed explanations that cover all aspects of a topic. '.repeat(10),
+    voice: {
+      tone: 'verbose-detailed',
+      style: 'Always provide extensive context and background. Write detailed, paragraph-length responses with multiple examples. Never be brief. Always explain thoroughly with multiple perspectives and considerations.'.repeat(3),
+      examples: [
+        'Well, that\'s a great question with many nuanced layers...'.repeat(5),
+        'Let me provide a comprehensive answer covering all angles...'.repeat(5),
+        'There are several important factors to consider here...'.repeat(5)
+      ]
+    }
+  }),
+
+  /**
+   * Complete profile with all fields populated
+   */
+  completeProfile: createMockProfile({
+    name: 'Complete Test Persona',
+    principles: 'I value evidence-based reasoning, constructive dialogue, and transparency. I acknowledge uncertainty and avoid tribal language.',
+    voice: {
+      tone: 'professional-friendly',
+      style: 'Clear, concise, technical but accessible. Use examples when helpful.',
+      examples: [
+        'Great question! Here\'s how I think about it...',
+        'I\'ve found this pattern useful in practice.',
+        'Let me break this down into key points.',
+        'That\'s a nuanced topic with trade-offs.',
+        'From my experience, this approach works well.'
       ]
     }
   })

@@ -26,7 +26,7 @@ When I say "design [feature]" or "let's design [feature]":
    - ADR (WHY): Architecture Decision Record in `docs/architecture/decisions/`
    - Design Doc (HOW): Technical specification in `.agents/artifacts/designer/designs/`
    - Handoff (TEST WHAT): Test guidance in `.agents/artifacts/designer/handoffs/`
-4. Create type stubs in `src/types/` (if applicable)
+4. Create type stubs in `src/shared/types/` (if applicable)
 5. Ensure no duplication: each document has unique content, linked together
 
 ## Test-Writer Agent Mode

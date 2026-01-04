@@ -196,6 +196,39 @@ export interface Response {
    * Last update timestamp
    */
   updatedAt: Date;
+
+  /**
+   * Platform-specific identifier for posted response
+   * Populated after successful posting
+   * 
+   * Examples:
+   * - Bluesky: AT URI (e.g., "at://did:plc:abc123.../app.bsky.feed.post/xyz789")
+   * - LinkedIn: Post URN (future)
+   * - Reddit: Post ID (future)
+   * 
+   * Used for:
+   * - Linking back to platform post
+   * - Future features: edit, delete, engagement tracking
+   * 
+   * @see ADR-010: Response Draft Posting
+   */
+  platformPostId?: string;
+
+  /**
+   * Public URL to view the posted response
+   * 
+   * Examples:
+   * - Bluesky: "https://bsky.app/profile/user.bsky.social/post/xyz789"
+   * - LinkedIn: "https://www.linkedin.com/feed/update/urn:li:share:abc123"
+   * - Reddit: "https://reddit.com/r/subreddit/comments/abc123/..."
+   * 
+   * Used for:
+   * - Clickable link in UI
+   * - Sharing posted responses
+   * 
+   * @see ADR-010: Response Draft Posting
+   */
+  platformPostUrl?: string;
 }
 
 /**
@@ -258,7 +291,9 @@ export function isResponse(obj: unknown): obj is Response {
     (r.dismissedAt === undefined || r.dismissedAt instanceof Date) &&
     typeof r.metadata === 'object' &&
     typeof r.version === 'number' &&
-    r.updatedAt instanceof Date
+    r.updatedAt instanceof Date &&
+    (r.platformPostId === undefined || typeof r.platformPostId === 'string') &&
+    (r.platformPostUrl === undefined || typeof r.platformPostUrl === 'string')
   );
 }
 

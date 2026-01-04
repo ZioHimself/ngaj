@@ -10,6 +10,7 @@
 - **Author**: Social media user who created a discovered post. Stored separately with profile data (follower count, bio, handle) and updated on each discovery.
 - **Knowledge Base**: Collection of user's uploaded reference materials (PDFs, markdown, text files) used to ground AI responses
 - **Response**: AI-generated suggested reply to an opportunity, grounded in the user's knowledge base, principles, and voice. Has status (draft, posted, dismissed) and version number for multi-draft support.
+- **Response Posting**: The act of publishing a draft response to the social media platform as a threaded reply to the opportunity post. Captures platform metadata (post ID, URL, timestamp).
 - **Principles**: Core values and beliefs that shape all AI-generated responses. Stored as freeform text in user profile. Always included in generation prompts (e.g., "I value evidence-based reasoning and kindness").
 - **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Freeform text field in profile (e.g., "Friendly but professional. Technical but accessible.").
 - **Engagement**: The act of responding to or interacting with social media posts
@@ -47,6 +48,9 @@
 - **Prompt Protection**: Security mechanism using boundary markers to prevent prompt injection attacks. Untrusted opportunity text placed after `--- USER INPUT BEGINS ---` marker and treated as data, not instructions. **First-occurrence rule**: Only the first boundary marker is processed; subsequent occurrences in user content are treated as literal text, preventing "escape" attacks.
 - **Response Version**: Sequential number for multiple drafts of the same opportunity. Enables "regenerate" feature and multi-draft comparison in future versions.
 - **Draft**: Initial status of a generated response before user review. User can edit, post, or dismiss drafts.
+- **Platform Post ID**: Platform-specific identifier for a posted response (e.g., AT URI for Bluesky: "at://did:plc:.../post/xyz"). Used for linking back to the platform post and future features (edit, delete, engagement tracking).
+- **Platform Post URL**: Public, human-readable URL to view a posted response on the platform (e.g., "https://bsky.app/profile/user/post/xyz"). Clickable link in UI.
+- **PostResult**: Technical term for the data returned by platform adapters after successfully posting a response (contains postId, postUrl, postedAt timestamp).
 
 ## Development Terms
 

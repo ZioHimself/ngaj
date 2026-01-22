@@ -16,17 +16,18 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 
 ### ✅ In Scope
 1. **Single Account** - One Bluesky account, credentials via `.env`
-2. **Knowledge Base** - Manual upload (PDF/MD/TXT), vector storage, semantic search
+2. **Knowledge Base** - Manual upload (PDF/MD/TXT), vector storage, semantic search (deferred to v0.2 for UI)
 3. **Bluesky Integration** - Auth, feed polling, reply posting
 4. **Opportunity Discovery** - Scheduled cron job, simple scoring (impact + recency + keywords)
 5. **Quick Response Mode** - Claude-powered suggestions with knowledge context, user reviews and posts
-6. **Basic UI** - Dashboard, opportunity queue, knowledge management, settings
+6. **Installation & Setup** - Self-contained installer with interactive CLI wizard, first-launch web UI setup (ADR-011, ADR-012)
+7. **Basic UI** - Opportunity queue (view, generate, edit, post responses), read-only settings page
 
 ### ❌ Deferred to Future Versions
-- **v0.2**: Multi-account, multi-platform (LinkedIn/Reddit), Toulmin analysis mode
+- **v0.2**: Multi-account, multi-platform (LinkedIn/Reddit), Toulmin analysis mode, knowledge base UI, dashboard overview, settings editing UI
 - **v0.3**: Content origination (news monitoring), scheduled posts
 - **v0.4**: Analytics, safety layer, advanced scoring
-- **v0.5**: Auto-scraping past posts, full automation
+- **v0.5**: Auto-scraping past posts, full automation, automatic updates
 
 ## Rationale
 
@@ -42,6 +43,59 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 - **No Toulmin Mode**: Quick suggestions may be sufficient for 80% of cases; add if demanded
 - **No Safety Layer**: Low attack surface with local-first + manual review
 - **No Content Origination**: Responding is higher value than proactive posting
+
+## UI Scope Details
+
+### Included in v0.1
+
+**Installation & Setup:**
+- Self-contained installer package (.pkg for macOS, .msi for Windows)
+- Interactive CLI wizard for credentials (Bluesky, Claude API)
+- Automatic dependency installation (Docker Desktop, databases)
+- First-launch web UI wizard (Profile/Account setup, discovery configuration)
+
+**Opportunity Queue Page** (Primary UI - ADR-013):
+- List pending opportunities (post content, author, score)
+- Generate response button (calls Claude with knowledge context)
+- View/edit/post response workflow
+- Status tracking (pending, draft ready, posted, dismissed)
+- Server-side pagination (20 per page)
+- Manual refresh for new opportunities
+
+**Settings Page** (Read-Only):
+- Display current Profile (voice, principles, interests)
+- Display current Account (handle, connection status)
+- Display discovery schedule
+- Links to REST API documentation for advanced settings
+
+**Empty States:**
+- Empty opportunity queue messaging ("Next check in X minutes")
+- Helpful tips and placeholder text throughout
+
+### Deferred to v0.2
+
+- Dashboard overview (statistics, charts, activity feed)
+- Knowledge base management UI (upload, view, delete documents)
+- Settings editing UI (must use REST API in v0.1)
+- Multi-account switching UI
+- Analytics pages
+
+### Rationale
+
+**Why prioritize Opportunity Queue over Dashboard?**
+- Core value loop: Discover → Review → Respond
+- Dashboard is nice-to-have (tracking), not essential for MVP
+- Reduces scope to ship faster
+
+**Why defer Knowledge Base UI?**
+- REST API sufficient for technical early adopters
+- Reduces UI complexity for v0.1
+- Can validate knowledge base feature before investing in UI
+
+**Why read-only Settings?**
+- Setup wizard handles initial configuration
+- REST API available for adjustments
+- Avoids building complex form validation/editing UI
 
 ## Consequences
 
@@ -65,11 +119,12 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 ## Success Criteria
 
 v0.1 succeeds if users:
-1. Discover 5-10 relevant opportunities per day
-2. Find AI suggestions useful 70%+ of the time
-3. Post 1-3 responses they wouldn't have made otherwise
-4. Complete setup in <30 minutes
-5. Want to keep using it
+1. Install and complete setup in <15 minutes (including Docker download)
+2. Discover 5-10 relevant opportunities per day
+3. Find AI suggestions useful 70%+ of the time
+4. Post 1-3 responses they wouldn't have made otherwise
+5. Complete initial setup without external help or documentation
+6. Want to keep using it
 
 If met → Proceed to v0.2
 
@@ -86,3 +141,6 @@ If met → Proceed to v0.2
 - [Lean Startup](http://theleanstartup.com/)
 - [ADR-001: MongoDB Storage](./001-mongodb-storage.md) - Supports multi-account future
 - [ADR-002: Env Credentials](./002-env-credentials.md) - Simple for v0.1, evolvable
+- [ADR-011: Installation and Setup Architecture](./011-installation-and-setup.md) - Consumer-friendly installation experience
+- [ADR-012: First-Launch Setup Wizard](./012-first-launch-wizard.md) - Web UI guided setup flow
+- [ADR-013: Opportunity Queue UI](./013-opportunity-queue-ui.md) - Primary user interface for reviewing and responding

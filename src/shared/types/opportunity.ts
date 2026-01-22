@@ -327,4 +327,3 @@ export interface RawAuthor {
   /** Follower count */
   followerCount: number;
 }
-

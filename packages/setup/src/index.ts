@@ -10,11 +10,22 @@
  */
 
 import { runSetupWizard } from './prompts/wizard.js';
+import { installSignalHandler, removeSignalHandler } from './handlers/signal-handler.js';
 
 async function main(): Promise<void> {
   console.log('🚀 Welcome to ngaj Setup!\n');
   console.log('This wizard will help you configure your credentials.');
   console.log("Let's get you set up. This will take ~5 minutes.\n");
+  
+  // Install signal handler for graceful Ctrl+C handling
+  installSignalHandler({
+    onCancel: () => {
+      throw new Error('USER_CANCELLED');
+    },
+    onResume: () => {
+      console.log('\nContinuing setup...\n');
+    },
+  });
   
   try {
     await runSetupWizard();
@@ -27,6 +38,9 @@ async function main(): Promise<void> {
     }
     console.error('\n❌ Setup failed:', error);
     process.exit(1);
+  } finally {
+    // Clean up signal handler
+    removeSignalHandler();
   }
 }
 

@@ -8,15 +8,16 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
+      // Only include backend code that has runtime logic
+      include: [
+        'packages/backend/src/**/*.ts'
+      ],
       exclude: [
-        'node_modules/',
-        'dist/',
-        'tests/',
-        'packages/*/dist/',
+        'node_modules/**',
+        '**/dist/**',
         '**/*.spec.ts',
         '**/*.test.ts',
-        '.agents/artifacts/',
-        'installer/'
+        '**/index.ts'
       ],
       thresholds: {
         lines: 80,

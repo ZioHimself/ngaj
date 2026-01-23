@@ -17,8 +17,11 @@ export default [
     ignores: [
       'node_modules/',
       'dist/',
+      '**/dist/',
+      'packages/*/dist/',
       'coverage/',
       '.agents/artifacts/',
+      'installer/',
       '*.config.js',
       '*.config.ts',
     ],

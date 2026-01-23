@@ -235,7 +235,7 @@ export const AI_PROVIDER_ENV_VARS: Record<AIProvider, EnvVariableName[]> = {
  */
 export const CREDENTIAL_PATTERNS = {
   /** Bluesky handle: @user.bsky.social */
-  blueskyHandle: /^@[\w\-\.]+\.bsky\.social$/,
+  blueskyHandle: /^@[\w\-.]+\.bsky\.social$/,
   
   /** Bluesky app password: xxxx-xxxx-xxxx-xxxx (19 chars) */
   blueskyAppPassword: /^[\w]{4}-[\w]{4}-[\w]{4}-[\w]{4}$/,

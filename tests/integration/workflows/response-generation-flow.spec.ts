@@ -63,7 +63,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
     // Mock platform adapter
     mockPlatformAdapter = {
-      getResponseConstraints: vi.fn()
+      getConstraints: vi.fn()
     };
 
     service = new ResponseSuggestionService(
@@ -99,7 +99,7 @@ describe('Response Generation Flow - Integration Tests', () => {
       // Setup mocks
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
+      mockPlatformAdapter.getConstraints.mockReturnValue(constraints);
 
       // Stage 1: Analysis
       mockClaudeClient.analyze.mockImplementation(async () => {
@@ -179,7 +179,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
 
@@ -214,7 +214,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
 
@@ -260,7 +260,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(
@@ -298,7 +298,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockImplementation(async () => {
@@ -336,7 +336,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints({ maxLength: 300 })
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -350,9 +350,7 @@ describe('Response Generation Flow - Integration Tests', () => {
       expect(result).toBeDefined();
       expect(result.text.length).toBeLessThanOrEqual(300);
       expect(result.metadata.constraints.maxLength).toBe(300);
-      expect(mockPlatformAdapter.getResponseConstraints).toHaveBeenCalledWith(
-        'bluesky'
-      );
+      expect(mockPlatformAdapter.getConstraints).toHaveBeenCalled();
     });
 
     it('should reject response that violates platform constraints', async () => {
@@ -368,7 +366,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints({ maxLength: 300 })
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -395,7 +393,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -423,7 +421,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       
@@ -460,7 +458,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       
@@ -485,7 +483,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockRejectedValue(
@@ -527,7 +525,7 @@ describe('Response Generation Flow - Integration Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());

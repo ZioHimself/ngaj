@@ -1,14 +1,30 @@
-import { Db, ObjectId, Collection } from 'mongodb';
+import { Db, ObjectId, Collection, OptionalUnlessRequiredId } from 'mongodb';
 import type {
   Response,
   CreateResponseInput,
   UpdateResponseInput,
-  OpportunityAnalysis
+  OpportunityAnalysis,
+  Opportunity,
+  Profile
 } from '@ngaj/shared';
-import type { Opportunity } from '@ngaj/shared';
-import type { Profile } from '@ngaj/shared';
-import { buildAnalysisPrompt, buildGenerationPrompt } from '../utils/prompt-builder';
+import type { IPlatformAdapter } from '../adapters/platform-adapter';
+import { buildAnalysisPrompt, buildGenerationPrompt, KBChunk } from '../utils/prompt-builder';
 import { validateConstraints } from '../utils/constraint-validator';
+
+/**
+ * Interface for AI analysis/generation client (e.g., Claude)
+ */
+export interface IClaudeClient {
+  analyze(prompt: string): Promise<OpportunityAnalysis>;
+  generate(prompt: string): Promise<string>;
+}
+
+/**
+ * Interface for vector database client (e.g., ChromaDB)
+ */
+export interface IChromaClient {
+  search(params: { keywords: string[] }): Promise<KBChunk[]>;
+}
 
 /**
  * Response Suggestion Service
@@ -20,15 +36,15 @@ import { validateConstraints } from '../utils/constraint-validator';
  * @see ADR-009: Response Suggestion Architecture
  */
 export class ResponseSuggestionService {
-  private responsesCollection: Collection<any>;
-  private opportunitiesCollection: Collection<any>;
-  private profilesCollection: Collection<any>;
+  private responsesCollection: Collection<Response>;
+  private opportunitiesCollection: Collection<Opportunity>;
+  private profilesCollection: Collection<Profile>;
 
   constructor(
     db: Db,
-    private claudeClient: any,
-    private chromaClient: any,
-    private platformAdapter: any
+    private claudeClient: IClaudeClient,
+    private chromaClient: IChromaClient,
+    private platformAdapter: IPlatformAdapter
   ) {
     this.responsesCollection = db.collection('responses');
     this.opportunitiesCollection = db.collection('opportunities');
@@ -81,9 +97,7 @@ export class ResponseSuggestionService {
     }
 
     // Get platform constraints
-    const constraints = this.platformAdapter.getResponseConstraints(
-      opportunity.platform
-    );
+    const constraints = this.platformAdapter.getConstraints();
 
     // Determine next version number
     const existingResponses = await this.responsesCollection
@@ -91,7 +105,7 @@ export class ResponseSuggestionService {
       .sort({ version: 1 })
       .toArray() || [];
     const version = existingResponses.length > 0
-      ? Math.max(...existingResponses.map((r: any) => r.version)) + 1
+      ? Math.max(...existingResponses.map((r) => r.version)) + 1
       : 1;
 
     // 2. Stage 1: Analyze opportunity → Extract keywords
@@ -117,7 +131,7 @@ export class ResponseSuggestionService {
     const analysisTimeMs = Date.now() - analysisStartTime;
 
     // 3. Search KB using keywords
-    let kbChunks: any[] = [];
+    let kbChunks: KBChunk[] = [];
     try {
       kbChunks = await this.chromaClient.search({
         keywords: analysis!.keywords
@@ -192,7 +206,7 @@ export class ResponseSuggestionService {
     const result = await this.responsesCollection.insertOne({
       ...responseDoc,
       updatedAt: now
-    });
+    } as OptionalUnlessRequiredId<Response>);
 
     return {
       _id: result.insertedId,
@@ -216,7 +230,7 @@ export class ResponseSuggestionService {
       .sort({ version: 1 })
       .toArray();
 
-    return responses.map((doc: any) => ({
+    return responses.map((doc) => ({
       ...doc,
       _id: doc._id
     }));

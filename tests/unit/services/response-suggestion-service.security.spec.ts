@@ -61,7 +61,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
     // Mock platform adapter
     mockPlatformAdapter = {
-      getResponseConstraints: vi.fn()
+      getConstraints: vi.fn()
     };
 
     service = new ResponseSuggestionService(
@@ -89,7 +89,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -129,7 +129,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -168,7 +168,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -210,7 +210,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -247,7 +247,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
 
@@ -299,7 +299,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -336,7 +336,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -375,7 +375,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       // Should still return valid JSON, not unstructured text
@@ -418,7 +418,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       // Should analyze the entire text, not return the injected JSON
@@ -463,7 +463,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -498,7 +498,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -533,7 +533,7 @@ describe('ResponseSuggestionService - Security Tests', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(

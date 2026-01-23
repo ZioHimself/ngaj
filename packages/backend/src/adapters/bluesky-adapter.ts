@@ -1,4 +1,7 @@
 import type { BskyAgent } from '@atproto/api';
+import type { Notification } from '@atproto/api/dist/client/types/app/bsky/notification/listNotifications';
+import type { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
+import type { Record as PostRecord } from '@atproto/api/dist/client/types/app/bsky/feed/post';
 import type { IPlatformAdapter, FetchOptions } from './platform-adapter';
 import type { RawPost, RawAuthor } from '@ngaj/shared';
 import type { PlatformConstraints } from '@ngaj/shared';
@@ -8,6 +11,47 @@ import {
   PostNotFoundError,
   PlatformPostingError
 } from '@ngaj/shared';
+
+/**
+ * Error shape for Bluesky API errors
+ */
+interface BlueskyApiError {
+  status?: number;
+  message?: string;
+  code?: string;
+  headers?: Record<string, string>;
+}
+
+/**
+ * Extended BskyAgent interface for methods not fully typed in @atproto/api
+ * These represent the actual runtime behavior of the agent
+ */
+interface ExtendedBskyAgent extends BskyAgent {
+  getPost(params: { uri: string }): Promise<GetPostResponse>;
+  post(params: { text: string; reply?: ReplyRef }): Promise<PostResponse>;
+  session?: { handle: string };
+}
+
+interface GetPostResponse {
+  value: {
+    uri: string;
+    cid: string;
+    reply?: {
+      root: { uri: string; cid: string };
+    };
+  };
+}
+
+interface ReplyRef {
+  parent: { uri: string; cid: string };
+  root: { uri: string; cid: string };
+}
+
+interface PostResponse {
+  uri: string;
+  cid: string;
+  createdAt: string;
+}
 
 /**
  * Bluesky platform adapter implementation
@@ -36,7 +80,7 @@ export class BlueskyAdapter implements IPlatformAdapter {
     const { data } = await this.agent.listNotifications({ limit });
 
     // Filter for reply notifications after 'since' date
-    const replyNotifications = data.notifications.filter((notif: any) => {
+    const replyNotifications = data.notifications.filter((notif: Notification) => {
       if (notif.reason !== 'reply') return false;
       if (since) {
         const notifDate = new Date(notif.indexedAt);
@@ -92,7 +136,7 @@ export class BlueskyAdapter implements IPlatformAdapter {
         for (const post of data.posts) {
           // Filter by since date if provided
           if (since) {
-            const postDate = new Date((post.record as any).createdAt);
+            const postDate = new Date((post.record as PostRecord).createdAt);
             if (postDate < since) continue;
           }
 
@@ -131,15 +175,16 @@ export class BlueskyAdapter implements IPlatformAdapter {
   /**
    * Transform Bluesky post from getPost() response
    */
-  private transformPost(post: any): RawPost {
+  private transformPost(post: PostView): RawPost {
     const postId = post.uri.split('/').pop();
     const authorHandle = post.author.handle;
+    const record = post.record as PostRecord;
     
     return {
       id: post.uri,
       url: `https://bsky.app/profile/${authorHandle}/post/${postId}`,
-      text: post.record.text,
-      createdAt: new Date(post.record.createdAt),
+      text: record.text,
+      createdAt: new Date(record.createdAt),
       authorId: post.author.did,
       likes: post.likeCount || 0,
       reposts: post.repostCount || 0,
@@ -150,15 +195,16 @@ export class BlueskyAdapter implements IPlatformAdapter {
   /**
    * Transform Bluesky post from searchPosts() response
    */
-  private transformSearchPost(post: any): RawPost {
+  private transformSearchPost(post: PostView): RawPost {
     const postId = post.uri.split('/').pop();
     const authorHandle = post.author.handle;
+    const record = post.record as PostRecord;
     
     return {
       id: post.uri,
       url: `https://bsky.app/profile/${authorHandle}/post/${postId}`,
-      text: post.record.text,
-      createdAt: new Date(post.record.createdAt),
+      text: record.text,
+      createdAt: new Date(record.createdAt),
       authorId: post.author.did,
       likes: post.likeCount || 0,
       reposts: post.repostCount || 0,
@@ -199,34 +245,37 @@ export class BlueskyAdapter implements IPlatformAdapter {
    * @see ADR-010: Response Draft Posting
    */
   async post(parentPostId: string, responseText: string): Promise<import('./platform-adapter').PostResult> {
+    // Cast agent to extended interface for methods not fully typed in @atproto/api
+    const extendedAgent = this.agent as unknown as ExtendedBskyAgent;
+
     try {
       // 1. Fetch parent post to get CID and reply.root (for threading)
-      const parentPost = await (this.agent as any).getPost({ uri: parentPostId });
+      const parentPost = await extendedAgent.getPost({ uri: parentPostId });
 
       if (!parentPost || !parentPost.value) {
         throw new PostNotFoundError('bluesky', parentPostId);
       }
 
       // 2. Construct reply structure
-      const reply = {
+      const reply: ReplyRef = {
         parent: {
-          uri: parentPost.value.uri as string,
-          cid: parentPost.value.cid as string,
+          uri: parentPost.value.uri,
+          cid: parentPost.value.cid,
         },
         root: parentPost.value.reply?.root || {
-          uri: parentPost.value.uri as string,
-          cid: parentPost.value.cid as string,
+          uri: parentPost.value.uri,
+          cid: parentPost.value.cid,
         },
       };
 
       // 3. Post response as threaded reply
-      const result = await (this.agent as any).post({
+      const result = await extendedAgent.post({
         text: responseText,
         reply,
       });
 
       // 4. Construct public URL
-      const handle = (this.agent as any).session?.handle || 'unknown';
+      const handle = extendedAgent.session?.handle || 'unknown';
       const rkey = result.uri.split('/').pop();
       const postUrl = `https://bsky.app/profile/${handle}/post/${rkey}`;
 
@@ -236,39 +285,41 @@ export class BlueskyAdapter implements IPlatformAdapter {
         postUrl,
         postedAt: new Date(result.createdAt),
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Map Bluesky errors to platform posting errors
       if (error instanceof PostNotFoundError) {
         throw error;
       }
 
+      const err = error as BlueskyApiError;
+
       // Authentication errors (401, invalid session)
-      if (error.status === 401 || error.message?.includes('authentication') || error.message?.includes('session')) {
-        throw new AuthenticationError('bluesky', error.message || 'Authentication failed');
+      if (err.status === 401 || err.message?.includes('authentication') || err.message?.includes('session')) {
+        throw new AuthenticationError('bluesky', err.message || 'Authentication failed');
       }
 
       // Rate limit errors (429)
-      if (error.status === 429) {
-        const retryAfter = error.headers?.['retry-after'] ? parseInt(error.headers['retry-after'], 10) : 60;
+      if (err.status === 429) {
+        const retryAfter = err.headers?.['retry-after'] ? parseInt(err.headers['retry-after'], 10) : 60;
         throw new RateLimitError('bluesky', retryAfter);
       }
 
       // Post not found (404)
-      if (error.status === 404 || error.message?.includes('not found') || error.message?.includes('NotFoundError')) {
+      if (err.status === 404 || err.message?.includes('not found') || err.message?.includes('NotFoundError')) {
         throw new PostNotFoundError('bluesky', parentPostId);
       }
 
       // Network errors (timeout, connection refused)
-      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+      if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
         throw new PlatformPostingError('bluesky', 'Network timeout', true);
       }
 
-      if (error.code === 'ECONNREFUSED' || error.message?.includes('connection refused')) {
+      if (err.code === 'ECONNREFUSED' || err.message?.includes('connection refused')) {
         throw new PlatformPostingError('bluesky', 'Connection refused', true);
       }
 
       // Generic platform error
-      throw new PlatformPostingError('bluesky', error.message || 'Post failed', true);
+      throw new PlatformPostingError('bluesky', err.message || 'Post failed', true);
     }
   }
 

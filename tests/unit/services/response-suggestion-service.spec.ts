@@ -67,7 +67,7 @@ describe('ResponseSuggestionService', () => {
 
     // Mock platform adapter
     mockPlatformAdapter = {
-      getResponseConstraints: vi.fn()
+      getConstraints: vi.fn()
     };
 
     service = new ResponseSuggestionService(
@@ -104,7 +104,7 @@ describe('ResponseSuggestionService', () => {
       mockProfilesCollection.findOne.mockResolvedValue(profile);
 
       // Mock platform adapter
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
+      mockPlatformAdapter.getConstraints.mockReturnValue(constraints);
 
       // Mock Stage 1: Analysis
       mockClaudeClient.analyze.mockResolvedValue(
@@ -174,7 +174,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
+      mockPlatformAdapter.getConstraints.mockReturnValue(constraints);
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
       mockChromaClient.search.mockResolvedValue([]); // No KB chunks
       mockClaudeClient.generate.mockResolvedValue('Response without KB context.');
@@ -205,7 +205,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
+      mockPlatformAdapter.getConstraints.mockReturnValue(constraints);
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
       mockChromaClient.search.mockResolvedValue([]);
       mockClaudeClient.generate.mockResolvedValue('Generic response.');
@@ -267,7 +267,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(constraints);
+      mockPlatformAdapter.getConstraints.mockReturnValue(constraints);
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
       mockChromaClient.search.mockResolvedValue([]);
       // Generate response that's too long
@@ -295,7 +295,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       // Mock finding existing responses
@@ -330,7 +330,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       // Mock malformed analysis response
@@ -354,7 +354,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());
@@ -380,7 +380,7 @@ describe('ResponseSuggestionService', () => {
 
       mockOpportunitiesCollection.findOne.mockResolvedValue(opportunity);
       mockProfilesCollection.findOne.mockResolvedValue(profile);
-      mockPlatformAdapter.getResponseConstraints.mockReturnValue(
+      mockPlatformAdapter.getConstraints.mockReturnValue(
         createMockConstraints()
       );
       mockClaudeClient.analyze.mockResolvedValue(createMockAnalysis());

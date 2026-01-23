@@ -46,26 +46,6 @@ export interface ScriptValidationResult {
 }
 
 /**
- * Validate a macOS post-install script (bash)
- * 
- * @param scriptContent - Content of the bash script
- * @returns Validation result
- */
-export function validateMacOSScript(scriptContent: string): ScriptValidationResult {
-  throw new Error('Not implemented');
-}
-
-/**
- * Validate a Windows post-install script (PowerShell)
- * 
- * @param scriptContent - Content of the PowerShell script
- * @returns Validation result
- */
-export function validateWindowsScript(scriptContent: string): ScriptValidationResult {
-  throw new Error('Not implemented');
-}
-
-/**
  * Expected patterns for macOS bash scripts
  */
 export const MACOS_PATTERNS = {
@@ -94,3 +74,68 @@ export const WINDOWS_PATTERNS = {
   waitsForHealth: /Invoke-WebRequest.*localhost:3000\/health/,
   opensBrowser: /Start-Process.*localhost:3000/,
 } as const;
+
+/**
+ * Validate script content against a set of patterns
+ * 
+ * @param scriptContent - Content of the script to validate
+ * @param patterns - Pattern object to match against
+ * @returns Validation result
+ */
+function validateScript(
+  scriptContent: string,
+  patterns: Record<keyof ScriptRequirements, RegExp>
+): ScriptValidationResult {
+  const requirements: ScriptRequirements = {
+    checksDocker: false,
+    createsDataDirs: false,
+    waitsForDocker: false,
+    pullsSetupContainer: false,
+    runsSetupWizard: false,
+    checksEnvFile: false,
+    startsServices: false,
+    waitsForHealth: false,
+    opensBrowser: false,
+  };
+
+  const missing: (keyof ScriptRequirements)[] = [];
+  const errors: string[] = [];
+
+  // Check each pattern
+  for (const key of Object.keys(patterns) as (keyof ScriptRequirements)[]) {
+    const pattern = patterns[key];
+    const matches = pattern.test(scriptContent);
+    requirements[key] = matches;
+    
+    if (!matches) {
+      missing.push(key);
+    }
+  }
+
+  return {
+    valid: missing.length === 0,
+    requirements,
+    missing,
+    errors,
+  };
+}
+
+/**
+ * Validate a macOS post-install script (bash)
+ * 
+ * @param scriptContent - Content of the bash script
+ * @returns Validation result
+ */
+export function validateMacOSScript(scriptContent: string): ScriptValidationResult {
+  return validateScript(scriptContent, MACOS_PATTERNS);
+}
+
+/**
+ * Validate a Windows post-install script (PowerShell)
+ * 
+ * @param scriptContent - Content of the PowerShell script
+ * @returns Validation result
+ */
+export function validateWindowsScript(scriptContent: string): ScriptValidationResult {
+  return validateScript(scriptContent, WINDOWS_PATTERNS);
+}

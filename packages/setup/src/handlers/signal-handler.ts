@@ -7,7 +7,7 @@
  * @see ADR-011: Installation and Setup Architecture (Scenario 2.2.5)
  */
 
-import type inquirer from 'inquirer';
+import inquirer from 'inquirer';
 
 /**
  * Result of cancellation confirmation prompt
@@ -27,6 +27,9 @@ export interface SignalHandlerOptions {
   onResume: () => void;
 }
 
+// Store the current signal handler for removal
+let currentHandler: ((...args: unknown[]) => void) | null = null;
+
 /**
  * Prompt user for cancellation confirmation
  * Shows "Setup incomplete. Quit? (y/n)" dialog
@@ -34,7 +37,16 @@ export interface SignalHandlerOptions {
  * @returns Whether user confirmed cancellation
  */
 export async function promptCancellationConfirmation(): Promise<CancellationResult> {
-  throw new Error('Not implemented');
+  const { confirm } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: 'Setup incomplete. Quit?',
+      default: false,
+    },
+  ]);
+
+  return { confirmed: confirm };
 }
 
 /**
@@ -44,12 +56,37 @@ export async function promptCancellationConfirmation(): Promise<CancellationResu
  * @returns Cleanup function to remove the handler
  */
 export function installSignalHandler(options: SignalHandlerOptions): () => void {
-  throw new Error('Not implemented');
+  const { onCancel, onResume } = options;
+
+  // Create async handler for SIGINT
+  const handler = async () => {
+    const result = await promptCancellationConfirmation();
+    
+    if (result.confirmed) {
+      onCancel();
+    } else {
+      onResume();
+    }
+  };
+
+  // Store reference for removal
+  currentHandler = handler;
+
+  // Register the handler
+  process.on('SIGINT', handler);
+
+  // Return cleanup function
+  return () => {
+    removeSignalHandler();
+  };
 }
 
 /**
  * Remove installed signal handler
  */
 export function removeSignalHandler(): void {
-  throw new Error('Not implemented');
+  if (currentHandler) {
+    process.removeListener('SIGINT', currentHandler);
+    currentHandler = null;
+  }
 }

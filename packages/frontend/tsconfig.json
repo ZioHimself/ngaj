@@ -18,12 +18,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@ngaj/shared": ["../shared/src"],
-      "@ngaj/shared/*": ["../shared/src/*"]
-    },
-    "baseUrl": "."
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

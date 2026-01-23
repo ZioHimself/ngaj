@@ -27,17 +27,17 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built artifacts
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+# Copy workspace configuration (needed for npm ci)
+COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/
-COPY --from=builder /app/packages/setup/dist ./packages/setup/dist
 COPY --from=builder /app/packages/setup/package.json ./packages/setup/
 
-# Copy root package.json for workspace resolution
-COPY package.json ./
+# Copy built artifacts
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/setup/dist ./packages/setup/dist
 
-# Install production dependencies only
-RUN npm ci --workspace=@ngaj/setup --omit=dev
+# Install production dependencies only for both workspaces
+RUN npm ci --workspace=@ngaj/shared --workspace=@ngaj/setup --omit=dev
 
 # Volume for writing .env file to host
 VOLUME ["/data"]

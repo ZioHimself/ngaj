@@ -9,8 +9,8 @@ import {
   cronExpressions
 } from '../../fixtures/account-fixtures';
 import { createMockProfile } from '../../fixtures/profile-fixtures';
-import type { Account } from '@/shared/types/account';
-import type { Profile } from '@/shared/types/profile';
+import type { Account } from '@ngaj/shared';
+import type { Profile } from '@ngaj/shared';
 
 /**
  * Integration tests for Account MongoDB operations

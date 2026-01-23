@@ -3,10 +3,10 @@ import { ObjectId } from 'mongodb';
 import {
   validateResponseForPosting,
   validatePostResult
-} from '@/backend/utils/response-validators';
-import { InvalidStatusError } from '@/shared/errors/platform-posting-errors';
+} from '@ngaj/backend/utils/response-validators';
+import { InvalidStatusError } from '@ngaj/shared';
 import { createMockResponse } from '@tests/fixtures/response-fixtures';
-import type { PostResult } from '@/backend/adapters/platform-adapter';
+import type { PostResult } from '@ngaj/backend/adapters/platform-adapter';
 
 describe('Response Validators', () => {
   describe('validateResponseForPosting()', () => {

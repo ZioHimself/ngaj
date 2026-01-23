@@ -6,7 +6,7 @@ import {
   PostNotFoundError,
   ContentViolationError,
   InvalidStatusError
-} from '@/shared/errors/platform-posting-errors';
+} from '@ngaj/shared';
 
 describe('PlatformPostingErrors', () => {
   describe('PlatformPostingError', () => {

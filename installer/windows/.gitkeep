@@ -1,0 +1,7 @@
+# Placeholder for Windows installer resources
+# Add the following files here:
+# - ngaj.ico (app icon)
+# - license.rtf (license in RTF format)
+# - banner.bmp (WiX banner, 493x58)
+# - dialog.bmp (WiX dialog background, 493x312)
+# - ngaj.wxs (WiX main configuration)

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BlueskyAdapter } from '@/backend/adapters/bluesky-adapter';
+import { BlueskyAdapter } from '@ngaj/backend/adapters/bluesky-adapter';
 import {
   AuthenticationError,
   RateLimitError,
   PostNotFoundError,
   PlatformPostingError
-} from '@/shared/errors/platform-posting-errors';
+} from '@ngaj/shared';
 import type { BskyAgent } from '@atproto/api';
 
 describe('BlueskyAdapter', () => {

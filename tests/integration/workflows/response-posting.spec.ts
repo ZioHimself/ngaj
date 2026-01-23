@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Db, ObjectId } from 'mongodb';
-import { ResponsePostingService } from '@/backend/services/response-posting-service';
+import { ResponsePostingService } from '@ngaj/backend/services/response-posting-service';
 import {
   AuthenticationError,
   RateLimitError,
@@ -9,11 +9,11 @@ import {
   PlatformPostingError,
   ContentViolationError,
   InvalidStatusError
-} from '@/shared/errors/platform-posting-errors';
+} from '@ngaj/shared';
 import { createMockResponse } from '@tests/fixtures/response-fixtures';
 import { createMockOpportunity } from '@tests/fixtures/opportunity-fixtures';
 import { createMockAccount } from '@tests/fixtures/account-fixtures';
-import type { PostResult } from '@/backend/adapters/platform-adapter';
+import type { PostResult } from '@ngaj/backend/adapters/platform-adapter';
 
 describe('Response Posting Workflow (Integration)', () => {
   let mongoServer: MongoMemoryServer;

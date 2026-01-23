@@ -5,7 +5,9 @@
 
 ## Overview
 
-The installation and setup system provides zero-prerequisites installation for non-technical users. Testing must verify the complete flow: Docker installation → setup container wizard → credential validation → production services startup. Focus on platform-specific scripts (macOS/Windows), containerized wizard behavior, and error handling.
+The installation and setup system provides zero-prerequisites installation for non-technical users. Testing must verify the complete flow: Docker installation → setup container wizard → credential validation → production services startup. Focus on OS-specific scripts (macOS/Windows), containerized wizard behavior, and error handling.
+
+**Terminology**: "Platform" = Social Network (Bluesky). "OS" = Operating System (macOS, Windows).
 
 ---
 
@@ -35,7 +37,7 @@ The installation and setup system provides zero-prerequisites installation for n
 
 ## 2. Test Scenarios
 
-### 2.1 Unit Tests: Platform-Specific Scripts
+### 2.1 Unit Tests: OS-Specific Scripts
 
 See [Design Doc Section 3](../designs/installation-setup-design.md#3-platform-specific-scripts) for script responsibilities.
 

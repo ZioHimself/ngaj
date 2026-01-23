@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateConstraints } from '@/backend/utils/constraint-validator';
+import { validateConstraints } from '@ngaj/backend/utils/constraint-validator';
 import { createMockConstraints } from '@tests/fixtures/response-fixtures';
 
 describe('Constraint Validator', () => {

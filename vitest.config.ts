@@ -12,9 +12,11 @@ export default defineConfig({
         'node_modules/',
         'dist/',
         'tests/',
+        'packages/*/dist/',
         '**/*.spec.ts',
         '**/*.test.ts',
-        '.agents/artifacts/'
+        '.agents/artifacts/',
+        'installer/'
       ],
       thresholds: {
         lines: 80,
@@ -24,15 +26,14 @@ export default defineConfig({
       }
     },
     include: ['tests/**/*.spec.ts'],
-    exclude: ['node_modules', 'dist', '.agents/artifacts']
+    exclude: ['node_modules', 'dist', '.agents/artifacts', 'packages/*/dist']
   },
   resolve: {
     alias: {
-      '@/backend': path.resolve(__dirname, './src/backend'),
-      '@/frontend': path.resolve(__dirname, './src/frontend'),
-      '@/shared': path.resolve(__dirname, './src/shared'),
-      '@': path.resolve(__dirname, './src'),
-      '@agents': path.resolve(__dirname, './.agents'),
+      '@ngaj/shared': path.resolve(__dirname, './packages/shared/src'),
+      '@ngaj/backend': path.resolve(__dirname, './packages/backend/src'),
+      '@ngaj/frontend': path.resolve(__dirname, './packages/frontend/src'),
+      '@ngaj/setup': path.resolve(__dirname, './packages/setup/src'),
       '@tests': path.resolve(__dirname, './tests')
     }
   }

@@ -475,5 +475,6 @@ v0.1 wizard succeeds if:
 
 ## Related Documentation
 
-- Design Doc: `.agents/artifacts/designer/designs/first-launch-wizard-design.md` (to be created)
-- Handoff Doc: `.agents/artifacts/designer/handoffs/first-launch-wizard-handoff.md` (to be created)
+- Design Doc: `.agents/artifacts/designer/designs/first-launch-wizard-design.md`
+- Handoff Doc: `.agents/artifacts/designer/handoffs/007-first-launch-wizard-handoff.md`
+- Type Definitions: `src/shared/types/wizard.ts`

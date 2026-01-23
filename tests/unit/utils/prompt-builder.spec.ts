@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildAnalysisPrompt,
   buildGenerationPrompt
-} from '@/backend/utils/prompt-builder';
+} from '@ngaj/backend/utils/prompt-builder';
 import { createMockConstraints } from '@tests/fixtures/response-fixtures';
 import { createMockProfile } from '@tests/fixtures/profile-fixtures';
 import { createMockKBChunks } from '@tests/fixtures/response-fixtures';

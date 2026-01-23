@@ -1,0 +1,26 @@
+# ngaj Development Docker Compose Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# This override provides development-friendly settings:
+# - Exposed database ports for local tools
+# - Local .env file (not ~/.ngaj/.env)
+# - Volume mounts for hot reload (optional)
+
+services:
+  mongodb:
+    ports:
+      - "27017:27017"
+
+  chromadb:
+    ports:
+      - "8000:8000"
+
+  backend:
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    # Uncomment for hot reload development:
+    # volumes:
+    #   - ./packages/backend/dist:/app/packages/backend/dist
+    #   - ./packages/shared/dist:/app/packages/shared/dist

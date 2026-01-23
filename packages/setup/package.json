@@ -1,0 +1,37 @@
+{
+  "name": "@ngaj/setup",
+  "version": "0.1.0",
+  "description": "ngaj installation setup wizard CLI",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "ngaj-setup": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "docker:build": "docker build -t ngaj/setup -f Dockerfile ../.."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@atproto/api": "^0.13.0",
+    "@ngaj/shared": "*",
+    "chalk": "^5.6.2",
+    "dotenv": "^16.4.0",
+    "inquirer": "^9.2.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^24.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "license": "MIT"
+}

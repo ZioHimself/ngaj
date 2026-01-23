@@ -4,7 +4,7 @@ import type {
   TextChunk,
   KnowledgeQueryResult,
   KnowledgeDocumentProcessingMetadata
-} from '@/shared/types/knowledge-base';
+} from '@ngaj/shared';
 
 /**
  * Factory function to create a valid KnowledgeDocument for testing

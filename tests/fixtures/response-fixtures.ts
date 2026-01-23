@@ -6,7 +6,7 @@ import type {
   ResponseStatus,
   PlatformConstraints,
   OpportunityAnalysis
-} from '@/shared/types/response';
+} from '@ngaj/shared';
 import {
   createMockOpportunity
 } from './opportunity-fixtures';

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { DocumentProcessor } from '@/backend/processors/document-processor';
+import { DocumentProcessor } from '@ngaj/backend/processors/document-processor';
 import {
   mockExtractedText,
   createMockEmbedding
 } from '../../fixtures/knowledge-base-fixtures';
-import { ExtractionError, EmbeddingError } from '@/shared/types/knowledge-base';
+import { ExtractionError, EmbeddingError } from '@ngaj/shared';
 
 describe('DocumentProcessor', () => {
   let processor: DocumentProcessor;

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { ResponseSuggestionService } from '@/backend/services/response-suggestion-service';
+import { ResponseSuggestionService } from '@ngaj/backend/services/response-suggestion-service';
 import {
   createMockResponse,
   createMockAnalysis,

@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { ProfileService } from '@/backend/services/profile-service';
+import { ProfileService } from '@ngaj/backend/services/profile-service';
 import { 
   createMockProfile, 
   createMockProfileInput, 
   invalidProfiles 
 } from '../../fixtures/profile-fixtures';
-import type { CreateProfileInput, UpdateProfileInput } from '@/shared/types/profile';
+import type { CreateProfileInput, UpdateProfileInput } from '@ngaj/shared';
 
 describe('ProfileService', () => {
   let service: ProfileService;

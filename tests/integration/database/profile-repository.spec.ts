@@ -5,7 +5,7 @@ import {
   createMockProfileInput, 
   createMockProfiles
 } from '../../fixtures/profile-fixtures';
-import type { Profile } from '@/shared/types/profile';
+import type { Profile } from '@ngaj/shared';
 
 /**
  * Integration tests for Profile MongoDB operations

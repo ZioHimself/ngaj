@@ -4,7 +4,7 @@ import type {
   CreateAccountInput, 
   Platform, 
   AccountStatus
-} from '@/shared/types/account';
+} from '@ngaj/shared';
 
 /**
  * Factory function to create a valid account for testing

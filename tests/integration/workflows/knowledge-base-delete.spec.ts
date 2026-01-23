@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MongoClient, Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { KnowledgeBaseService } from '@/backend/services/knowledge-base-service';
+import { KnowledgeBaseService } from '@ngaj/backend/services/knowledge-base-service';
 import { createMockDocument } from '../../fixtures/knowledge-base-fixtures';
-import { NotFoundError } from '@/shared/types/knowledge-base';
+import { NotFoundError } from '@ngaj/shared';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';

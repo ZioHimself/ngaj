@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import { AccountService } from '@/backend/services/account-service';
+import { AccountService } from '@ngaj/backend/services/account-service';
 import { 
   createMockAccount, 
   createMockAccountInput,
@@ -9,7 +9,7 @@ import {
   cronExpressions
 } from '../../fixtures/account-fixtures';
 import { createMockProfile } from '../../fixtures/profile-fixtures';
-import type { CreateAccountInput, UpdateAccountInput, Platform } from '@/shared/types/account';
+import type { CreateAccountInput, UpdateAccountInput, Platform } from '@ngaj/shared';
 
 describe('AccountService', () => {
   let service: AccountService;

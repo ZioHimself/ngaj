@@ -18,7 +18,7 @@ This creates barriers for the target audience. We need a **self-contained instal
 1. **Requires zero prerequisites** - No assumptions about installed software
 2. **Guides credential setup** - Interactive prompts with help links
 3. **Handles dependencies** - Automatically installs Docker, databases, runtime
-4. **Works cross-platform** - macOS and Windows (Linux in v0.2)
+4. **Works cross-OS** - macOS and Windows (Linux in v0.2)
 5. **Starts services automatically** - User goes from download to working app in <10 minutes
 
 **Design Constraints:**
@@ -38,7 +38,7 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 
 **Package Contents (~10MB):**
 - Docker Compose configuration files
-- Installation scripts (pre/post-install hooks, platform-specific)
+- Installation scripts (pre/post-install hooks, OS-specific)
 - Uninstall instructions (manual for v0.1)
 
 **What's downloaded during installation:**
@@ -429,17 +429,25 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
 
 **Technology:** Node.js CLI app (inquirer.js for prompts)
 
+**Type Definitions:** `packages/shared/src/types/setup.ts` - Platform-abstracted credential types
+
 **Image:** Pre-built `ngaj/setup:latest` on Docker Hub
 - Base: `node:20-alpine` (~50MB)
 - Dependencies: inquirer.js, @atproto/api, @anthropic-ai/sdk
 - Entrypoint: `/app/setup.js` (interactive wizard)
 - Volume mount: `/data` → `~/.ngaj` on host (writes `.env` file)
 
+**Platform Abstraction:**
+- `PlatformCredentials` union type enables multi-platform support (v0.2+)
+- v0.1: Only `BlueskyCredentials` implemented
+- v0.2+: Add `LinkedInCredentials`, `RedditCredentials`
+- `AICredentials` abstraction for future AI provider support
+
 **Workflow:**
-1. Prompt for credentials (Bluesky handle, app password, Claude API key)
-2. Validate format (regex checks)
-3. Test connections (Bluesky `createSession`, Claude API call)
-4. Write to `/data/.env` (mounted volume, appears on host as `~/.ngaj/.env`)
+1. Prompt for credentials (uses `SetupWizardStep` types)
+2. Validate format (uses `CREDENTIAL_PATTERNS` constants)
+3. Test connections (returns `CredentialValidationResult`)
+4. Write to `/data/.env` (uses `PLATFORM_ENV_VARS` mapping)
 5. Exit (container destroyed, credentials remain on host)
 
 ## Success Criteria
@@ -484,5 +492,16 @@ v0.1 installation succeeds if:
 
 ## Related Documentation
 
-- Design Doc: `.agents/artifacts/designer/designs/installation-setup-design.md` (to be created)
-- Handoff Doc: `.agents/artifacts/designer/handoffs/installation-setup-handoff.md` (to be created)
+- Design Doc: `.agents/artifacts/designer/designs/installation-setup-design.md`
+- Handoff Doc: `.agents/artifacts/designer/handoffs/006-installation-setup-handoff.md`
+- Type Definitions: `packages/shared/src/types/setup.ts`
+- GitHub Issue: [#10 - Installation and Setup](https://github.com/ZioHimself/ngaj/issues/10)
+
+## Project Structure Notes
+
+The installation feature requires restructuring to npm workspaces:
+- `packages/setup/` - Setup wizard CLI (separate deps, clean Docker image)
+- `packages/shared/` - Types used by backend, frontend, and setup
+- `installer/` - OS-specific packaging (macOS .pkg, Windows .msi)
+
+See Design Doc Section 8 for complete structure.

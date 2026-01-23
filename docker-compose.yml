@@ -1,0 +1,72 @@
+# ngaj Production Docker Compose Configuration
+# Usage: docker compose up -d
+#
+# Services:
+# - mongodb: Database for profiles, accounts, opportunities, responses
+# - chromadb: Vector database for knowledge base embeddings
+# - backend: ngaj API server (includes frontend static files)
+#
+# Prerequisites:
+# - ~/.ngaj/.env must exist with credentials (created by setup wizard)
+# - Docker Desktop running
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: ngaj-mongodb
+    restart: unless-stopped
+    volumes:
+      - ${HOME}/.ngaj/data/mongodb:/data/db
+    networks:
+      - ngaj-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: ngaj-chromadb
+    restart: unless-stopped
+    volumes:
+      - ${HOME}/.ngaj/data/chromadb:/chroma/chroma
+    networks:
+      - ngaj-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: ngaj/backend:latest
+    container_name: ngaj-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ${HOME}/.ngaj/.env
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/ngaj
+      - CHROMA_URL=http://chromadb:8000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    networks:
+      - ngaj-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  ngaj-network:
+    driver: bridge

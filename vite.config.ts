@@ -2,29 +2,27 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+// Root vite config - delegates to frontend package for actual builds
+// This is kept for development convenience (npm run dev:frontend from root)
 export default defineConfig({
   plugins: [react()],
-  root: './src/frontend',
+  root: './packages/frontend/src',
   build: {
-    outDir: '../../dist/frontend',
+    outDir: path.resolve(__dirname, './packages/frontend/dist'),
     emptyOutDir: true,
   },
   resolve: {
     alias: {
-      '@/backend': path.resolve(__dirname, './src/backend'),
-      '@/frontend': path.resolve(__dirname, './src/frontend'),
-      '@/shared': path.resolve(__dirname, './src/shared'),
-      '@': path.resolve(__dirname, './src'),
+      '@ngaj/shared': path.resolve(__dirname, './packages/shared/src'),
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },
   },
 });
-

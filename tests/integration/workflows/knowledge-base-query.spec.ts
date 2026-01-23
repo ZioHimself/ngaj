@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MongoClient, Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { KnowledgeBaseService } from '@/backend/services/knowledge-base-service';
+import { KnowledgeBaseService } from '@ngaj/backend/services/knowledge-base-service';
 import {
   createMockDocument,
   createMockEmbedding,

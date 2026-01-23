@@ -14,7 +14,7 @@
 - **Principles**: Core values and beliefs that shape all AI-generated responses. Stored as freeform text in user profile. Always included in generation prompts (e.g., "I value evidence-based reasoning and kindness").
 - **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Freeform text field in profile (e.g., "Friendly but professional. Technical but accessible.").
 - **Engagement**: The act of responding to or interacting with social media posts
-- **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with
+- **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with. **Note for agents**: "Platform" is reserved for social networks in this project. Use "OS" or "Operating System" for macOS/Windows/Linux. Use "Native Installer" for OS-specific installer packages (.pkg, .msi).
 - **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 60% recency (exponential decay) + 40% impact (reach and engagement)
 - **Recency Score**: Time-based score component (0-100) using exponential decay. Posts < 2 min = ~100, 30 min = ~37, 2 hours = ~1.
 - **Impact Score**: Reach/engagement score component (0-100) using logarithmic scale of author followers + post likes + reposts
@@ -36,6 +36,7 @@
 - **Storage Limit**: Configurable maximum disk space per profile (default: 100MB total, 10MB per file)
 - **Cron Job**: Scheduled task that runs discovery at regular intervals. Multiple schedules supported per account (e.g., replies every 15 min, search every 2 hours).
 - **Cron Expression**: Time schedule format (e.g., '*/15 * * * *' = every 15 minutes, '0 */2 * * *' = every 2 hours)
+- **Discovery Schedule Preset**: Simplified schedule option in First-Launch Wizard (15min, 30min, 1hr, 2hr, 4hr). Maps to cron expressions internally. Full cron expressions available via REST API.
 - **AT Protocol**: Bluesky's underlying protocol for decentralized social networking
 - **Local-First**: Architecture principle where all data and processing stays on the user's machine
 - **Draft**: Initial status of a generated response before user review and posting
@@ -51,6 +52,15 @@
 - **Platform Post ID**: Platform-specific identifier for a posted response (e.g., AT URI for Bluesky: "at://did:plc:.../post/xyz"). Used for linking back to the platform post and future features (edit, delete, engagement tracking).
 - **Platform Post URL**: Public, human-readable URL to view a posted response on the platform (e.g., "https://bsky.app/profile/user/post/xyz"). Clickable link in UI.
 - **PostResult**: Technical term for the data returned by platform adapters after successfully posting a response (contains postId, postUrl, postedAt timestamp).
+- **Setup Wizard**: Interactive CLI application that runs inside a Docker container during installation to collect and validate user credentials (Bluesky, Claude API). Writes credentials to `.env` file via mounted volume. See also: First-Launch Wizard.
+- **First-Launch Wizard**: Web UI wizard that runs once on first application launch (when no Profile exists). Creates Profile, connects Bluesky account, and configures discovery schedule. Distinct from Setup Wizard (CLI) which handles credentials during installation.
+- **Setup Container**: Pre-built Docker image (`ngaj/setup:latest`) containing the Node.js setup wizard. Runs temporarily during installation, then destroyed. Credentials persist on host via volume mount.
+- **Platform Credentials**: Abstracted type system for multi-platform credential support. Base interface `BasePlatformCredentials` extended by platform-specific types (`BlueskyCredentials`, `LinkedInCredentials`, `RedditCredentials`). Enables adding new platforms without changing setup wizard logic.
+- **AI Provider**: Abstraction for AI service credentials. v0.1: Only Anthropic (Claude). Designed for future provider support (OpenAI, Google, etc.) via `AICredentials` union type.
+- **Credential Validation**: Two-phase verification during setup: (1) format validation via regex patterns, (2) connection test via API call. Failed validation re-prompts user; network errors abort setup.
+- **Volume Mount**: Docker mechanism to share files between container and host. Setup container mounts `~/.ngaj:/data` to write `.env` file that persists after container exits.
+- **Native Installer**: OS-specific installation package (.pkg for macOS, .msi for Windows) that bundles Docker Compose configs and post-install scripts. Downloads Docker Desktop and setup container on first run.
+- **OS-Specific Scripts**: Post-install scripts written in the native scripting language of each operating system (bash for macOS, PowerShell for Windows). Handle Docker installation check, setup container launch, and production services startup.
 
 ## Development Terms
 

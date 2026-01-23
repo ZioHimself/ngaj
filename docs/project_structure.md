@@ -2,164 +2,150 @@
 
 This document outlines the high-level project structure for ngaj. Internal organization within each major directory will be determined by test-writer and implementer agents during TDD cycles.
 
-## Current Directory Layout (Phase 1)
+**Terminology**: "Platform" = Social Network (Bluesky, etc.). "OS" = Operating System (macOS, Windows).
+
+## Directory Layout
 
 ```
 ngaj/
-├── .gitignore                    # Git ignore rules
-├── package.json                  # Node.js dependencies and scripts
-├── tsconfig.json                 # TypeScript configuration (base)
-├── tsconfig.backend.json         # Backend-specific TypeScript config
-├── tsconfig.frontend.json        # Frontend-specific TypeScript config
-├── vite.config.ts                # Vite build configuration
-├── vitest.config.ts              # Vitest test configuration
-├── playwright.config.ts          # Playwright E2E test configuration
-├── eslint.config.js              # ESLint configuration
-├── tailwind.config.js            # Tailwind CSS configuration
-├── postcss.config.js             # PostCSS configuration
-├── README.md                     # Project overview
-├── LICENSE                       # MIT license
+├── packages/                     # npm workspaces (separate dependencies per package)
+│   ├── backend/                  # @ngaj/backend - Node.js/Express API server
+│   ├── frontend/                 # @ngaj/frontend - React web UI
+│   ├── setup/                    # @ngaj/setup - CLI wizard for installation
+│   └── shared/                   # @ngaj/shared - Types and errors used by all packages
 │
-├── .agents/                      # Agent workflow artifacts (not in production)
-│   ├── README.md                 # Agent system documentation
-│   ├── config/                   # Agent configuration
-│   ├── context/                  # Project context (glossary, tech stack)
-│   ├── prompts/                  # Agent system prompts
-│   │   ├── designer/
-│   │   ├── test-writer/
-│   │   ├── implementer/
-│   │   └── reviewer/
-│   ├── artifacts/                # Agent outputs
-│   │   ├── designer/
-│   │   │   ├── designs/
-│   │   │   └── handoffs/
-│   │   ├── test-writer/
-│   │   │   ├── test-plans/
-│   │   │   └── handoffs/
-│   │   ├── implementer/
-│   │   │   └── handoffs/
-│   │   └── reviewer/
-│   │       └── review-reports/
-│   ├── docs/                     # Agent system documentation
-│   └── templates/                # Document templates
+├── installer/                    # Native installer packaging (OS-specific)
+│   ├── scripts/                  # Post-install scripts (bash, PowerShell)
+│   ├── macos/                    # macOS .pkg packaging and resources
+│   └── windows/                  # Windows .msi packaging and resources
+│
+├── tests/                        # Test suites (mirrors packages/ structure)
+│   ├── unit/                     # Unit tests (Vitest)
+│   ├── integration/              # Integration tests (API, database)
+│   ├── e2e/                      # End-to-end tests (Playwright)
+│   └── fixtures/                 # Shared test data
 │
 ├── docs/                         # Project documentation
-│   ├── setup.md                  # Setup and installation guide
-│   ├── project_structure.md      # This file
-│   ├── api/
-│   │   └── openapi.yaml          # API specification
-│   └── architecture/
-│       ├── overview.md           # System architecture
-│       └── decisions/            # Architecture Decision Records (ADRs)
+│   ├── api/                      # API specifications (OpenAPI)
+│   └── architecture/             # Architecture overview and ADRs
 │
-├── src/                          # Source code
-│   ├── shared/                   # Shared code used across backend and frontend
-│   │   ├── types/                # Shared TypeScript type definitions
-│   │   └── errors/               # Custom error classes
-│   │
-│   ├── backend/                  # Node.js/Express backend
-│   │   ├── index.ts              # Server entry point
-│   │   └── config/
-│   │       └── database.ts       # MongoDB connection
-│   │
-│   └── frontend/                 # React frontend
-│       ├── index.html            # HTML entry point
-│       ├── main.tsx              # React entry point
-│       ├── App.tsx               # Root component
-│       └── index.css             # Tailwind CSS imports
+├── .agents/                      # Agent workflow system (not in production)
+│   ├── prompts/                  # Agent system prompts by role
+│   ├── artifacts/                # Agent outputs (designs, handoffs, reviews)
+│   └── templates/                # Document templates
 │
-├── tests/                        # Test suites
-│   ├── unit/                     # Unit tests (Vitest)
-│   │   └── example.spec.ts
-│   ├── integration/              # Integration tests
-│   │   ├── api/
-│   │   └── database/
-│   └── e2e/                      # End-to-end tests (Playwright)
+├── .github/                      # GitHub configuration
+│   └── workflows/                # CI/CD workflows
 │
-└── dist/                         # Build output (gitignored)
-    ├── backend/                  # Compiled backend
-    └── frontend/                 # Compiled frontend assets
+├── docker-compose.yml            # Production service orchestration
+└── [config files]                # TypeScript, ESLint, Vite, Tailwind configs
 ```
 
-## High-Level Structure Guidelines
+## Package Descriptions
 
-### `/src/shared` - Shared Code
-- Code shared across backend and frontend
-- Includes types, error classes, and utilities
+### `packages/shared` - Shared Code (`@ngaj/shared`)
+- TypeScript types and interfaces shared across all packages
+- Custom error classes
+- Validation helpers and type guards
+- **No runtime dependencies** on other packages
 
-#### `/src/shared/types` - Shared Type Definitions
-- TypeScript interfaces and types shared across backend and frontend
-- Type guards and validation helpers
-- Exported through `index.ts` for clean imports
-
-#### `/src/shared/errors` - Custom Error Classes
-- Application-specific error types
-
-### `/src/backend` - Node.js Backend
+### `packages/backend` - API Server (`@ngaj/backend`)
 - Express server with RESTful API
-- Business logic and data access layers
-- Integration with MongoDB and ChromaDB
-- Platform adapters (Bluesky, etc.)
-- Internal structure to be determined by implementer agent
+- Business logic and service layers
+- MongoDB and ChromaDB integration
+- Platform adapters (Bluesky, future: LinkedIn, Reddit)
+- Cron scheduler for discovery jobs
+- **Depends on**: `@ngaj/shared`
+- **Dockerfile**: Builds production Docker image
 
-**Current Phase 1 Infrastructure:**
-- `index.ts` - Express server with health check and placeholder endpoints
-- `config/database.ts` - MongoDB connection management
-
-### `/src/frontend` - React Frontend  
-- User interface built with React 18 and TypeScript
-- Styled with Tailwind CSS
+### `packages/frontend` - Web UI (`@ngaj/frontend`)
+- React 18 with TypeScript
+- Tailwind CSS styling
 - Vite for development and building
-- Internal component organization to be determined by implementer agent
+- **Depends on**: `@ngaj/shared`
 
-**Current Phase 1 Infrastructure:**
-- `index.html`, `main.tsx`, `App.tsx` - Basic app structure with health check UI
-- `index.css` - Tailwind imports
+### `packages/setup` - Installation Wizard (`@ngaj/setup`)
+- Interactive CLI for credential collection (inquirer.js)
+- Credential validators (Bluesky, Claude API)
+- Environment file writer
+- **Depends on**: `@ngaj/shared`
+- **Dockerfile**: Builds setup wizard Docker image
+- **Runs**: Temporarily during installation, then destroyed
 
-### `/tests` - Test Suites
-- **Unit tests**: Test individual functions/components in isolation (Vitest)
-- **Integration tests**: Test API endpoints and database interactions
-- **E2E tests**: Test complete user workflows (Playwright)
-- Test structure mirrors source structure where applicable
+### `installer/` - Native Installer Packaging
+- **OS-specific** packaging for macOS (.pkg) and Windows (.msi)
+- Post-install scripts that orchestrate Docker installation and setup
+- Resources: icons, license text, welcome screens
+- **Not an npm package** - build tooling only
 
-### `/.agents` - Agent Workflow System
+### `tests/` - Test Suites
+- **Unit tests**: Isolated function/component tests (Vitest)
+- **Integration tests**: API endpoints, database, service interactions
+- **E2E tests**: Complete user workflows (Playwright)
+- **Fixtures**: Shared test data and mocks
+
+### `.agents/` - Agent Workflow System
 - Not part of production application
-- Contains prompts, artifacts, and documentation for AI agent workflow
-- See `.agents/README.md` for complete documentation
+- Prompts, artifacts, and documentation for AI agent workflow
 - Organized by agent role (designer, test-writer, implementer, reviewer)
 
-### `/docs` - Documentation
-- Architecture Decision Records (ADRs) documenting major design choices
-- API specifications (OpenAPI/Swagger)
-- Setup and user guides
-- Architecture overview and diagrams
+### `docs/` - Documentation
+- Architecture Decision Records (ADRs)
+- API specifications (OpenAPI)
+- Setup guides and architecture overview
 
 ## Configuration Files
 
-### TypeScript
-- **`tsconfig.json`** - Base configuration for shared types
-- **`tsconfig.backend.json`** - Backend compilation (NodeNext module resolution)
-- **`tsconfig.frontend.json`** - Frontend compilation (React JSX, DOM types)
+### Root Level
+- **`package.json`** - Workspace configuration and root scripts
+- **`docker-compose.yml`** - Production service orchestration
+- **`turbo.json`** (optional) - Build orchestration for workspaces
+
+### Per-Package
+Each package in `packages/` has its own:
+- `package.json` - Package-specific dependencies
+- `tsconfig.json` - TypeScript configuration
+- `Dockerfile` (backend, setup only) - Docker image build
 
 ### Build & Development
-- **`package.json`** - Dependencies, scripts, metadata
-- **`vite.config.ts`** - Frontend dev server and build
-- **`vitest.config.ts`** - Unit test runner
-- **`playwright.config.ts`** - E2E test runner
+- TypeScript configs for each package
+- Vite for frontend development and building
+- Vitest for unit/integration tests
+- Playwright for E2E tests
 
 ### Code Quality
-- **`eslint.config.js`** - Linting rules for TypeScript and React
-- **`tailwind.config.js`** - Tailwind CSS configuration
-- **`postcss.config.js`** - PostCSS configuration
+- ESLint for TypeScript and React linting
+- Tailwind CSS for styling
 
 ### Environment
-- **`.env`** (not committed) - Environment variables, created from `.env.example`
-- **`.gitignore`** - Files excluded from version control
+- **`.env`** (not committed) - Credentials and configuration
+- **`~/.ngaj/.env`** (user home) - Production credentials written by setup wizard
+
+## Build System
+
+### npm Workspaces
+Packages depend on each other via workspace protocol:
+```
+@ngaj/shared  ←──  @ngaj/backend
+              ←──  @ngaj/frontend  
+              ←──  @ngaj/setup
+```
+
+### Docker Images
+| Image | Source | Purpose |
+|-------|--------|---------|
+| `ngaj/backend` | `packages/backend/` | Production API server |
+| `ngaj/setup` | `packages/setup/` | Installation wizard (temporary) |
+
+### Native Installers
+Built via CI/CD on release:
+- macOS: `.pkg` (pkgbuild or Packages app)
+- Windows: `.msi` (WiX Toolset)
 
 ## Related Documentation
 
-- [Setup Guide](setup.md) - Detailed setup instructions
+- [Setup Guide](setup.md) - Development setup instructions
 - [Architecture Overview](architecture/overview.md) - System architecture
-- [Architecture Decision Records](architecture/decisions/) - ADR-001 through ADR-006
+- [Architecture Decision Records](architecture/decisions/) - ADRs
 - [API Specification](api/openapi.yaml) - OpenAPI spec
-- [Agent System](.agents/README.md) - AI agent workflow documentation
+- [Agent System](../.agents/README.md) - AI agent workflow

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { KnowledgeBaseService } from '@/backend/services/knowledge-base-service';
+import { KnowledgeBaseService } from '@ngaj/backend/services/knowledge-base-service';
 import {
   createMockDocument,
   createMockFileUpload,
@@ -8,7 +8,7 @@ import {
   createMockDocuments,
   storageLimitScenarios
 } from '../../fixtures/knowledge-base-fixtures';
-import type { ProcessingOptions } from '@/shared/types/knowledge-base';
+import type { ProcessingOptions } from '@ngaj/shared';
 import {
   ValidationError,
   StorageLimitError,
@@ -16,7 +16,7 @@ import {
   EmbeddingError,
   TimeoutError,
   NotFoundError
-} from '@/shared/types/knowledge-base';
+} from '@ngaj/shared';
 
 describe('KnowledgeBaseService', () => {
   let service: KnowledgeBaseService;

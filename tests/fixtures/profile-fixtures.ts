@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import type { Profile, CreateProfileInput } from '@/shared/types/profile';
+import type { Profile, CreateProfileInput } from '@ngaj/shared';
 
 /**
  * Factory function to create a valid profile for testing

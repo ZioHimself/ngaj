@@ -6,8 +6,8 @@ import type {
   CreateOpportunityInput,
   OpportunityStatus,
   UpsertAuthorInput
-} from '@/shared/types/opportunity';
-import type { Platform } from '@/shared/types/account';
+} from '@ngaj/shared';
+import type { Platform } from '@ngaj/shared';
 
 /**
  * Factory function to create a valid opportunity for testing
@@ -375,7 +375,7 @@ export const authorFixtures = {
 };
 
 // Re-export types from shared for backwards compatibility
-export type { RawPost, RawAuthor } from '@/shared/types/opportunity';
+export type { RawPost, RawAuthor } from '@ngaj/shared';
 
 /**
  * Factory to create RawPost (platform adapter output)

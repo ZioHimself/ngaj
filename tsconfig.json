@@ -3,12 +3,8 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
-    "types": ["node"],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "allowJs": true,
-    "checkJs": false,
-    "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -20,14 +16,17 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "paths": {
-      "@/backend/*": ["./src/backend/*"],
-      "@/frontend/*": ["./src/frontend/*"],
-      "@/shared/*": ["./src/shared/*"],
-      "@/*": ["./src/*"],
+      "@ngaj/shared": ["./packages/shared/src"],
+      "@ngaj/backend": ["./packages/backend/src"],
+      "@ngaj/backend/*": ["./packages/backend/src/*"],
+      "@ngaj/frontend": ["./packages/frontend/src"],
+      "@ngaj/frontend/*": ["./packages/frontend/src/*"],
+      "@ngaj/setup": ["./packages/setup/src"],
+      "@ngaj/setup/*": ["./packages/setup/src/*"],
       "@tests/*": ["./tests/*"]
     },
     "baseUrl": "."
   },
-  "include": ["src/shared/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", ".agents", "src/backend", "src/frontend"]
+  "include": ["tests/**/*"],
+  "exclude": ["node_modules", "dist", ".agents", "packages/*/dist"]
 }

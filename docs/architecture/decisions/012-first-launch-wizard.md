@@ -176,7 +176,7 @@ The wizard consists of **3 mandatory steps** presented sequentially:
 
 **Flow:**
 1. Page loads → Display handle from `.env`
-2. User clicks "Test Connection" → POST `/api/accounts/test-bluesky`
+2. User clicks "Test Connection" → POST `/api/accounts/test-connection`
    - Success → Show "✓ Connected successfully", enable Next button
    - Failure → Show error message ("Authentication failed. Check credentials in .env"), disable Next
 3. User checks consent checkbox
@@ -283,12 +283,16 @@ The wizard makes the following API calls:
 
 | Step | Action | Endpoint | Payload |
 |------|--------|----------|---------|
-| 1 | Create Profile | `POST /api/profiles` | `{ name, voice: { tone, style }, discovery: { interests } }` |
-| 2 | Test Bluesky | `POST /api/accounts/test-bluesky` | `{ handle, password }` (from .env) |
-| 2 | Create Account | `POST /api/accounts` | `{ profileId, platform: 'bluesky', handle, displayName }` |
-| 3 | Update Discovery | `PATCH /api/accounts/:id` | `{ discovery: { replies: { schedule, enabled }, search: { schedule, enabled } } }` |
+| 1 | Create Profile | `POST /api/profiles` | `WizardProfileInput` (see below) |
+| 2 | Test Connection | `POST /api/accounts/test-connection` | `{ platform: 'bluesky' }` |
+| 2 | Create Account | `POST /api/accounts` | `{ profileId, platform: 'bluesky' }` |
+| 3 | Update Discovery | `PATCH /api/accounts/:id` | `{ schedulePreset: '1hr' }` |
 
-**Note:** Profile creation returns `profileId`, which is used in subsequent Account creation.
+**Notes:**
+- Profile creation returns `profileId`, used in Account creation
+- `test-connection` reads credentials from `.env` on backend, returns `{ success, handle, error? }`
+- Account creation reads `handle` from `.env` on backend
+- Discovery update transforms preset to cron schedules on backend
 
 ### 5. Error Handling
 
@@ -431,7 +435,7 @@ The wizard makes the following API calls:
 - `POST /api/profiles` - Create Profile
 - `POST /api/accounts` - Create Account
 - `PATCH /api/accounts/:id` - Update Account (discovery schedules)
-- `POST /api/accounts/test-bluesky` - Test Bluesky connection (new endpoint)
+- `POST /api/accounts/test-connection` - Test platform connection (new endpoint)
 
 ## Success Criteria
 

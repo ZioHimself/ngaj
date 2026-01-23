@@ -56,18 +56,84 @@ interface WizardProfileInput {
 
 // Step 2: Connection test
 interface TestConnectionInput {
-  platform: 'bluesky';
+  platform: 'bluesky';    // Backend reads credentials from .env
 }
 
 interface TestConnectionResult {
   success: boolean;
-  handle: string;         // handle from .env
+  handle: string;         // handle from .env (for display)
   error?: string;
+}
+
+// Step 2: Account creation (handle read from .env on backend)
+interface WizardAccountInput {
+  profileId: string;
+  platform: Platform;
 }
 
 // Step 3: Simplified discovery schedule
 interface WizardDiscoveryInput {
   schedulePreset: DiscoverySchedulePreset;  // '15min' | '30min' | '1hr' | '2hr' | '4hr'
+}
+```
+
+### Backend Transformations
+
+**Step 1: WizardProfileInput → CreateProfileInput**
+
+```typescript
+// Wizard input
+{ name, voice, principles, interests }
+
+// Transforms to Profile with defaults
+{
+  name,
+  principles,
+  voice: {
+    tone: 'professional-friendly',  // Default
+    style: voice,                   // From wizard
+    examples: [],                   // Default empty
+  },
+  discovery: {
+    interests,                      // From wizard
+    keywords: [],                   // Default empty
+    communities: [],                // Default empty
+  },
+  isActive: true,                   // Default
+}
+```
+
+**Step 2: WizardAccountInput → CreateAccountInput**
+
+```typescript
+// Wizard input
+{ profileId, platform: 'bluesky' }
+
+// Backend reads handle from process.env.BLUESKY_HANDLE
+// Transforms to Account
+{
+  profileId,
+  platform: 'bluesky',
+  handle: process.env.BLUESKY_HANDLE,  // Read from .env
+  discovery: {
+    schedules: [],  // Empty until Step 3
+  },
+  status: 'active',
+}
+```
+
+**Step 3: WizardDiscoveryInput → AccountDiscoveryConfig**
+
+```typescript
+// Wizard input
+{ schedulePreset: '1hr' }
+
+// Transforms to discovery config
+{
+  schedules: [
+    { type: 'replies', enabled: true, cronExpression: '0 * * * *' },
+    { type: 'search', enabled: true, cronExpression: '0 * * * *' },
+  ],
 }
 ```
 

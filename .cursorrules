@@ -17,7 +17,7 @@ Before proceeding with any ambiguous decision, conflicting requirement, or out-o
 
 **All agents MUST follow**: [Brevity Guidelines](.agents/context/brevity-guidelines.md)
 
-**Core Principle**: Keep everything short, concise, and focused → Use references instead of duplication
+**Core Principle**: Keep all output artifact contributions short, concise, and focused → Use references instead of duplication
 
 - **Artifacts**: Single purpose per document, reference instead of repeat
 - **Code**: Lean principles—YAGNI, single responsibility, no dead code

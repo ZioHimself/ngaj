@@ -31,7 +31,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@ngaj/shared': path.resolve(__dirname, './packages/shared/src'),
+      '@ngaj/shared': path.resolve(__dirname, './packages/shared/dist'),
       '@ngaj/backend': path.resolve(__dirname, './packages/backend/src'),
       '@ngaj/frontend': path.resolve(__dirname, './packages/frontend/src'),
       '@ngaj/setup': path.resolve(__dirname, './packages/setup/src'),

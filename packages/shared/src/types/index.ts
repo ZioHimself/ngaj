@@ -4,6 +4,10 @@
  * @module types
  */
 
+// Core utilities (ID types, type guard factories)
+export type { EntityId, IdValidator, TypeGuardFactory } from './core.js';
+export { isStringId, isValidDate, isPlainObject } from './core.js';
+
 // Profile types
 export type {
   Profile,
@@ -12,7 +16,7 @@ export type {
   CreateProfileInput,
   UpdateProfileInput,
 } from './profile.js';
-export { isProfile } from './profile.js';
+export { isProfile, createProfileGuard } from './profile.js';
 
 // Account types
 export type {
@@ -26,7 +30,7 @@ export type {
   UpdateAccountInput,
   AccountWithProfile,
 } from './account.js';
-export { isAccount } from './account.js';
+export { isAccount, createAccountGuard } from './account.js';
 
 // Knowledge Base types
 export type {
@@ -65,7 +69,9 @@ export type {
   UpdateOpportunityInput,
   UpsertAuthorInput,
 } from './opportunity.js';
-export { isOpportunity, isAuthor } from './opportunity.js';
+// Note: DiscoveryType is exported from both account.js and opportunity.js
+// They are the same type; we export from account.js above
+export { isOpportunity, isAuthor, createOpportunityGuard, createAuthorGuard } from './opportunity.js';
 
 // Response types
 export type {
@@ -77,7 +83,7 @@ export type {
   CreateResponseInput,
   UpdateResponseInput,
 } from './response.js';
-export { isResponse, isOpportunityAnalysis } from './response.js';
+export { isResponse, isOpportunityAnalysis, createResponseGuard } from './response.js';
 
 // Setup types (CLI credential wizard)
 export type {

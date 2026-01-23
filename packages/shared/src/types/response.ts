@@ -1,4 +1,10 @@
-import { ObjectId } from 'mongodb';
+/**
+ * Response Type Definitions
+ * 
+ * @module types/response
+ */
+
+import { EntityId, IdValidator, isStringId, isValidDate, isPlainObject } from './core.js';
 
 /**
  * Platform-specific constraints for response generation.
@@ -135,25 +141,26 @@ export interface ResponseMetadata {
  * 
  * Stored in MongoDB `responses` collection.
  * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  * @see ADR-009: Response Suggestion Architecture
  */
-export interface Response {
+export interface Response<TId = string> {
   /**
-   * MongoDB document ID
+   * Document ID
    */
-  _id: ObjectId;
+  _id: EntityId<TId>;
 
   /**
    * Opportunity this response addresses
    * References opportunities._id
    */
-  opportunityId: ObjectId;
+  opportunityId: EntityId<TId>;
 
   /**
    * Account generating this response
    * References accounts._id
    */
-  accountId: ObjectId;
+  accountId: EntityId<TId>;
 
   /**
    * Generated response text (user-editable)
@@ -261,47 +268,46 @@ export interface OpportunityAnalysis {
   question: string;
 }
 
-/**
- * Partial response for create operations (omit MongoDB-generated fields)
- */
-export type CreateResponseInput = Omit<Response, '_id' | 'updatedAt'>;
+const VALID_STATUSES: ResponseStatus[] = ['draft', 'posted', 'dismissed'];
 
 /**
- * Partial response for update operations (only text edits allowed on drafts)
+ * Creates a type guard for Response with environment-specific ID validation.
  */
-export interface UpdateResponseInput {
-  text: string;
+export function createResponseGuard<TId>(
+  isValidId: IdValidator<TId>
+): (obj: unknown) => obj is Response<TId> {
+  return (obj: unknown): obj is Response<TId> => {
+    if (!isPlainObject(obj)) return false;
+    const r = obj as Partial<Response<TId>>;
+    return (
+      isValidId(r._id) &&
+      isValidId(r.opportunityId) &&
+      isValidId(r.accountId) &&
+      typeof r.text === 'string' &&
+      typeof r.status === 'string' &&
+      VALID_STATUSES.includes(r.status as ResponseStatus) &&
+      isValidDate(r.generatedAt) &&
+      (r.postedAt === undefined || isValidDate(r.postedAt)) &&
+      (r.dismissedAt === undefined || isValidDate(r.dismissedAt)) &&
+      isPlainObject(r.metadata) &&
+      typeof r.version === 'number' &&
+      isValidDate(r.updatedAt) &&
+      (r.platformPostId === undefined || typeof r.platformPostId === 'string') &&
+      (r.platformPostUrl === undefined || typeof r.platformPostUrl === 'string')
+    );
+  };
 }
 
 /**
- * Type guard to check if an object is a valid Response
+ * Default type guard for Response with string IDs.
  */
-export function isResponse(obj: unknown): obj is Response {
-  if (typeof obj !== 'object' || obj === null) return false;
-  const r = obj as Partial<Response>;
-  return (
-    r._id instanceof ObjectId &&
-    r.opportunityId instanceof ObjectId &&
-    r.accountId instanceof ObjectId &&
-    typeof r.text === 'string' &&
-    typeof r.status === 'string' &&
-    ['draft', 'posted', 'dismissed'].includes(r.status) &&
-    r.generatedAt instanceof Date &&
-    (r.postedAt === undefined || r.postedAt instanceof Date) &&
-    (r.dismissedAt === undefined || r.dismissedAt instanceof Date) &&
-    typeof r.metadata === 'object' &&
-    typeof r.version === 'number' &&
-    r.updatedAt instanceof Date &&
-    (r.platformPostId === undefined || typeof r.platformPostId === 'string') &&
-    (r.platformPostUrl === undefined || typeof r.platformPostUrl === 'string')
-  );
-}
+export const isResponse = createResponseGuard(isStringId);
 
 /**
  * Type guard to check if an object is a valid OpportunityAnalysis
  */
 export function isOpportunityAnalysis(obj: unknown): obj is OpportunityAnalysis {
-  if (typeof obj !== 'object' || obj === null) return false;
+  if (!isPlainObject(obj)) return false;
   const a = obj as Partial<OpportunityAnalysis>;
   return (
     typeof a.mainTopic === 'string' &&
@@ -312,3 +318,14 @@ export function isOpportunityAnalysis(obj: unknown): obj is OpportunityAnalysis 
   );
 }
 
+/**
+ * Partial response for create operations (omit generated fields)
+ */
+export type CreateResponseInput<TId = string> = Omit<Response<TId>, '_id' | 'updatedAt'>;
+
+/**
+ * Partial response for update operations (only text edits allowed on drafts)
+ */
+export interface UpdateResponseInput {
+  text: string;
+}

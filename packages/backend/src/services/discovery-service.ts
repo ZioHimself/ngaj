@@ -1,26 +1,28 @@
-import { ObjectId } from 'mongodb';
 import type { Db } from 'mongodb';
 import type { IPlatformAdapter } from '../adapters/platform-adapter.js';
 import type { ScoringService } from './scoring-service.js';
 import type {
-  Opportunity,
-  OpportunityWithAuthor,
   OpportunityFilters,
   OpportunityStatus,
   DiscoveryType,
-  Author,
   RawPost
 } from '@ngaj/shared';
-import type { Account } from '@ngaj/shared';
-import type { Profile } from '@ngaj/shared';
+import {
+  ObjectId,
+  type OpportunityDocument,
+  type OpportunityWithAuthorDocument,
+  type AuthorDocument,
+  type AccountDocument,
+  type ProfileDocument,
+} from '../types/documents.js';
 
 /**
  * Discovery service interface
  */
 export interface IDiscoveryService {
-  discover(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]>;
+  discover(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]>;
   getOpportunities(accountId: ObjectId, filters?: OpportunityFilters): Promise<{
-    opportunities: OpportunityWithAuthor[];
+    opportunities: OpportunityWithAuthorDocument[];
     pagination: {
       total: number;
       limit: number;
@@ -63,16 +65,16 @@ export class DiscoveryService implements IDiscoveryService {
    * @returns Array of created opportunities
    * @throws DiscoveryError on failure
    */
-  async discover(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]> {
+  async discover(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]> {
     try {
       // 1. Load account and profile
-      const accountsCollection = this.db.collection<Account>('accounts');
+      const accountsCollection = this.db.collection<AccountDocument>('accounts');
       const account = await accountsCollection.findOne({ _id: accountId });
       if (!account) {
         throw new Error(`Account not found: ${accountId}`);
       }
 
-      const profilesCollection = this.db.collection<Profile>('profiles');
+      const profilesCollection = this.db.collection<ProfileDocument>('profiles');
       const profile = await profilesCollection.findOne({ _id: account.profileId });
       if (!profile) {
         throw new Error(`Profile not found: ${account.profileId}`);
@@ -103,10 +105,10 @@ export class DiscoveryService implements IDiscoveryService {
       }
 
       // 5. Process each post
-      const opportunities: Opportunity[] = [];
+      const opportunities: OpportunityDocument[] = [];
       for (const post of posts) {
         // Check for duplicate
-        const opportunitiesCollection = this.db.collection<Opportunity>('opportunities');
+        const opportunitiesCollection = this.db.collection<OpportunityDocument>('opportunities');
         const existing = await opportunitiesCollection.findOne({
           accountId,
           postId: post.id
@@ -122,7 +124,7 @@ export class DiscoveryService implements IDiscoveryService {
         const score = this.scoringService.scoreOpportunity(post, rawAuthor);
 
         // Upsert author
-        const authorsCollection = this.db.collection<Author>('authors');
+        const authorsCollection = this.db.collection<AuthorDocument>('authors');
         await authorsCollection.updateOne(
           {
             platform: account.platform,
@@ -158,7 +160,7 @@ export class DiscoveryService implements IDiscoveryService {
         const discoveredAt = new Date();
         const expiresAt = new Date(discoveredAt.getTime() + this.OPPORTUNITY_TTL_HOURS * 60 * 60 * 1000);
 
-        const opportunity: Opportunity = {
+        const opportunity: OpportunityDocument = {
           _id: new ObjectId(),
           accountId,
           platform: account.platform,
@@ -210,7 +212,7 @@ export class DiscoveryService implements IDiscoveryService {
     accountId: ObjectId,
     filters?: OpportunityFilters
   ): Promise<{
-    opportunities: OpportunityWithAuthor[];
+    opportunities: OpportunityWithAuthorDocument[];
     pagination: {
       total: number;
       limit: number;
@@ -232,7 +234,7 @@ export class DiscoveryService implements IDiscoveryService {
     }
 
     // Query opportunities
-    const opportunitiesCollection = this.db.collection<Opportunity>('opportunities');
+    const opportunitiesCollection = this.db.collection<OpportunityDocument>('opportunities');
     const opportunities = await opportunitiesCollection
       .find(query)
       .sort({ 'scoring.total': -1 })
@@ -243,8 +245,8 @@ export class DiscoveryService implements IDiscoveryService {
     const total = await opportunitiesCollection.countDocuments(query);
 
     // Populate authors
-    const authorsCollection = this.db.collection<Author>('authors');
-    const opportunitiesWithAuthors: OpportunityWithAuthor[] = [];
+    const authorsCollection = this.db.collection<AuthorDocument>('authors');
+    const opportunitiesWithAuthors: OpportunityWithAuthorDocument[] = [];
     for (const opp of opportunities) {
       const author = await authorsCollection.findOne({ _id: opp.authorId });
       if (author) {
@@ -273,7 +275,7 @@ export class DiscoveryService implements IDiscoveryService {
    * @throws NotFoundError if opportunity doesn't exist
    */
   async updateStatus(opportunityId: ObjectId, status: OpportunityStatus): Promise<void> {
-    const opportunitiesCollection = this.db.collection<Opportunity>('opportunities');
+    const opportunitiesCollection = this.db.collection<OpportunityDocument>('opportunities');
     const result = await opportunitiesCollection.updateOne(
       { _id: opportunityId },
       {
@@ -296,7 +298,7 @@ export class DiscoveryService implements IDiscoveryService {
    * @returns Number of opportunities expired
    */
   async expireOpportunities(): Promise<number> {
-    const opportunitiesCollection = this.db.collection<Opportunity>('opportunities');
+    const opportunitiesCollection = this.db.collection<OpportunityDocument>('opportunities');
     const result = await opportunitiesCollection.updateMany(
       {
         status: 'pending',
@@ -317,7 +319,7 @@ export class DiscoveryService implements IDiscoveryService {
    * Update account discovery status on success
    */
   private async updateDiscoverySuccess(accountId: ObjectId, discoveryType: DiscoveryType): Promise<void> {
-    const accountsCollection = this.db.collection<Account>('accounts');
+    const accountsCollection = this.db.collection<AccountDocument>('accounts');
     const account = await accountsCollection.findOne({ _id: accountId });
     if (!account) return;
 
@@ -339,7 +341,7 @@ export class DiscoveryService implements IDiscoveryService {
    * Update account discovery error status
    */
   private async updateDiscoveryError(accountId: ObjectId, error: Error): Promise<void> {
-    const accountsCollection = this.db.collection<Account>('accounts');
+    const accountsCollection = this.db.collection<AccountDocument>('accounts');
     await accountsCollection.updateOne(
       { _id: accountId },
       {

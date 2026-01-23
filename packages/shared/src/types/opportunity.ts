@@ -1,4 +1,10 @@
-import { ObjectId } from 'mongodb';
+/**
+ * Opportunity Type Definitions
+ * 
+ * @module types/opportunity
+ */
+
+import { EntityId, IdValidator, isStringId, isValidDate, isPlainObject } from './core.js';
 import { Platform } from './account.js';
 
 /**
@@ -27,17 +33,18 @@ export type OpportunityStatus = 'pending' | 'responded' | 'dismissed' | 'expired
  * 
  * Stored in MongoDB `opportunities` collection.
  * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  * @see ADR-008: Opportunity Discovery Architecture
  */
-export interface Opportunity {
-  /** MongoDB document ID */
-  _id: ObjectId;
+export interface Opportunity<TId = string> {
+  /** Document ID */
+  _id: EntityId<TId>;
 
   /**
    * Account that discovered this opportunity
    * References accounts._id
    */
-  accountId: ObjectId;
+  accountId: EntityId<TId>;
 
   /**
    * Platform where this opportunity was found
@@ -72,7 +79,7 @@ export interface Opportunity {
    * Reference to the post author
    * References authors._id
    */
-  authorId: ObjectId;
+  authorId: EntityId<TId>;
 
   /** Engagement metrics captured at discovery time */
   engagement: {
@@ -151,10 +158,12 @@ export interface OpportunityScore {
  * Upserted during discovery; supports future interaction tracking.
  * 
  * Stored in MongoDB `authors` collection.
+ * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  */
-export interface Author {
-  /** MongoDB document ID */
-  _id: ObjectId;
+export interface Author<TId = string> {
+  /** Document ID */
+  _id: EntityId<TId>;
 
   /** Platform identifier */
   platform: Platform;
@@ -196,10 +205,12 @@ export interface Author {
 /**
  * Opportunity with populated author data.
  * Result of MongoDB $lookup join.
+ * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  */
-export interface OpportunityWithAuthor extends Opportunity {
+export interface OpportunityWithAuthor<TId = string> extends Opportunity<TId> {
   /** Populated author document */
-  author: Author;
+  author: Author<TId>;
 }
 
 /**
@@ -216,56 +227,86 @@ export interface OpportunityFilters {
   offset?: number;
 }
 
+const VALID_PLATFORMS: Platform[] = ['bluesky', 'linkedin', 'reddit'];
+const VALID_DISCOVERY_TYPES: DiscoveryType[] = ['replies', 'search'];
+const VALID_STATUSES: OpportunityStatus[] = ['pending', 'responded', 'dismissed', 'expired'];
+
 /**
- * Type guard to check if an object is a valid Opportunity
+ * Creates a type guard for Opportunity with environment-specific ID validation.
  */
-export function isOpportunity(obj: unknown): obj is Opportunity {
-  if (typeof obj !== 'object' || obj === null) return false;
-  const o = obj as Partial<Opportunity>;
-  return (
-    o._id instanceof ObjectId &&
-    o.accountId instanceof ObjectId &&
-    typeof o.platform === 'string' &&
-    ['bluesky', 'linkedin', 'reddit'].includes(o.platform) &&
-    typeof o.postId === 'string' &&
-    typeof o.postUrl === 'string' &&
-    typeof o.content === 'object' &&
-    o.authorId instanceof ObjectId &&
-    typeof o.engagement === 'object' &&
-    typeof o.scoring === 'object' &&
-    typeof o.discoveryType === 'string' &&
-    ['replies', 'search'].includes(o.discoveryType) &&
-    typeof o.status === 'string' &&
-    ['pending', 'responded', 'dismissed', 'expired'].includes(o.status) &&
-    o.discoveredAt instanceof Date &&
-    o.expiresAt instanceof Date &&
-    o.updatedAt instanceof Date
-  );
+export function createOpportunityGuard<TId>(
+  isValidId: IdValidator<TId>
+): (obj: unknown) => obj is Opportunity<TId> {
+  return (obj: unknown): obj is Opportunity<TId> => {
+    if (!isPlainObject(obj)) return false;
+    const o = obj as Partial<Opportunity<TId>>;
+    return (
+      isValidId(o._id) &&
+      isValidId(o.accountId) &&
+      typeof o.platform === 'string' &&
+      VALID_PLATFORMS.includes(o.platform as Platform) &&
+      typeof o.postId === 'string' &&
+      typeof o.postUrl === 'string' &&
+      isPlainObject(o.content) &&
+      typeof (o.content as Opportunity['content']).text === 'string' &&
+      isValidDate((o.content as Opportunity['content']).createdAt) &&
+      isValidId(o.authorId) &&
+      isPlainObject(o.engagement) &&
+      typeof (o.engagement as Opportunity['engagement']).likes === 'number' &&
+      typeof (o.engagement as Opportunity['engagement']).reposts === 'number' &&
+      typeof (o.engagement as Opportunity['engagement']).replies === 'number' &&
+      isPlainObject(o.scoring) &&
+      typeof (o.scoring as OpportunityScore).recency === 'number' &&
+      typeof (o.scoring as OpportunityScore).impact === 'number' &&
+      typeof (o.scoring as OpportunityScore).total === 'number' &&
+      typeof o.discoveryType === 'string' &&
+      VALID_DISCOVERY_TYPES.includes(o.discoveryType as DiscoveryType) &&
+      typeof o.status === 'string' &&
+      VALID_STATUSES.includes(o.status as OpportunityStatus) &&
+      isValidDate(o.discoveredAt) &&
+      isValidDate(o.expiresAt) &&
+      isValidDate(o.updatedAt)
+    );
+  };
 }
 
 /**
- * Type guard to check if an object is a valid Author
+ * Creates a type guard for Author with environment-specific ID validation.
  */
-export function isAuthor(obj: unknown): obj is Author {
-  if (typeof obj !== 'object' || obj === null) return false;
-  const a = obj as Partial<Author>;
-  return (
-    a._id instanceof ObjectId &&
-    typeof a.platform === 'string' &&
-    ['bluesky', 'linkedin', 'reddit'].includes(a.platform) &&
-    typeof a.platformUserId === 'string' &&
-    typeof a.handle === 'string' &&
-    typeof a.displayName === 'string' &&
-    (a.bio === undefined || typeof a.bio === 'string') &&
-    typeof a.followerCount === 'number' &&
-    a.lastUpdatedAt instanceof Date
-  );
+export function createAuthorGuard<TId>(
+  isValidId: IdValidator<TId>
+): (obj: unknown) => obj is Author<TId> {
+  return (obj: unknown): obj is Author<TId> => {
+    if (!isPlainObject(obj)) return false;
+    const a = obj as Partial<Author<TId>>;
+    return (
+      isValidId(a._id) &&
+      typeof a.platform === 'string' &&
+      VALID_PLATFORMS.includes(a.platform as Platform) &&
+      typeof a.platformUserId === 'string' &&
+      typeof a.handle === 'string' &&
+      typeof a.displayName === 'string' &&
+      (a.bio === undefined || typeof a.bio === 'string') &&
+      typeof a.followerCount === 'number' &&
+      isValidDate(a.lastUpdatedAt)
+    );
+  };
 }
 
 /**
- * Partial opportunity for create operations (omit MongoDB-generated fields)
+ * Default type guard for Opportunity with string IDs.
  */
-export type CreateOpportunityInput = Omit<Opportunity, '_id' | 'updatedAt'>;
+export const isOpportunity = createOpportunityGuard(isStringId);
+
+/**
+ * Default type guard for Author with string IDs.
+ */
+export const isAuthor = createAuthorGuard(isStringId);
+
+/**
+ * Partial opportunity for create operations (omit generated fields)
+ */
+export type CreateOpportunityInput<TId = string> = Omit<Opportunity<TId>, '_id' | 'updatedAt'>;
 
 /**
  * Partial opportunity for update operations (only status changes allowed)
@@ -277,7 +318,7 @@ export interface UpdateOpportunityInput {
 /**
  * Partial author for upsert operations
  */
-export type UpsertAuthorInput = Omit<Author, '_id' | 'lastUpdatedAt'>;
+export type UpsertAuthorInput<TId = string> = Omit<Author<TId>, '_id' | 'lastUpdatedAt'>;
 
 /**
  * Raw post data from platform adapter (before transformation to Opportunity)

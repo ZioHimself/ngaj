@@ -6,10 +6,10 @@
  * @see ADR-010: Response Draft Posting
  */
 
-import type { Db, ObjectId } from 'mongodb';
-import type { Response } from '@ngaj/shared';
+import type { Db } from 'mongodb';
 import type { IPlatformAdapter } from '../adapters/platform-adapter.js';
 import { validateResponseForPosting, validatePostResult } from '../utils/response-validators.js';
+import { ObjectId, type ResponseDocument } from '../types/documents.js';
 
 /**
  * Service for posting responses to social media platforms.
@@ -49,7 +49,7 @@ export class ResponsePostingService {
    * @throws {ContentViolationError} If response violates platform rules
    * @throws {PlatformPostingError} For other posting failures
    */
-  async postResponse(responseId: ObjectId): Promise<Response> {
+  async postResponse(responseId: ObjectId): Promise<ResponseDocument> {
     // 1. Load response from database
     const response = await this.responsesCollection.findOne({ _id: responseId });
     if (!response) {
@@ -57,7 +57,7 @@ export class ResponsePostingService {
     }
 
     // 2. Validate response is eligible for posting (must be draft)
-    validateResponseForPosting(response as Response);
+    validateResponseForPosting(response as ResponseDocument);
 
     // 3. Load opportunity (to get parent post ID for threading)
     const opportunity = await this.opportunitiesCollection.findOne({ _id: response.opportunityId });
@@ -105,7 +105,7 @@ export class ResponsePostingService {
 
     // 9. Return updated response
     const updatedResponse = await this.responsesCollection.findOne({ _id: responseId });
-    return updatedResponse as Response;
+    return updatedResponse as ResponseDocument;
   }
 }
 

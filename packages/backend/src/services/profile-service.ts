@@ -1,6 +1,7 @@
-import { Db, ObjectId } from 'mongodb';
-import type { Profile, CreateProfileInput, UpdateProfileInput } from '@ngaj/shared';
+import type { Db } from 'mongodb';
+import type { CreateProfileInput, UpdateProfileInput } from '@ngaj/shared';
 import { ValidationError, NotFoundError, ConflictError } from '@ngaj/shared';
+import { ObjectId, type ProfileDocument } from '../types/documents.js';
 
 /**
  * Service for managing Profile entities
@@ -21,19 +22,19 @@ export class ProfileService {
    * @throws ValidationError - When input data is invalid
    * @throws ConflictError - When profile name already exists
    */
-  async create(data: CreateProfileInput): Promise<Profile> {
+  async create(data: CreateProfileInput): Promise<ProfileDocument> {
     // Validate input
     this.validateProfileData(data);
 
     // Check for duplicate name
-    const existingProfile = await this.db.collection<Profile>('profiles').findOne({ name: data.name });
+    const existingProfile = await this.db.collection<ProfileDocument>('profiles').findOne({ name: data.name });
     if (existingProfile) {
       throw new ConflictError(`Profile with name '${data.name}' already exists`);
     }
 
     // Create profile document
     const now = new Date();
-    const profile: Profile = {
+    const profile: ProfileDocument = {
       _id: new ObjectId(),
       name: data.name,
       voice: data.voice,
@@ -44,7 +45,7 @@ export class ProfileService {
     };
 
     // Insert into database
-    const result = await this.db.collection<Profile>('profiles').insertOne(profile);
+    const result = await this.db.collection<ProfileDocument>('profiles').insertOne(profile);
     
     return {
       ...profile,
@@ -58,13 +59,13 @@ export class ProfileService {
    * @returns Profile if found, null otherwise
    * @throws Error - When ObjectId format is invalid
    */
-  async findById(id: ObjectId): Promise<Profile | null> {
+  async findById(id: ObjectId): Promise<ProfileDocument | null> {
     // Validate ObjectId
     if (!ObjectId.isValid(id)) {
       throw new Error('Invalid ObjectId');
     }
 
-    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id });
+    const profile = await this.db.collection<ProfileDocument>('profiles').findOne({ _id: id });
     return profile;
   }
 
@@ -74,14 +75,14 @@ export class ProfileService {
    * @param filters - Optional filters (e.g., { active: true })
    * @returns Array of profiles (empty array if none found)
    */
-  async findAll(filters?: { active?: boolean }): Promise<Profile[]> {
+  async findAll(filters?: { active?: boolean }): Promise<ProfileDocument[]> {
     const query: { isActive?: boolean } = {};
     
     if (filters?.active !== undefined) {
       query.isActive = filters.active;
     }
 
-    const profiles = await this.db.collection<Profile>('profiles').find(query).toArray();
+    const profiles = await this.db.collection<ProfileDocument>('profiles').find(query).toArray();
     return profiles;
   }
 
@@ -92,7 +93,7 @@ export class ProfileService {
    * @throws ValidationError - When update data is invalid
    * @throws ConflictError - When updating to duplicate name
    */
-  async update(id: ObjectId, data: UpdateProfileInput): Promise<Profile> {
+  async update(id: ObjectId, data: UpdateProfileInput): Promise<ProfileDocument> {
     // Check if profile exists
     const existingProfile = await this.findById(id);
     if (!existingProfile) {
@@ -104,7 +105,7 @@ export class ProfileService {
       this.validateName(data.name);
       
       // Check for duplicate name (excluding current profile)
-      const duplicateProfile = await this.db.collection<Profile>('profiles').findOne({ name: data.name });
+      const duplicateProfile = await this.db.collection<ProfileDocument>('profiles').findOne({ name: data.name });
       if (duplicateProfile && !duplicateProfile._id.equals(id)) {
         throw new ConflictError(`Profile with name '${data.name}' already exists`);
       }
@@ -120,7 +121,7 @@ export class ProfileService {
       updatedAt: new Date()
     };
 
-    await this.db.collection<Profile>('profiles').updateOne(
+    await this.db.collection<ProfileDocument>('profiles').updateOne(
       { _id: id },
       { $set: updateDoc }
     );
@@ -150,7 +151,7 @@ export class ProfileService {
     }
 
     // Soft delete
-    await this.db.collection<Profile>('profiles').updateOne(
+    await this.db.collection<ProfileDocument>('profiles').updateOne(
       { _id: id },
       { 
         $set: { 
@@ -167,7 +168,7 @@ export class ProfileService {
    * @returns true if name is available, false if taken
    */
   async validateProfileName(name: string): Promise<boolean> {
-    const existingProfile = await this.db.collection<Profile>('profiles').findOne({ name });
+    const existingProfile = await this.db.collection<ProfileDocument>('profiles').findOne({ name });
     return existingProfile === null;
   }
 
@@ -178,7 +179,7 @@ export class ProfileService {
    */
   async canDelete(id: ObjectId): Promise<{ canDelete: boolean; reason?: string }> {
     // Check if profile exists (query directly to avoid findById's ObjectId validation)
-    const profile = await this.db.collection<Profile>('profiles').findOne({ _id: id });
+    const profile = await this.db.collection<ProfileDocument>('profiles').findOne({ _id: id });
     if (!profile) {
       return {
         canDelete: false,

@@ -7,7 +7,6 @@
  * @see ADR-012: First-Launch Setup Wizard
  */
 
-import { ObjectId } from 'mongodb';
 import type {
   WizardProfileInput,
   WizardAccountInput,
@@ -15,7 +14,11 @@ import type {
   TestConnectionInput,
   TestConnectionResult,
 } from '@ngaj/shared';
-import type { Profile, Account } from '@ngaj/shared';
+import {
+  ObjectId,
+  type ProfileDocument,
+  type AccountDocument,
+} from '../types/documents.js';
 import {
   validateWizardProfileInput,
   presetToCron,
@@ -131,7 +134,7 @@ export class WizardService {
    * Create a profile from wizard input.
    * Transforms simplified wizard fields to full profile format.
    */
-  async createProfileFromWizard(input: WizardProfileInput): Promise<Profile> {
+  async createProfileFromWizard(input: WizardProfileInput): Promise<ProfileDocument> {
     // Validate input
     const validation = validateWizardProfileInput(input);
     if (!validation.valid) {
@@ -147,7 +150,7 @@ export class WizardService {
     }
 
     const now = new Date();
-    const profile: Omit<Profile, '_id'> & { _id?: ObjectId } = {
+    const profile: Omit<ProfileDocument, '_id'> & { _id?: ObjectId } = {
       name: input.name,
       principles: input.principles,
       voice: {
@@ -170,7 +173,7 @@ export class WizardService {
     return {
       ...profile,
       _id: result.insertedId,
-    } as Profile;
+    } as ProfileDocument;
   }
 
   /**
@@ -218,7 +221,7 @@ export class WizardService {
    * Create account from wizard input.
    * Reads handle from environment variables.
    */
-  async createAccountFromWizard(input: WizardAccountInput): Promise<Account> {
+  async createAccountFromWizard(input: WizardAccountInput): Promise<AccountDocument> {
     // Verify profile exists
     const profile = await this.db
       .collection('profiles')
@@ -233,7 +236,7 @@ export class WizardService {
       handle && handle.startsWith('@') ? handle : `@${handle ?? ''}`;
 
     const now = new Date();
-    const account: Omit<Account, '_id'> & { _id?: ObjectId } = {
+    const account: Omit<AccountDocument, '_id'> & { _id?: ObjectId } = {
       profileId: new ObjectId(input.profileId),
       platform: input.platform,
       handle: formattedHandle,
@@ -250,7 +253,7 @@ export class WizardService {
     return {
       ...account,
       _id: result.insertedId,
-    } as Account;
+    } as AccountDocument;
   }
 
   /**
@@ -260,7 +263,7 @@ export class WizardService {
   async setDiscoverySchedule(
     accountId: string,
     input: WizardDiscoveryInput
-  ): Promise<Account> {
+  ): Promise<AccountDocument> {
     const accountObjectId = new ObjectId(accountId);
 
     // Verify account exists

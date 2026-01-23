@@ -25,9 +25,6 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "mongodb": "^7.0.0"
-  },
   "devDependencies": {
     "@types/node": "^24.9.2",
     "typescript": "^5.9.3"

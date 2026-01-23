@@ -1,4 +1,10 @@
-import { ObjectId } from 'mongodb';
+/**
+ * Profile Type Definitions
+ * 
+ * @module types/profile
+ */
+
+import { EntityId, IdValidator, isStringId, isValidDate, isPlainObject } from './core.js';
 
 /**
  * Profile represents a cross-platform persona with consistent voice,
@@ -6,11 +12,12 @@ import { ObjectId } from 'mongodb';
  * 
  * Relationship: 1 Profile → Many Accounts
  * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  * @see ADR-006: Profile and Account Separation
  */
-export interface Profile {
-  /** MongoDB document ID */
-  _id: ObjectId;
+export interface Profile<TId = string> {
+  /** Document ID */
+  _id: EntityId<TId>;
   
   /** Human-readable name (e.g., "Professional Tech Persona") */
   name: string;
@@ -104,29 +111,55 @@ export interface DiscoveryConfig {
 }
 
 /**
- * Type guard to check if an object is a valid Profile
+ * Creates a type guard for Profile with environment-specific ID validation.
+ * 
+ * @example
+ * // Frontend - use default string validation
+ * const isProfile = createProfileGuard(isStringId);
+ * 
+ * // Backend - use ObjectId validation
+ * import { ObjectId } from 'mongodb';
+ * const isProfileDocument = createProfileGuard(
+ *   (v): v is ObjectId => v instanceof ObjectId
+ * );
  */
-export function isProfile(obj: unknown): obj is Profile {
-  if (typeof obj !== 'object' || obj === null) return false;
-  const p = obj as Partial<Profile>;
-  return (
-    p._id instanceof ObjectId &&
-    typeof p.name === 'string' &&
-    typeof p.voice === 'object' &&
-    typeof p.discovery === 'object' &&
-    p.createdAt instanceof Date &&
-    p.updatedAt instanceof Date &&
-    typeof p.isActive === 'boolean'
-  );
+export function createProfileGuard<TId>(
+  isValidId: IdValidator<TId>
+): (obj: unknown) => obj is Profile<TId> {
+  return (obj: unknown): obj is Profile<TId> => {
+    if (!isPlainObject(obj)) return false;
+    const p = obj as Partial<Profile<TId>>;
+    return (
+      isValidId(p._id) &&
+      typeof p.name === 'string' &&
+      (p.principles === undefined || typeof p.principles === 'string') &&
+      isPlainObject(p.voice) &&
+      typeof (p.voice as VoiceConfig).tone === 'string' &&
+      typeof (p.voice as VoiceConfig).style === 'string' &&
+      Array.isArray((p.voice as VoiceConfig).examples) &&
+      isPlainObject(p.discovery) &&
+      Array.isArray((p.discovery as DiscoveryConfig).interests) &&
+      Array.isArray((p.discovery as DiscoveryConfig).keywords) &&
+      Array.isArray((p.discovery as DiscoveryConfig).communities) &&
+      isValidDate(p.createdAt) &&
+      isValidDate(p.updatedAt) &&
+      typeof p.isActive === 'boolean'
+    );
+  };
 }
 
 /**
- * Partial profile for create operations (omit MongoDB-generated fields)
+ * Default type guard for Profile with string IDs.
+ * Use this in frontend and API validation.
  */
-export type CreateProfileInput = Omit<Profile, '_id' | 'createdAt' | 'updatedAt'>;
+export const isProfile = createProfileGuard(isStringId);
+
+/**
+ * Partial profile for create operations (omit generated fields)
+ */
+export type CreateProfileInput = Omit<Profile<string>, '_id' | 'createdAt' | 'updatedAt'>;
 
 /**
  * Partial profile for update operations (omit immutable fields)
  */
-export type UpdateProfileInput = Partial<Omit<Profile, '_id' | 'createdAt' | 'updatedAt'>>;
-
+export type UpdateProfileInput = Partial<Omit<Profile<string>, '_id' | 'createdAt' | 'updatedAt'>>;

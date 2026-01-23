@@ -1,5 +1,5 @@
-import type { Profile } from '@ngaj/shared';
 import type { PlatformConstraints } from '@ngaj/shared';
+import type { ProfileDocument } from '../types/documents.js';
 
 /**
  * KB chunk structure from ChromaDB search results
@@ -64,7 +64,7 @@ ${opportunityText}`;
  * @see ADR-009: Response Suggestion Architecture
  */
 export function buildGenerationPrompt(
-  profile: Profile,
+  profile: ProfileDocument,
   kbChunks: KBChunk[],
   constraints: PlatformConstraints,
   opportunityText: string

@@ -4,9 +4,9 @@
  * @see ADR-010: Response Draft Posting
  */
 
-import type { Response } from '@ngaj/shared';
 import type { PostResult } from '../adapters/platform-adapter.js';
 import { InvalidStatusError } from '@ngaj/shared';
+import type { ResponseDocument } from '../types/documents.js';
 
 /**
  * Validate that a response is eligible for posting.
@@ -17,7 +17,7 @@ import { InvalidStatusError } from '@ngaj/shared';
  * @param response - Response to validate
  * @throws {InvalidStatusError} If response is not a draft
  */
-export function validateResponseForPosting(response: Response): void {
+export function validateResponseForPosting(response: ResponseDocument): void {
   if (response.status !== 'draft') {
     throw new InvalidStatusError(response.status, 'draft');
   }

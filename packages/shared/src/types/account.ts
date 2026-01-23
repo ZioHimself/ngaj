@@ -1,4 +1,11 @@
-import { ObjectId } from 'mongodb';
+/**
+ * Account Type Definitions
+ * 
+ * @module types/account
+ */
+
+import { EntityId, IdValidator, isStringId, isValidDate, isPlainObject } from './core.js';
+import type { Profile } from './profile.js';
 
 /**
  * Platform identifier for supported social media platforms.
@@ -22,15 +29,16 @@ export type AccountStatus = 'active' | 'paused' | 'error';
  * Credentials (passwords, tokens) are stored in .env per ADR-002.
  * Only non-sensitive identifiers (handle) are stored in MongoDB.
  * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  * @see ADR-006: Profile and Account Separation
  * @see ADR-002: Environment Variables for Credentials
  */
-export interface Account {
-  /** MongoDB document ID */
-  _id: ObjectId;
+export interface Account<TId = string> {
+  /** Document ID */
+  _id: EntityId<TId>;
   
   /** Reference to the profile this account belongs to */
-  profileId: ObjectId;
+  profileId: EntityId<TId>;
   
   /** Platform identifier */
   platform: Platform;
@@ -134,41 +142,66 @@ export interface DiscoveryTypeSchedule {
   lastRunAt?: Date;
 }
 
+const VALID_PLATFORMS: Platform[] = ['bluesky', 'linkedin', 'reddit'];
+const VALID_STATUSES: AccountStatus[] = ['active', 'paused', 'error'];
+
 /**
- * Type guard to check if an object is a valid Account
+ * Creates a type guard for Account with environment-specific ID validation.
+ * 
+ * @example
+ * // Frontend - use default string validation
+ * const isAccount = createAccountGuard(isStringId);
+ * 
+ * // Backend - use ObjectId validation
+ * import { ObjectId } from 'mongodb';
+ * const isAccountDocument = createAccountGuard(
+ *   (v): v is ObjectId => v instanceof ObjectId
+ * );
  */
-export function isAccount(obj: unknown): obj is Account {
-  if (typeof obj !== 'object' || obj === null) return false;
-  const a = obj as Partial<Account>;
-  return (
-    a._id instanceof ObjectId &&
-    a.profileId instanceof ObjectId &&
-    typeof a.platform === 'string' &&
-    ['bluesky', 'linkedin', 'reddit'].includes(a.platform) &&
-    typeof a.handle === 'string' &&
-    typeof a.discovery === 'object' &&
-    typeof a.status === 'string' &&
-    ['active', 'paused', 'error'].includes(a.status) &&
-    a.createdAt instanceof Date &&
-    a.updatedAt instanceof Date
-  );
+export function createAccountGuard<TId>(
+  isValidId: IdValidator<TId>
+): (obj: unknown) => obj is Account<TId> {
+  return (obj: unknown): obj is Account<TId> => {
+    if (!isPlainObject(obj)) return false;
+    const a = obj as Partial<Account<TId>>;
+    return (
+      isValidId(a._id) &&
+      isValidId(a.profileId) &&
+      typeof a.platform === 'string' &&
+      VALID_PLATFORMS.includes(a.platform as Platform) &&
+      typeof a.handle === 'string' &&
+      isPlainObject(a.discovery) &&
+      Array.isArray((a.discovery as AccountDiscoveryConfig).schedules) &&
+      typeof a.status === 'string' &&
+      VALID_STATUSES.includes(a.status as AccountStatus) &&
+      isValidDate(a.createdAt) &&
+      isValidDate(a.updatedAt)
+    );
+  };
 }
 
 /**
- * Partial account for create operations (omit MongoDB-generated fields)
+ * Default type guard for Account with string IDs.
+ * Use this in frontend and API validation.
  */
-export type CreateAccountInput = Omit<Account, '_id' | 'createdAt' | 'updatedAt'>;
+export const isAccount = createAccountGuard(isStringId);
+
+/**
+ * Partial account for create operations (omit generated fields)
+ */
+export type CreateAccountInput<TId = string> = Omit<Account<TId>, '_id' | 'createdAt' | 'updatedAt'>;
 
 /**
  * Partial account for update operations (omit immutable fields)
  */
-export type UpdateAccountInput = Partial<Omit<Account, '_id' | 'profileId' | 'platform' | 'createdAt' | 'updatedAt'>>;
+export type UpdateAccountInput = Partial<Omit<Account<string>, '_id' | 'profileId' | 'platform' | 'createdAt' | 'updatedAt'>>;
 
 /**
  * Account with populated profile (result of MongoDB $lookup)
+ * 
+ * @typeParam TId - ID type (defaults to string for frontend, use ObjectId for backend)
  */
-export interface AccountWithProfile extends Account {
+export interface AccountWithProfile<TId = string> extends Account<TId> {
   /** Populated profile document */
-  profile: import('./profile.js').Profile;
+  profile: Profile<TId>;
 }
-

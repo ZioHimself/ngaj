@@ -1,9 +1,12 @@
-import { ObjectId } from 'mongodb';
 import type { Db } from 'mongodb';
 import * as cron from 'node-cron';
 import type { IDiscoveryService } from '../services/discovery-service.js';
-import type { DiscoveryType, Opportunity } from '@ngaj/shared';
-import type { Account } from '@ngaj/shared';
+import type { DiscoveryType } from '@ngaj/shared';
+import {
+  ObjectId,
+  type OpportunityDocument,
+  type AccountDocument,
+} from '../types/documents.js';
 
 /**
  * Cron scheduler interface
@@ -13,7 +16,7 @@ export interface ICronScheduler {
   start(): void;
   stop(): void;
   reload(): Promise<void>;
-  triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]>;
+  triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]>;
   isRunning(): boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getRegisteredJobs(): Map<string, any>;
@@ -49,7 +52,7 @@ export class CronScheduler implements ICronScheduler {
    */
   async initialize(): Promise<void> {
     // Load all active accounts from database
-    const accountsCollection = this.db.collection<Account>('accounts');
+    const accountsCollection = this.db.collection<AccountDocument>('accounts');
     const accounts = await accountsCollection.find().toArray();
 
     // Register jobs for each enabled schedule
@@ -128,7 +131,7 @@ export class CronScheduler implements ICronScheduler {
    * @param discoveryType - 'replies' | 'search'
    * @returns Created opportunities
    */
-  async triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<Opportunity[]> {
+  async triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]> {
     return await this.discoveryService.discover(accountId, discoveryType);
   }
 

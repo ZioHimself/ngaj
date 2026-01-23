@@ -1,14 +1,17 @@
-import { Db, ObjectId } from 'mongodb';
+import type { Db } from 'mongodb';
 import { CronExpressionParser } from 'cron-parser';
 import type { 
-  Account, 
-  CreateAccountInput, 
   UpdateAccountInput,
   Platform,
   AccountStatus,
-  AccountWithProfile
 } from '@ngaj/shared';
 import { ValidationError, NotFoundError, ConflictError } from '@ngaj/shared';
+import {
+  ObjectId,
+  type AccountDocument,
+  type AccountWithProfileDocument,
+  type CreateAccountDocumentInput,
+} from '../types/documents.js';
 
 /**
  * Service for managing Account entities
@@ -30,7 +33,7 @@ export class AccountService {
    * @throws ValidationError - When input data is invalid
    * @throws ConflictError - When (platform, handle) combination already exists
    */
-  async create(data: CreateAccountInput): Promise<Account> {
+  async create(data: CreateAccountDocumentInput): Promise<AccountDocument> {
     // Validate input
     this.validateAccountData(data);
 
@@ -41,7 +44,7 @@ export class AccountService {
     }
 
     // Check for duplicate (platform, handle)
-    const existingAccount = await this.db.collection<Account>('accounts').findOne({
+    const existingAccount = await this.db.collection<AccountDocument>('accounts').findOne({
       platform: data.platform,
       handle: data.handle
     });
@@ -53,7 +56,7 @@ export class AccountService {
 
     // Create account document
     const now = new Date();
-    const account: Account = {
+    const account: AccountDocument = {
       _id: new ObjectId(),
       profileId: data.profileId,
       platform: data.platform,
@@ -69,7 +72,7 @@ export class AccountService {
     };
 
     // Insert into database
-    const result = await this.db.collection<Account>('accounts').insertOne(account);
+    const result = await this.db.collection<AccountDocument>('accounts').insertOne(account);
     
     return {
       ...account,
@@ -85,7 +88,7 @@ export class AccountService {
    * @returns Account if found (with or without profile), null otherwise
    * @throws Error - When ObjectId format is invalid
    */
-  async findById(id: ObjectId, populate?: boolean): Promise<Account | AccountWithProfile | null> {
+  async findById(id: ObjectId, populate?: boolean): Promise<AccountDocument | AccountWithProfileDocument | null> {
     // Validate ObjectId
     if (!ObjectId.isValid(id)) {
       throw new Error('Invalid ObjectId');
@@ -93,7 +96,7 @@ export class AccountService {
 
     if (populate) {
       // Use aggregation with $lookup to populate profile
-      const results = await this.db.collection<Account>('accounts').aggregate([
+      const results = await this.db.collection<AccountDocument>('accounts').aggregate([
         { $match: { _id: id } },
         {
           $lookup: {
@@ -111,10 +114,10 @@ export class AccountService {
         }
       ]).toArray();
 
-      return results[0] as AccountWithProfile || null;
+      return results[0] as AccountWithProfileDocument || null;
     }
 
-    const account = await this.db.collection<Account>('accounts').findOne({ _id: id });
+    const account = await this.db.collection<AccountDocument>('accounts').findOne({ _id: id });
     return account;
   }
 
@@ -127,7 +130,7 @@ export class AccountService {
   async findAll(filters?: { 
     profileId?: ObjectId; 
     status?: AccountStatus 
-  }): Promise<Account[]> {
+  }): Promise<AccountDocument[]> {
     const query: { profileId?: ObjectId; status?: AccountStatus } = {};
     
     if (filters?.profileId) {
@@ -138,7 +141,7 @@ export class AccountService {
       query.status = filters.status;
     }
 
-    const accounts = await this.db.collection<Account>('accounts').find(query).toArray();
+    const accounts = await this.db.collection<AccountDocument>('accounts').find(query).toArray();
     return accounts;
   }
 
@@ -148,7 +151,7 @@ export class AccountService {
    * @throws NotFoundError - When account not found
    * @throws ValidationError - When attempting to update immutable fields or invalid data
    */
-  async update(id: ObjectId, data: UpdateAccountInput): Promise<Account> {
+  async update(id: ObjectId, data: UpdateAccountInput): Promise<AccountDocument> {
     // Check for immutable field updates
     if ('profileId' in data) {
       throw new ValidationError('profileId cannot be updated');
@@ -179,7 +182,7 @@ export class AccountService {
       updatedAt: new Date()
     };
 
-    await this.db.collection<Account>('accounts').updateOne(
+    await this.db.collection<AccountDocument>('accounts').updateOne(
       { _id: id },
       { $set: updateDoc }
     );
@@ -195,7 +198,7 @@ export class AccountService {
    * @throws NotFoundError - When account not found
    */
   async delete(id: ObjectId): Promise<void> {
-    const result = await this.db.collection<Account>('accounts').deleteOne({ _id: id });
+    const result = await this.db.collection<AccountDocument>('accounts').deleteOne({ _id: id });
     
     if (result.deletedCount === 0) {
       throw new NotFoundError('Account not found');
@@ -209,8 +212,8 @@ export class AccountService {
    * 
    * @returns Array of accounts with profiles
    */
-  async findAccountsForDiscovery(): Promise<AccountWithProfile[]> {
-    const accounts = await this.db.collection<Account>('accounts').aggregate([
+  async findAccountsForDiscovery(): Promise<AccountWithProfileDocument[]> {
+    const accounts = await this.db.collection<AccountDocument>('accounts').aggregate([
       {
         $match: {
           'discovery.schedules': {
@@ -235,7 +238,7 @@ export class AccountService {
       }
     ]).toArray();
 
-    return accounts as AccountWithProfile[];
+    return accounts as AccountWithProfileDocument[];
   }
 
   /**
@@ -267,7 +270,7 @@ export class AccountService {
       updateDoc['status'] = 'error';
     }
 
-    await this.db.collection<Account>('accounts').updateOne(
+    await this.db.collection<AccountDocument>('accounts').updateOne(
       { _id: id },
       { $set: updateDoc }
     );
@@ -304,7 +307,7 @@ export class AccountService {
    * Validate complete account data
    * @private
    */
-  private validateAccountData(data: CreateAccountInput): void {
+  private validateAccountData(data: CreateAccountDocumentInput): void {
     // Validate profileId
     if (!data.profileId) {
       throw new ValidationError('profileId is required');

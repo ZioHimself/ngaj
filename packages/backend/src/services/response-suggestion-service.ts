@@ -1,15 +1,18 @@
-import { Db, ObjectId, Collection, OptionalUnlessRequiredId } from 'mongodb';
+import type { Db, Collection, OptionalUnlessRequiredId } from 'mongodb';
 import type {
-  Response,
-  CreateResponseInput,
   UpdateResponseInput,
   OpportunityAnalysis,
-  Opportunity,
-  Profile
 } from '@ngaj/shared';
 import type { IPlatformAdapter } from '../adapters/platform-adapter';
 import { buildAnalysisPrompt, buildGenerationPrompt, KBChunk } from '../utils/prompt-builder';
 import { validateConstraints } from '../utils/constraint-validator';
+import {
+  ObjectId,
+  type ResponseDocument,
+  type OpportunityDocument,
+  type ProfileDocument,
+  type CreateResponseDocumentInput,
+} from '../types/documents.js';
 
 /**
  * Interface for AI analysis/generation client (e.g., Claude)
@@ -36,9 +39,9 @@ export interface IChromaClient {
  * @see ADR-009: Response Suggestion Architecture
  */
 export class ResponseSuggestionService {
-  private responsesCollection: Collection<Response>;
-  private opportunitiesCollection: Collection<Opportunity>;
-  private profilesCollection: Collection<Profile>;
+  private responsesCollection: Collection<ResponseDocument>;
+  private opportunitiesCollection: Collection<OpportunityDocument>;
+  private profilesCollection: Collection<ProfileDocument>;
 
   constructor(
     db: Db,
@@ -76,13 +79,13 @@ export class ResponseSuggestionService {
     opportunityId: ObjectId,
     accountId: ObjectId,
     profileId: ObjectId
-  ): Promise<Response> {
+  ): Promise<ResponseDocument> {
     const startTime = Date.now();
 
     // 1. Load opportunity and profile
     const opportunity = await this.opportunitiesCollection.findOne({
       _id: opportunityId
-    }) as Opportunity | null;
+    }) as OpportunityDocument | null;
 
     if (!opportunity) {
       throw new Error('Opportunity not found');
@@ -90,7 +93,7 @@ export class ResponseSuggestionService {
 
     const profile = await this.profilesCollection.findOne({
       _id: profileId
-    }) as Profile | null;
+    }) as ProfileDocument | null;
 
     if (!profile) {
       throw new Error('Profile not found');
@@ -180,7 +183,7 @@ export class ResponseSuggestionService {
     const generationTimeMs = Date.now() - startTime;
     const now = new Date();
 
-    const responseDoc: CreateResponseInput = {
+    const responseDoc: CreateResponseDocumentInput = {
       opportunityId,
       accountId,
       text: generatedText!,
@@ -206,7 +209,7 @@ export class ResponseSuggestionService {
     const result = await this.responsesCollection.insertOne({
       ...responseDoc,
       updatedAt: now
-    } as OptionalUnlessRequiredId<Response>);
+    } as OptionalUnlessRequiredId<ResponseDocument>);
 
     return {
       _id: result.insertedId,
@@ -224,7 +227,7 @@ export class ResponseSuggestionService {
    * @param opportunityId - Opportunity to get responses for
    * @returns Array of responses (all versions)
    */
-  async getResponses(opportunityId: ObjectId): Promise<Response[]> {
+  async getResponses(opportunityId: ObjectId): Promise<ResponseDocument[]> {
     const responses = await this.responsesCollection
       .find({ opportunityId })
       .sort({ version: 1 })

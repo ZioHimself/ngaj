@@ -23,10 +23,10 @@ interface BlueskyApiError {
 }
 
 /**
- * Extended BskyAgent interface for methods not fully typed in @atproto/api
- * These represent the actual runtime behavior of the agent
+ * Agent interface for posting methods with runtime-accurate types.
+ * Used for type-safe casting when the @atproto/api types don't match runtime behavior.
  */
-interface ExtendedBskyAgent extends BskyAgent {
+interface AgentPostingMethods {
   getPost(params: { uri: string }): Promise<GetPostResponse>;
   post(params: { text: string; reply?: ReplyRef }): Promise<PostResponse>;
   session?: { handle: string };
@@ -245,12 +245,12 @@ export class BlueskyAdapter implements IPlatformAdapter {
    * @see ADR-010: Response Draft Posting
    */
   async post(parentPostId: string, responseText: string): Promise<import('./platform-adapter').PostResult> {
-    // Cast agent to extended interface for methods not fully typed in @atproto/api
-    const extendedAgent = this.agent as unknown as ExtendedBskyAgent;
+    // Cast agent to interface with runtime-accurate types for posting methods
+    const agentForPosting = this.agent as unknown as AgentPostingMethods;
 
     try {
       // 1. Fetch parent post to get CID and reply.root (for threading)
-      const parentPost = await extendedAgent.getPost({ uri: parentPostId });
+      const parentPost = await agentForPosting.getPost({ uri: parentPostId });
 
       if (!parentPost || !parentPost.value) {
         throw new PostNotFoundError('bluesky', parentPostId);
@@ -269,13 +269,13 @@ export class BlueskyAdapter implements IPlatformAdapter {
       };
 
       // 3. Post response as threaded reply
-      const result = await extendedAgent.post({
+      const result = await agentForPosting.post({
         text: responseText,
         reply,
       });
 
       // 4. Construct public URL
-      const handle = extendedAgent.session?.handle || 'unknown';
+      const handle = agentForPosting.session?.handle || 'unknown';
       const rkey = result.uri.split('/').pop();
       const postUrl = `https://bsky.app/profile/${handle}/post/${rkey}`;
 

@@ -13,6 +13,16 @@ Before proceeding with any ambiguous decision, conflicting requirement, or out-o
 4. ASK human for decision
 5. WAIT for confirmation before proceeding
 
+## ✍️ Brevity Guidelines
+
+**All agents MUST follow**: [Brevity Guidelines](.agents/context/brevity-guidelines.md)
+
+**Core Principle**: Keep everything short, concise, and focused → Use references instead of duplication
+
+- **Artifacts**: Single purpose per document, reference instead of repeat
+- **Code**: Lean principles—YAGNI, single responsibility, no dead code
+- **Issues**: 1-3 sentence summary, link to artifacts for details
+
 ## Designer Agent Mode
 
 When I say "design [feature]" or "let's design [feature]":

@@ -2,7 +2,32 @@
 
 ## Core Principle
 
-**Keep everything short, concise, and focused → Use references instead of duplication → Respect each document's distinct purpose**
+**Keep output short, concise, and focused → Use references instead of duplication → Respect each document's distinct purpose**
+
+---
+
+## Scope: Output Artifacts, Not Dialogue
+
+Brevity applies to **what agents produce**, not how they collaborate with users.
+
+| Activity | Brevity Applies? | Guidance |
+|----------|------------------|----------|
+| Design dialogue | ❌ No | Explore thoroughly, ask questions, challenge assumptions |
+| Clarifying questions | ❌ No | Ask as many as needed to understand requirements |
+| Trade-off discussions | ❌ No | Analyze multiple dimensions: performance, security, scale |
+| ADRs, design docs, handoffs | ✅ Yes | Distill conclusions into focused documents |
+| Code | ✅ Yes | Lean, single-purpose, no dead code |
+| GitHub issues | ✅ Yes | Short summary, link to artifacts |
+
+**Principle**: Rich exploration → Lean output
+
+Agents are encouraged to:
+- Ask probing questions about scalability, edge cases, future growth
+- Challenge constraints and surface hidden complexity
+- Present multiple options with trade-offs
+- Think aloud and share reasoning
+
+Then capture the **conclusions** concisely in artifacts.
 
 ---
 

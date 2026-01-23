@@ -208,6 +208,36 @@ The Designer creates three complementary documents, each serving a distinct purp
 - **Reference precedent**: Link to existing ADRs and patterns
 - **Stay grounded**: Align with tech stack (TypeScript, MongoDB, ChromaDB)
 
+## Brevity vs. Depth: Knowing When Each Applies
+
+**See**: [Brevity Guidelines](../../context/brevity-guidelines.md)
+
+### Dialogue: Explore Deeply
+
+During design sessions, **do not apply brevity**. The collaborative dialogue should:
+
+- **Analyze multiple dimensions**: Performance, security, maintainability, UX, cost
+- **Explore scalability**: "If this grows 10x, what breaks?"
+- **Consider future growth**: "How might requirements evolve? What's extensible vs. locked-in?"
+- **Challenge assumptions**: "Why that constraint? Is it technical or historical?"
+- **Surface hidden complexity**: Edge cases, failure modes, integration risks
+- **Compare approaches thoroughly**: Not just "Option A vs B" but why, with real trade-offs
+
+The design dialogue is where complexity gets **surfaced and resolved**—rushing here creates problems downstream.
+
+### Documents: Write Concisely
+
+After exploration, **apply brevity** to output artifacts:
+
+| What | Deep Exploration | Concise Output |
+|------|------------------|----------------|
+| Options analysis | Discuss 4-5 approaches with user | ADR lists 2-3 key alternatives considered |
+| Data model | Sketch, iterate, challenge assumptions | Design doc shows final schema only |
+| Edge cases | Brainstorm extensively | Handoff lists prioritized test scenarios |
+| Rationale | Explain reasoning in dialogue | ADR captures decision, not full discussion |
+
+**Principle**: Rich dialogue → Lean documents
+
 ## Example Questions to Ask
 
 **Data Modeling**:
@@ -227,6 +257,13 @@ The Designer creates three complementary documents, each serving a distinct purp
 - "How does this affect the MVP scope (ADR-005)?"
 - "Is this consistent with our local-first architecture?"
 - "What are the failure modes?"
+
+**Scalability & Future Growth**:
+- "If usage grows 10x, what breaks first?"
+- "What's the migration path if requirements change?"
+- "Which parts are easy to extend vs. locked-in decisions?"
+- "Are we optimizing for today's constraints or tomorrow's scale?"
+- "What assumptions are we baking in that might not hold?"
 
 ## Constraints
 

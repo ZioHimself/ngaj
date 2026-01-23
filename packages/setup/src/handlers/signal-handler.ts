@@ -60,12 +60,27 @@ export function installSignalHandler(options: SignalHandlerOptions): () => void 
 
   // Create async handler for SIGINT
   const handler = async () => {
-    const result = await promptCancellationConfirmation();
-    
-    if (result.confirmed) {
-      onCancel();
-    } else {
-      onResume();
+    try {
+      const result = await promptCancellationConfirmation();
+      
+      if (result.confirmed) {
+        try {
+          onCancel();
+        } catch {
+          // Callback threw - this is expected for USER_CANCELLED flow
+          // The callback is responsible for handling its own errors
+          // (e.g., by calling process.exit())
+        }
+      } else {
+        onResume();
+      }
+    } catch {
+      // Prompt failed (e.g., stdin closed) - treat as cancel
+      try {
+        onCancel();
+      } catch {
+        // Ignore callback errors
+      }
     }
   };
 

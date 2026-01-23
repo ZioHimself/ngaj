@@ -20,7 +20,8 @@ async function main(): Promise<void> {
   // Install signal handler for graceful Ctrl+C handling
   installSignalHandler({
     onCancel: () => {
-      throw new Error('USER_CANCELLED');
+      console.log('\n⚠️ Setup cancelled. Run the installer again to complete setup.');
+      process.exit(1);
     },
     onResume: () => {
       console.log('\nContinuing setup...\n');

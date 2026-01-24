@@ -2,8 +2,8 @@
 
 **Handoff Number**: 007  
 **Feature**: First-Launch Setup Wizard  
-**Date**: 2026-01-23  
-**Status**: Red Phase Complete
+**Date**: 2026-01-24  
+**Status**: Red Phase Complete (E2E Added)
 
 ---
 
@@ -15,7 +15,8 @@
 | Unit Tests (Transformation) | 7 | Red |
 | Unit Tests (Service) | 14 | Red |
 | Integration Tests | 8 | Red |
-| **Total** | **46** | **All Failing** |
+| E2E Tests (Playwright) | 36 | Red |
+| **Total** | **82** | **All Failing** |
 
 ---
 
@@ -29,6 +30,7 @@
 | `tests/unit/wizard/schedule-transformation.spec.ts` | Preset → cron tests |
 | `tests/unit/services/wizard-service.spec.ts` | WizardService tests |
 | `tests/integration/wizard/wizard-flow.spec.ts` | Complete flow tests |
+| `tests/e2e/features/first-launch-wizard.spec.ts` | Full UI E2E tests |
 
 ### Fixtures
 
@@ -142,6 +144,58 @@
 - Browser refresh pre-populates form
 - Handle duplicate profile name (409)
 
+### E2E Tests (27 tests) - Playwright
+
+**Wizard Activation (5 tests):**
+- Redirect to /login when not authenticated
+- Redirect to /setup when authenticated but no profile
+- Redirect to /opportunities when profile exists
+- /setup redirects to /opportunities if profile exists
+- Stay on /setup when no profile exists
+
+**Step 1: Profile Creation (9 tests):**
+- Display Step 1 form with all fields
+- Validation error when name is empty
+- Validation error when name too short
+- Validation error when name exceeds maximum
+- Validation error when voice too short
+- Validation error when principles too short
+- Validation error when too many interests
+- Advance to Step 2 with valid data
+- Allow empty interests (optional field)
+
+**Step 2: Connect Bluesky (7 tests):**
+- Display Step 2 with connection test button
+- Show success message after connection test
+- Show error after failed connection test
+- Require consent checkbox before proceeding
+- Advance to Step 3 after connection and consent
+- Navigate back to Step 1
+- Preserve profile data when navigating back
+
+**Step 3: Configure Discovery (5 tests):**
+- Display schedule options
+- 1 hour selected by default
+- Allow selecting different presets
+- Navigate back to Step 2
+- Redirect to /opportunities after finish
+
+**Complete Flow (2 tests):**
+- Complete full wizard from start to finish
+- Persist data across back navigation
+
+**Error Handling (6 tests):**
+- Display error when profile creation fails
+- Display error when profile name exists (409)
+- Display error when account creation fails
+- Display network error when connection fails
+- Display error when schedule update fails
+
+**Progress Indicator (3 tests):**
+- Show step 1 indicator on profile page
+- Show step 2 indicator on account page
+- Show step 3 indicator on discovery page
+
 ---
 
 ## Test Fixtures
@@ -214,7 +268,7 @@ Recommended sequence for Implementer:
 ## Running Tests
 
 ```bash
-# Run all wizard tests
+# Run all wizard unit/integration tests
 npm test -- --grep "Wizard"
 
 # Run validation tests only
@@ -228,6 +282,15 @@ npm test -- tests/integration/wizard/wizard-flow.spec.ts
 
 # Run with coverage
 npm test -- --coverage
+
+# Run E2E tests (Playwright)
+npx playwright test tests/e2e/features/first-launch-wizard.spec.ts
+
+# Run E2E tests with UI
+npx playwright test tests/e2e/features/first-launch-wizard.spec.ts --ui
+
+# Run E2E tests in headed mode
+npx playwright test tests/e2e/features/first-launch-wizard.spec.ts --headed
 ```
 
 ---
@@ -236,6 +299,7 @@ npm test -- --coverage
 
 When implementation is complete:
 
+**Unit/Integration Tests (Vitest):**
 ```
 ✓ tests/unit/wizard/wizard-validation.spec.ts (17 tests)
 ✓ tests/unit/wizard/schedule-transformation.spec.ts (7 tests)
@@ -244,6 +308,18 @@ When implementation is complete:
 
 Test Suites: 4 passed, 4 total
 Tests:       46 passed, 46 total
+```
+
+**E2E Tests (Playwright):**
+```
+Running 27 tests using 1 worker
+
+✓ [chromium] › tests/e2e/features/first-launch-wizard.spec.ts:XX:XX
+  ✓ Wizard Activation › should redirect to /login when not authenticated
+  ✓ Wizard Activation › should redirect to /setup when authenticated but no profile
+  ... (25 more tests)
+
+27 passed
 ```
 
 ---
@@ -293,9 +369,9 @@ Tests:       46 passed, 46 total
 
 ## Known Limitations
 
-- **No E2E tests**: UI not implemented yet
 - **Single account only**: v0.1 constraint
 - **No skip option**: Wizard is mandatory
+- **E2E tests use mocked APIs**: Real backend not required for E2E tests
 
 ---
 
@@ -303,7 +379,8 @@ Tests:       46 passed, 46 total
 
 For Green Phase completion:
 
-- [ ] All 46 tests pass
+- [ ] All 46 unit/integration tests pass
+- [ ] All 36 E2E tests pass
 - [ ] No linter errors
 - [ ] TypeScript compiles without errors
 - [ ] Test coverage meets thresholds

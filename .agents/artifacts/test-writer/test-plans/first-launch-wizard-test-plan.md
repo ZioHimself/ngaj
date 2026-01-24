@@ -2,7 +2,7 @@
 
 **Handoff Number**: 007  
 **Feature**: First-Launch Setup Wizard  
-**Date**: 2026-01-23  
+**Date**: 2026-01-24  
 **Status**: Red Phase (Tests Written, Implementation Pending)
 
 ---
@@ -24,7 +24,8 @@
 | Schedule Transformation | 5 | Critical |
 | Wizard Service | 14 | Critical |
 | Integration (Wizard Flow) | 8 | Critical |
-| **Total** | **39** | |
+| E2E (Wizard UI) | 36 | Critical |
+| **Total** | **75** | |
 
 ---
 
@@ -93,6 +94,66 @@
 | Browser refresh pre-populates | Existing data loads into form |
 | Duplicate profile name rejected | 409 Conflict on duplicate |
 
+### 2.3 E2E Tests (Playwright)
+
+#### Wizard Activation (`tests/e2e/features/first-launch-wizard.spec.ts`)
+
+| Test | Description |
+|------|-------------|
+| Redirect to /login when not authenticated | Unauthenticated users see login |
+| Redirect to /setup when no profile | Authenticated users without profile go to wizard |
+| Redirect to /opportunities when profile exists | Users with profile go to dashboard |
+| /setup redirects to /opportunities if profile exists | Wizard not shown after completion |
+| Stay on /setup when no profile exists | Wizard stays visible until complete |
+
+#### Step 1: Profile Creation (`tests/e2e/features/first-launch-wizard.spec.ts`)
+
+| Test | Description |
+|------|-------------|
+| Display Step 1 form with all fields | All inputs visible |
+| Validation error when name is empty | "Profile name is required" |
+| Validation error when name too short | "at least 3 characters" |
+| Validation error when name exceeds max | "not exceed 100 characters" |
+| Validation error when voice too short | "at least 10 characters" |
+| Validation error when principles too short | "at least 10 characters" |
+| Validation error when too many interests | "Maximum 20 interests" |
+| Advance to Step 2 with valid data | Form submits successfully |
+| Allow empty interests | Optional field works |
+
+#### Step 2: Connect Bluesky (`tests/e2e/features/first-launch-wizard.spec.ts`)
+
+| Test | Description |
+|------|-------------|
+| Display Step 2 with connection test button | UI elements visible |
+| Show success message after connection test | "Connected successfully" shown |
+| Show error after failed connection | "Connection failed" shown |
+| Require consent checkbox before proceeding | "You must agree" error |
+| Advance to Step 3 after connection and consent | Proceeds to discovery |
+| Navigate back to Step 1 | Back button works |
+| Preserve profile data when navigating back | Data pre-populated |
+
+#### Step 3: Configure Discovery (`tests/e2e/features/first-launch-wizard.spec.ts`)
+
+| Test | Description |
+|------|-------------|
+| Display schedule options | All presets visible |
+| 1 hour selected by default | Default selection shown |
+| Allow selecting different presets | Selection changes |
+| Navigate back to Step 2 | Back button works |
+| Redirect to /opportunities after finish | Completion flow |
+
+#### Complete Flow & Error Handling (`tests/e2e/features/first-launch-wizard.spec.ts`)
+
+| Test | Description |
+|------|-------------|
+| Complete full wizard from start to finish | Happy path E2E |
+| Persist data across back navigation | State preserved |
+| Display error when profile creation fails | 500 error handled |
+| Display error when profile name exists | 409 conflict handled |
+| Display error when account creation fails | Error shown |
+| Display network error when connection fails | Network error handled |
+| Display error when schedule update fails | Error shown |
+
 ---
 
 ## 3. Mock Strategy
@@ -122,16 +183,19 @@
 ```
 tests/
 ├── fixtures/
-│   └── wizard-fixtures.ts          # Wizard-specific fixtures
+│   └── wizard-fixtures.ts                    # Wizard-specific fixtures
 ├── unit/
 │   ├── wizard/
-│   │   ├── wizard-validation.spec.ts      # Input validation tests
-│   │   └── schedule-transformation.spec.ts # Cron preset tests
+│   │   ├── wizard-validation.spec.ts         # Input validation tests
+│   │   └── schedule-transformation.spec.ts   # Cron preset tests
 │   └── services/
-│       └── wizard-service.spec.ts          # Wizard service tests
-└── integration/
-    └── wizard/
-        └── wizard-flow.spec.ts             # Complete flow tests
+│       └── wizard-service.spec.ts            # Wizard service tests
+├── integration/
+│   └── wizard/
+│       └── wizard-flow.spec.ts               # Complete flow tests
+└── e2e/
+    └── features/
+        └── first-launch-wizard.spec.ts       # Full UI E2E tests (Playwright)
 ```
 
 ---
@@ -188,17 +252,18 @@ export function presetToCron(preset: DiscoverySchedulePreset): string;
 
 ## 7. Known Limitations
 
-- **E2E tests deferred**: UI tests require frontend implementation
 - **Multi-account not tested**: v0.1 supports single account only
 - **Skip wizard not tested**: No skip option in v0.1
+- **E2E tests use mocked APIs**: Real backend not required for E2E
 
 ---
 
 ## 8. Success Criteria
 
-- [ ] All 39 tests fail with clear "Not implemented" errors
+- [ ] All 75 tests fail with clear "Not implemented" errors
 - [ ] No TypeScript compilation errors
 - [ ] No linter errors in test code
 - [ ] Stubs have correct method signatures
 - [ ] Test names clearly describe expected behavior
 - [ ] Fixtures cover all validation edge cases
+- [ ] E2E tests verify full user workflow

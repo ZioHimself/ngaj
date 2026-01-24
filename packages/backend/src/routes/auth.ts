@@ -60,7 +60,7 @@ router.post('/login', (req, res) => {
  * - 500: { error: string } - Logout failed
  */
 router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
+  req.session.destroy((err: Error | undefined) => {
     if (err) {
       return res.status(500).json({ error: 'Logout failed' });
     }

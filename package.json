@@ -36,6 +36,9 @@
     "docker:push": "docker push ngaj/backend && docker push ngaj/setup",
     "installer:macos": "bash installer/macos/build.sh",
     "installer:macos:full": "npm run docker:build && npm run installer:macos",
+    "installer:windows": "bash installer/windows/build.sh",
+    "installer:windows:ps1": "powershell -ExecutionPolicy Bypass -File installer/windows/build.ps1",
+    "installer:windows:full": "npm run docker:build && npm run installer:windows",
     "db:init": "tsx scripts/init-db.ts",
     "db:reset": "tsx scripts/reset-db.ts"
   },

@@ -102,30 +102,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Extract version from tag
         id: version
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Build Windows installer
-        shell: pwsh
+        shell: bash
+        run: npm run installer:windows
+
+      - name: Rename installer with version
+        shell: bash
         run: |
-          # Create staging directory
-          New-Item -ItemType Directory -Force -Path staging\ngaj
-          
-          # Copy docker-compose and scripts
-          Copy-Item docker-compose.yml staging\ngaj\
-          Copy-Item -Recurse installer\scripts staging\ngaj\
-          
-          # Note: Full WiX installer build would go here
-          # For now, create a simple zip
-          Compress-Archive -Path staging\ngaj\* -DestinationPath ngaj-${{ steps.version.outputs.VERSION }}-windows.zip
+          mv dist/ngaj-installer-*-windows.zip dist/ngaj-${{ steps.version.outputs.VERSION }}-windows.zip
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: installer-windows
-          path: ngaj-*.zip
+          path: dist/ngaj-*.zip
 
   # Create GitHub Release
   release:

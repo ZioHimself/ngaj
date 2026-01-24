@@ -169,3 +169,64 @@ jobs:
           name: macos-installer-test
           path: dist/ngaj-installer-*.pkg
           retention-days: 7
+
+  installer-windows:
+    name: Windows Installer Build Test
+    runs-on: windows-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Verify PowerShell scripts syntax
+        shell: pwsh
+        run: |
+          # Parse PowerShell scripts to check for syntax errors
+          $scripts = @(
+            "installer\windows\build.ps1",
+            "installer\scripts\postinstall.ps1",
+            "installer\scripts\ngaj-start.ps1"
+          )
+          
+          foreach ($script in $scripts) {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+              "$PWD\$script",
+              [ref]$null,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              Write-Error "Syntax errors in $script"
+              $errors | ForEach-Object { Write-Error $_.Message }
+              exit 1
+            }
+            Write-Host "$script syntax OK" -ForegroundColor Green
+          }
+
+      - name: Verify bash build script syntax
+        shell: bash
+        run: bash -n installer/windows/build.sh && echo "✓ build.sh syntax OK"
+
+      - name: Build Windows installer package
+        shell: bash
+        run: npm run installer:windows
+
+      - name: Verify installer was created
+        shell: bash
+        run: |
+          ls -la dist/
+          test -f dist/ngaj-installer-*-windows.zip
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-test
+          path: dist/ngaj-installer-*-windows.zip
+          retention-days: 7

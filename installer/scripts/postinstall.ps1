@@ -4,16 +4,32 @@
 
 $ErrorActionPreference = "Stop"
 
-$NgajHome = "$env:USERPROFILE\.ngaj"
+$NgajHome = "$env:LOCALAPPDATA\ngaj"
 $InstallDir = "$env:ProgramFiles\ngaj"
 
-Write-Host "🚀 ngaj Post-Install Setup" -ForegroundColor Cyan
+Write-Host "ngaj Post-Install Setup" -ForegroundColor Cyan
 Write-Host "==========================" -ForegroundColor Cyan
 
-# Create user data directory
+# Create user data directory structure
 New-Item -ItemType Directory -Force -Path "$NgajHome\data\mongodb" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\data\chromadb" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\logs" | Out-Null
+New-Item -ItemType Directory -Force -Path "$NgajHome\scripts" | Out-Null
+
+# Copy start script to user directory
+Write-Host "Installing launcher scripts..."
+Copy-Item "$InstallDir\scripts\ngaj-start.ps1" "$NgajHome\scripts\" -Force
+
+# Create Start Menu shortcut
+Write-Host "Creating Start Menu shortcut..."
+$WshShell = New-Object -ComObject WScript.Shell
+$StartMenu = [Environment]::GetFolderPath('StartMenu')
+$Shortcut = $WshShell.CreateShortcut("$StartMenu\Programs\ngaj.lnk")
+$Shortcut.TargetPath = "powershell.exe"
+$Shortcut.Arguments = "-ExecutionPolicy Bypass -NoExit -File `"$NgajHome\scripts\ngaj-start.ps1`""
+$Shortcut.WorkingDirectory = $NgajHome
+$Shortcut.Description = "Start ngaj - Social Media Engagement Companion"
+$Shortcut.Save()
 
 # Check for Docker
 Write-Host "Checking for Docker..."
@@ -80,7 +96,53 @@ do {
     }
 } while (-not $ready)
 
+# Detect LAN IP address for network access
+function Get-LanIP {
+    $ip = $null
+    try {
+        $networkConfig = Get-NetIPConfiguration | Where-Object { 
+            $_.IPv4DefaultGateway -ne $null -and 
+            $_.NetAdapter.Status -eq "Up" 
+        } | Select-Object -First 1
+        
+        if ($networkConfig) {
+            $ip = ($networkConfig.IPv4Address | Where-Object { $_.PrefixOrigin -ne "WellKnown" }).IPAddress
+        }
+    } catch {
+        $ip = $null
+    }
+    return $ip
+}
+
+$lanIP = Get-LanIP
+
+# Read login secret from .env
+$loginSecret = $null
+if (Test-Path "$NgajHome\.env") {
+    $envContent = Get-Content "$NgajHome\.env"
+    $loginLine = $envContent | Where-Object { $_ -match "^LOGIN_SECRET=" }
+    if ($loginLine) {
+        $loginSecret = $loginLine -replace "^LOGIN_SECRET=", ""
+    }
+}
+
 Write-Host ""
-Write-Host "✅ ngaj is ready!" -ForegroundColor Green
-Write-Host "Opening http://localhost:3000..."
-Start-Process "http://localhost:3000"
+Write-Host "ngaj is ready!" -ForegroundColor Green
+Write-Host ""
+Write-Host "  Local access:   http://localhost:3000"
+if ($lanIP) {
+    Write-Host "  Network access: http://${lanIP}:3000"
+    Write-Host "  (Use this URL from your mobile device on the same WiFi)"
+}
+if ($loginSecret) {
+    Write-Host ""
+    Write-Host "  Login code:     $loginSecret"
+}
+Write-Host ""
+Write-Host "Opening browser..."
+
+if ($lanIP) {
+    Start-Process "http://${lanIP}:3000"
+} else {
+    Start-Process "http://localhost:3000"
+}

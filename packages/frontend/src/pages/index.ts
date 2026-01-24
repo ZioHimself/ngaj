@@ -6,3 +6,4 @@ export { SetupWizard } from './SetupWizard';
 export { Opportunities } from './Opportunities';
 export { OpportunitiesDashboard } from './OpportunitiesDashboard';
 export type { OpportunitiesDashboardProps } from './OpportunitiesDashboard';
+export { LoginPage } from './LoginPage';

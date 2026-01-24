@@ -1,39 +1,67 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SetupWizard, Opportunities } from './pages';
+import { SetupWizard, Opportunities, LoginPage } from './pages';
 
 /**
  * App Root Component
  *
- * Handles routing and wizard activation:
- * - If no profile exists → redirect to /setup
- * - If profile exists → show opportunities
+ * Handles routing with authentication and wizard activation:
+ * - If not authenticated → show login page
+ * - If authenticated but no profile → redirect to /setup
+ * - If authenticated and profile exists → show opportunities
+ *
+ * @see ADR-014: Simple Token Authentication
  */
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if setup is needed
-    const checkProfile = async () => {
+    // Check authentication status and profile
+    const checkAuthAndProfile = async () => {
       try {
-        const response = await fetch('/api/wizard/check');
-        if (response.ok) {
-          const data = await response.json();
-          setHasProfile(data.hasProfile);
+        // First check auth status
+        const authResponse = await fetch('/api/auth/status');
+
+        if (authResponse.status === 401) {
+          // Not authenticated
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          setIsAuthenticated(authData.authenticated);
+
+          if (!authData.authenticated) {
+            setIsLoading(false);
+            return;
+          }
+
+          // If authenticated, check if setup is needed
+          const profileResponse = await fetch('/api/wizard/check');
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            setHasProfile(profileData.hasProfile);
+          } else {
+            // API error, assume no profile
+            setHasProfile(false);
+          }
         } else {
-          // API not available, assume no profile
-          setHasProfile(false);
+          // Auth check failed, assume not authenticated
+          setIsAuthenticated(false);
         }
       } catch {
-        // Error checking, assume no profile
-        setHasProfile(false);
+        // Network error, assume not authenticated
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkProfile();
+    checkAuthAndProfile();
   }, []);
 
   if (isLoading) {
@@ -50,19 +78,43 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Setup wizard route */}
+        {/* Login page (public) */}
         <Route
-          path="/setup"
+          path="/login"
           element={
-            hasProfile ? <Navigate to="/opportunities" replace /> : <SetupWizard />
+            isAuthenticated ? (
+              <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
+            ) : (
+              <LoginPage />
+            )
           }
         />
 
-        {/* Main opportunities page */}
+        {/* Setup wizard route (requires auth) */}
+        <Route
+          path="/setup"
+          element={
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : hasProfile ? (
+              <Navigate to="/opportunities" replace />
+            ) : (
+              <SetupWizard />
+            )
+          }
+        />
+
+        {/* Main opportunities page (requires auth + profile) */}
         <Route
           path="/opportunities"
           element={
-            hasProfile ? <Opportunities /> : <Navigate to="/setup" replace />
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : !hasProfile ? (
+              <Navigate to="/setup" replace />
+            ) : (
+              <Opportunities />
+            )
           }
         />
 
@@ -70,7 +122,11 @@ function App() {
         <Route
           path="/"
           element={
-            <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
+            )
           }
         />
 
@@ -78,7 +134,11 @@ function App() {
         <Route
           path="*"
           element={
-            <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
+            )
           }
         />
       </Routes>

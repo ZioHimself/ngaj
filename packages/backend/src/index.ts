@@ -2,6 +2,9 @@ import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { connectToDatabase, closeDatabaseConnection, getDatabase } from './config/database.js';
 import { WizardService } from './services/wizard-service.js';
+import { configureSession } from './middleware/session.js';
+import { authMiddleware } from './middleware/auth.js';
+import authRoutes from './routes/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -12,7 +15,25 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 
-// Health check endpoint
+// Session middleware (must be before auth middleware)
+app.use(configureSession());
+
+// Auth middleware (protects routes after session is configured)
+app.use(authMiddleware);
+
+// Auth routes (login, logout, status)
+app.use('/api/auth', authRoutes);
+
+// Health check endpoint (public route - allowed by auth middleware)
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+// Legacy health check endpoint for backwards compatibility
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',

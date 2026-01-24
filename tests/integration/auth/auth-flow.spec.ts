@@ -9,6 +9,7 @@ import {
   validLoginRequest,
   invalidLoginRequests,
   codeNormalizationCases,
+  loginSuccessResponse,
 } from '../../fixtures/auth-fixtures';
 
 describe('Auth Integration Tests', () => {

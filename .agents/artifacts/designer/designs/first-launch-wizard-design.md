@@ -1,6 +1,7 @@
 # First-Launch Wizard - Design Document
 
 📋 **Decision Context**: [ADR-012: First-Launch Setup Wizard](../../../../docs/architecture/decisions/012-first-launch-wizard.md)
+📱 **UI Layout**: [Responsive Web Design](./responsive-web-design.md) - Mobile-first layout specifications
 
 **Date**: 2026-01-22  
 **Status**: Approved
@@ -11,7 +12,9 @@
 
 Web UI wizard that runs once on first launch to create Profile, connect Bluesky account, and configure discovery. Shows when no Profile exists; redirects to `/opportunities` on completion.
 
-**Type Definitions**: `src/shared/types/wizard.ts`
+> **UI Implementation**: This document covers wizard flow and API integration. For component layout, touch targets, and responsive breakpoints, see [Responsive Web Design](./responsive-web-design.md).
+
+**Type Definitions**: `packages/shared/src/types/wizard.ts`
 
 ---
 
@@ -194,5 +197,7 @@ const SCHEDULE_PRESET_CRON: Record<DiscoverySchedulePreset, string> = {
 
 ## References
 
-- [ADR-012](../../../../docs/architecture/decisions/012-first-launch-wizard.md) - Decision rationale and UI mockups
-- [Type Definitions](../../../../src/shared/types/wizard.ts) - Wizard-specific types
+- [ADR-012](../../../../docs/architecture/decisions/012-first-launch-wizard.md) - Decision rationale
+- [ADR-015](../../../../docs/architecture/decisions/015-responsive-web-design.md) - Mobile-first responsive design decisions
+- [Responsive Web Design](./responsive-web-design.md) - UI layout specifications (touch targets, breakpoints, Tailwind classes)
+- [Type Definitions](../../../../packages/shared/src/types/wizard.ts) - Wizard-specific types

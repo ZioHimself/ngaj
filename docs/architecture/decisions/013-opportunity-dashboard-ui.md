@@ -4,6 +4,8 @@
 
 **Accepted** - January 18, 2026
 
+> **Note:** Some UI decisions in this ADR have been **superseded** by [ADR-015: Responsive Web Design](./015-responsive-web-design.md), which establishes mobile-first design patterns. Superseded sections are marked with ~~strikethrough~~.
+
 ## Context
 
 The Opportunity Dashboard is the **primary interface** for ngaj v0.1. This is where users spend most of their time: reviewing discovered opportunities, generating AI responses, editing drafts, and posting to Bluesky. The backend discovery system (ADR-008) surfaces relevant posts, but we need to decide how users interact with this list.
@@ -12,7 +14,7 @@ The Opportunity Dashboard is the **primary interface** for ngaj v0.1. This is wh
 
 **Design Constraints:**
 - Users may have 10-50 opportunities per day (based on ADR-005 success criteria: 5-10 relevant)
-- Desktop-first (mobile as stretch goal for v0.1)
+- **Mobile-first design** (see [ADR-015](./015-responsive-web-design.md) for responsive layout decisions)
 - Must feel fast and responsive (not sluggish with 50+ items)
 - Simple workflow: View → Generate → Edit → Post (no complex branching)
 - Non-technical users (consumer app, not power user tool)
@@ -119,18 +121,20 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 
 **Problem:** 50+ opportunities slow to load/render
 
-**Decision:** Server-side pagination (not infinite scroll for v0.1)
+**Decision:** ~~Server-side pagination~~ → **"Load More" button** (see [ADR-015](./015-responsive-web-design.md))
 
 **Approach:**
-- Load 20 opportunities per page
-- Simple page navigation (Previous/Next, page numbers)
+- Load 20 opportunities initially
+- "Load More" button appends next batch to existing list
 - Server returns paginated results from MongoDB (skip/limit)
+- Progress indicator shows "X of Y loaded"
 
-**Why not infinite scroll?**
-- Simpler to implement
-- Better for keyboard navigation
-- Easier to test
-- Can add in v0.2 if users request
+**Why "Load More" over numbered pagination?**
+- Better mobile UX (no fiddly page numbers on touch screens)
+- User stays in context (doesn't jump to new page)
+- Simpler mental model (just keep loading more)
+
+> **Note:** Original decision was numbered pagination. Updated per ADR-015 for mobile-first design.
 
 ### 7. Real-Time Updates
 
@@ -151,19 +155,23 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 
 ### 8. Response Generation UX
 
-**Inline vs. Modal?** → **Inline** (show response below opportunity)
+**Inline vs. Modal?** → **Full-screen modal on mobile, inline on desktop** (see [ADR-015](./015-responsive-web-design.md))
 
 **Flow:**
 1. User clicks "Generate Response" on opportunity
 2. Loading indicator appears (shows AI is working)
-3. Response appears inline below opportunity post
-4. Textarea becomes editable for user changes
-5. "Post" and "Regenerate" buttons appear
+3. **Mobile:** Full-screen modal opens with response editor
+4. **Desktop:** Modal with backdrop, constrained width
+5. Textarea is editable for user changes
+6. "Post" and "Regenerate" buttons in modal footer
 
-**Why inline?**
-- Keeps context visible (see opportunity while editing)
-- Less disruptive than modal
-- Familiar pattern (social media reply boxes)
+**Why modal for mobile?**
+- Full keyboard focus without layout jumping
+- Virtual keyboard handling is cleaner
+- Dedicated editing space on small screens
+- Back button provides clear exit
+
+> **Note:** Original decision was inline editing. Updated per ADR-015 for mobile-first design.
 
 ### 9. Error Handling
 
@@ -236,9 +244,9 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 **Trade-off:**
 - Some users may prefer "newest first" → Offer as alternative sort (if time allows)
 
-### Why Pagination (vs. Infinite Scroll)?
+### Why "Load More" (vs. Pagination or Infinite Scroll)?
 
-**Decision:** Server-side pagination (20 per page)
+**Decision:** ~~Server-side pagination~~ → **"Load More" button** (updated per [ADR-015](./015-responsive-web-design.md))
 
 **Alternatives Considered:**
 
@@ -246,16 +254,21 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
    - ✅ Simplest
    - ❌ Slow with 50+ opportunities
    
-2. **Infinite Scroll**
+2. **Numbered Pagination** (original decision)
+   - ✅ Simple, predictable
+   - ❌ Poor mobile UX (small touch targets for page numbers)
+   - ❌ Context lost when changing pages
+
+3. **Infinite Scroll**
    - ✅ Modern, smooth UX
    - ❌ More complex (scroll tracking, virtualization)
    - ❌ Harder to navigate back to specific item
 
-**Chosen: Pagination** because:
-- Good enough for v0.1 (10-50 opportunities)
-- Simple to implement and test
-- Predictable performance
-- Can upgrade to infinite scroll in v0.2 if needed
+**Chosen: "Load More"** because:
+- Better mobile UX than numbered pages
+- User stays in context (items append, don't replace)
+- Simpler than infinite scroll (explicit user action)
+- Explicit control over data loading
 
 ### Why Manual Refresh (vs. Auto-Polling)?
 
@@ -270,25 +283,33 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 **Trade-off:**
 - User must remember to click Refresh → Mitigate with "New opportunities available" banner
 
-### Why Inline Response (vs. Modal)?
+### Why Full-Screen Modal on Mobile (vs. Inline)?
 
-**Decision:** Show generated response inline below opportunity
+**Decision:** ~~Inline editing~~ → **Full-screen modal on mobile** (updated per [ADR-015](./015-responsive-web-design.md))
 
 **Alternatives Considered:**
 
-1. **Modal/Dialog**
-   - ✅ Focused editing (no distractions)
-   - ❌ Hides opportunity context
-   - ❌ Requires closing to see other opportunities
+1. **Inline (original decision)**
+   - ✅ Keeps context visible
+   - ✅ Familiar social media pattern
+   - ❌ Layout shifts when editor appears on mobile
+   - ❌ Virtual keyboard handling is problematic
    
 2. **Separate Page**
    - ✅ More space for editing
    - ❌ Requires navigation (slower)
 
-**Chosen: Inline** because:
-- Keeps context visible (see what you're replying to)
-- Familiar social media pattern (reply boxes)
-- Faster workflow (no navigation or modal management)
+3. **Full-Screen Modal**
+   - ✅ Focused editing environment
+   - ✅ Clean virtual keyboard handling
+   - ✅ Works well on mobile
+   - ⚠️ Needs "original post" preview to maintain context
+
+**Chosen: Full-screen modal** because:
+- Better mobile keyboard handling
+- Dedicated editing space on small screens
+- Clear entry/exit flow (back button)
+- Original post preview maintains context
 
 ## Consequences
 
@@ -303,19 +324,17 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 
 ### Negative
 
-- ❌ **Desktop-only optimized**: May not be ideal on mobile (list is long)
+- ~~❌ **Desktop-only optimized**~~ → ✅ **Addressed by [ADR-015](./015-responsive-web-design.md)** (mobile-first design)
 - ❌ **Manual refresh**: User must click to see new opportunities
 - ❌ **Limited sorting/filtering**: Only basic options in v0.1
 - ❌ **No bulk actions**: Must process opportunities one at a time
-- ❌ **Pagination friction**: Requires clicking "Next" to see page 2
+- ~~❌ **Pagination friction**~~ → ✅ **Addressed** ("Load More" button replaces numbered pages)
 
 ### Mitigation
 
-- **Desktop-only**: Document as known limitation; add mobile optimization in v0.2
 - **Manual refresh**: Show banner when new opportunities available
 - **Limited filters**: Document REST API for advanced queries; add more filters in v0.2
 - **No bulk actions**: Acceptable for MVP (users review individually anyway)
-- **Pagination friction**: 20 per page enough for daily workflow; can adjust if needed
 
 ## Implementation Guidance
 
@@ -396,7 +415,7 @@ v0.1 Opportunity Dashboard succeeds if:
 ### v0.5: Advanced Features
 - Infinite scroll with virtualization
 - Keyboard shortcuts (j/k navigation, g to generate, p to post)
-- Mobile-optimized view
+- ~~Mobile-optimized view~~ → ✅ Implemented in v0.1 (see [ADR-015](./015-responsive-web-design.md))
 - Drag-to-reorder (manual prioritization)
 - Opportunity insights (why was this scored high?)
 
@@ -407,8 +426,11 @@ v0.1 Opportunity Dashboard succeeds if:
 - [ADR-009: Response Suggestion Architecture](./009-response-suggestion-architecture.md) - Response generation flow
 - [ADR-010: Response Posting](./010-response-posting.md) - Post response flow
 - [ADR-012: First-Launch Setup Wizard](./012-first-launch-wizard.md) - Onboarding that leads to this page
+- [ADR-015: Responsive Web Design](./015-responsive-web-design.md) - **Mobile-first UI layout decisions** (supersedes some UI decisions in this ADR)
 
 ## Related Documentation
 
-- Design Doc: `.agents/artifacts/designer/designs/opportunity-dashboard-ui-design.md` (to be created)
-- Handoff Doc: `.agents/artifacts/designer/handoffs/opportunity-dashboard-ui-handoff.md` (to be created)
+- Design Doc: `.agents/artifacts/designer/designs/opportunity-dashboard-ui-design.md`
+- **UI Design Doc**: `.agents/artifacts/designer/designs/responsive-web-design.md` - Mobile-first layout specifications
+- Handoff Doc: `.agents/artifacts/designer/handoffs/008-opportunity-dashboard-ui-handoff.md`
+- **UI Handoff Doc**: `.agents/artifacts/designer/handoffs/011-responsive-web-design-handoff.md` - Responsive design test scenarios

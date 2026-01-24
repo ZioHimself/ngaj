@@ -4,6 +4,8 @@
 
 **Accepted** - January 18, 2026
 
+> **Note:** UI layout specifications (wireframes, component dimensions) are now defined in [ADR-015: Responsive Web Design](./015-responsive-web-design.md) and the associated design documents. This ADR focuses on wizard **flow and logic**.
+
 ## Context
 
 After installation (ADR-011), services are running and credentials are configured, but **Profile and Account** records don't exist yet in MongoDB. The user needs a guided experience to:
@@ -53,55 +55,7 @@ The wizard consists of **3 mandatory steps** presented sequentially:
 
 **Purpose:** Define cross-platform persona (voice, principles, interests)
 
-**UI Layout:**
-```
-┌────────────────────────────────────────────────┐
-│  ngaj Setup                            [1/3]   │
-├────────────────────────────────────────────────┤
-│                                                │
-│  Step 1: Create Your Profile                  │
-│                                                │
-│  Your profile defines how ngaj responds to     │
-│  opportunities. You can edit this later via    │
-│  REST API.                                     │
-│                                                │
-│  Profile Name                                  │
-│  ┌──────────────────────────────────────────┐ │
-│  │ My Professional Persona                  │ │
-│  └──────────────────────────────────────────┘ │
-│                                                │
-│  Voice (how should responses sound?)          │
-│  ┌──────────────────────────────────────────┐ │
-│  │ Professional but friendly. Technical but │ │
-│  │ accessible. Conversational, not stuffy.  │ │
-│  │                                          │ │
-│  └──────────────────────────────────────────┘ │
-│  💡 Tip: Describe your tone and style. This   │
-│     guides AI response generation.            │
-│                                                │
-│  Principles (what values guide your responses?)│
-│  ┌──────────────────────────────────────────┐ │
-│  │ I value evidence-based reasoning, clear  │ │
-│  │ communication, and kindness. I prioritize│ │
-│  │ adding value over self-promotion.        │ │
-│  │                                          │ │
-│  └──────────────────────────────────────────┘ │
-│  💡 Tip: Core beliefs that shape how you      │
-│     engage. AI will honor these principles.   │
-│                                                │
-│  Interests (comma-separated keywords)          │
-│  ┌──────────────────────────────────────────┐ │
-│  │ ai, typescript, distributed systems,     │ │
-│  │ developer tools                          │ │
-│  └──────────────────────────────────────────┘ │
-│  💡 Tip: Topics you want to engage with.      │
-│     Used for opportunity discovery.           │
-│                                                │
-│              ┌──────────┐                      │
-│              │   Next   │                      │
-│              └──────────┘                      │
-└────────────────────────────────────────────────┘
-```
+> **UI Design:** See [ADR-015: Responsive Web Design](./015-responsive-web-design.md) and [Design Doc](../../.agents/artifacts/designer/designs/responsive-web-design.md) for mobile-first layout specifications.
 
 **Fields:**
 
@@ -134,37 +88,7 @@ The wizard consists of **3 mandatory steps** presented sequentially:
 
 **Purpose:** Verify Bluesky credentials from installation, create Account record
 
-**UI Layout:**
-```
-┌────────────────────────────────────────────────┐
-│  ngaj Setup                            [2/3]   │
-├────────────────────────────────────────────────┤
-│                                                │
-│  Step 2: Connect Bluesky                      │
-│                                                │
-│  We'll verify your Bluesky connection and     │
-│  create your account.                          │
-│                                                │
-│  Bluesky Handle                                │
-│  ┌──────────────────────────────────────────┐ │
-│  │ @user.bsky.social                        │ │
-│  └──────────────────────────────────────────┘ │
-│  (Read from installation credentials)          │
-│                                                │
-│  ┌──────────────────────┐                      │
-│  │  Test Connection     │ ← Click to verify   │
-│  └──────────────────────┘                      │
-│                                                │
-│  Status: ✓ Connected successfully             │
-│                                                │
-│  [ ] I understand ngaj will post on my behalf │
-│      after I review and approve responses.     │
-│                                                │
-│         ┌──────┐  ┌──────────┐                │
-│         │ Back │  │   Next   │                │
-│         └──────┘  └──────────┘                │
-└────────────────────────────────────────────────┘
-```
+> **UI Design:** See [ADR-015: Responsive Web Design](./015-responsive-web-design.md) and [Design Doc](../../.agents/artifacts/designer/designs/responsive-web-design.md) for mobile-first layout specifications.
 
 **Fields:**
 
@@ -194,40 +118,7 @@ The wizard consists of **3 mandatory steps** presented sequentially:
 
 **Purpose:** Set discovery schedule (how often to check for opportunities)
 
-**UI Layout:**
-```
-┌────────────────────────────────────────────────┐
-│  ngaj Setup                            [3/3]   │
-├────────────────────────────────────────────────┤
-│                                                │
-│  Step 3: Configure Discovery                  │
-│                                                │
-│  ngaj will automatically discover relevant    │
-│  opportunities based on your interests.        │
-│                                                │
-│  Check for opportunities every:                │
-│                                                │
-│  ┌────────────────────────┐                   │
-│  │  1 hour             ▼ │                   │
-│  └────────────────────────┘                   │
-│                                                │
-│  Options:                                     │
-│  • Every 15 minutes                           │
-│  • Every 30 minutes                           │
-│  • Every 1 hour (recommended)                 │
-│  • Every 2 hours                              │
-│  • Every 4 hours                              │
-│                                                │
-│  💡 Tip: Start with 1 hour. You can adjust this│
-│     later via ngaj Support for more advanced   │
-│     schedules (e.g., separate schedules for    │
-│     replies vs. search).                       │
-│                                                │
-│         ┌──────┐  ┌───────────────┐            │
-│         │ Back │  │  Finish Setup │            │
-│         └──────┘  └───────────────┘            │
-└────────────────────────────────────────────────┘
-```
+> **UI Design:** See [ADR-015: Responsive Web Design](./015-responsive-web-design.md) and [Design Doc](../../.agents/artifacts/designer/designs/responsive-web-design.md) for mobile-first layout specifications.
 
 **Fields:**
 
@@ -474,11 +365,13 @@ v0.1 wizard succeeds if:
 
 - [ADR-011: Installation and Setup Architecture](./011-installation-and-setup.md) - Installation flow that precedes this wizard
 - [ADR-006: Profile and Account Separation](./006-profile-account-separation.md) - Data model for Profile/Account
-- [Design Doc: Account Configuration](../../../../.agents/artifacts/designer/designs/account-configuration-design.md) - API contracts for Profile/Account
+- [ADR-015: Responsive Web Design](./015-responsive-web-design.md) - **UI layout and responsive design decisions**
+- [Design Doc: Account Configuration](../../.agents/artifacts/designer/designs/account-configuration-design.md) - API contracts for Profile/Account
 - [ADR-005: MVP Scope](./005-mvp-scope.md) - v0.1 feature scope
 
 ## Related Documentation
 
 - Design Doc: `.agents/artifacts/designer/designs/first-launch-wizard-design.md`
+- **UI Design Doc**: `.agents/artifacts/designer/designs/responsive-web-design.md` - Mobile-first layout specifications
 - Handoff Doc: `.agents/artifacts/designer/handoffs/007-first-launch-wizard-handoff.md`
-- Type Definitions: `src/shared/types/wizard.ts`
+- Type Definitions: `packages/shared/src/types/wizard.ts`

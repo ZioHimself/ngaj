@@ -1,6 +1,7 @@
 # Opportunity Dashboard UI - Design Document
 
 📋 **Decision Context**: [ADR-013: Opportunity Dashboard User Interface](../../../../docs/architecture/decisions/013-opportunity-dashboard-ui.md)
+📱 **UI Layout**: [Responsive Web Design](./responsive-web-design.md) - Mobile-first layout specifications
 
 **Date**: 2026-01-24  
 **Status**: Approved
@@ -10,6 +11,8 @@
 ## Overview
 
 The Opportunity Dashboard is the primary interface for ngaj v0.1. Users view discovered opportunities, generate AI responses, edit drafts, and post to Bluesky. This document specifies the frontend implementation details.
+
+> **UI Implementation**: This document covers data flow, state management, and component behavior. For responsive layout, touch targets, and Tailwind classes, see [Responsive Web Design](./responsive-web-design.md).
 
 **Key Entities**: Opportunity, Response, Author  
 **External Dependencies**: Backend REST API, Bluesky (via backend)
@@ -22,50 +25,45 @@ The Opportunity Dashboard is the primary interface for ngaj v0.1. Users view dis
 
 ## 1. Page Structure
 
-### 1.1 Layout Components
+> **Layout Specifications**: See [Responsive Web Design](./responsive-web-design.md#8-dashboard-layout) for mobile/desktop layouts and Tailwind classes.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  DashboardHeader                                                │
-├─────────────────────────────────────────────────────────────────┤
-│  FilterBar                                                      │
-├─────────────────────────────────────────────────────────────────┤
-│  OpportunityList                                                │
-│    ├─ OpportunityCard (expanded)                                │
-│    │    └─ ResponseEditor                                       │
-│    ├─ OpportunityCard (collapsed)                               │
-│    └─ OpportunityCard (collapsed)                               │
-├─────────────────────────────────────────────────────────────────┤
-│  Pagination                                                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 1.2 Component Tree
+### 1.1 Component Tree
 
 ```typescript
 // Page component
-Opportunities
-  ├─ DashboardHeader
-  │    ├─ Logo/Title
-  │    └─ RefreshButton
-  ├─ FilterBar
-  │    ├─ StatusFilter (dropdown or tabs)
-  │    └─ SortIndicator (read-only for v0.1)
+OpportunitiesDashboard
+  ├─ Header (sticky)
+  │    ├─ Title
+  │    └─ FilterBar (horizontal scrollable tabs)
   ├─ OpportunityList
   │    └─ OpportunityCard[] 
-  │         ├─ OpportunityHeader (author, score, age)
-  │         ├─ OpportunityContent (post text)
-  │         ├─ OpportunityActions (generate, dismiss)
-  │         └─ ResponseEditor (when expanded)
-  │              ├─ DraftTextarea
-  │              ├─ CharacterCount
-  │              └─ ResponseActions (regenerate, dismiss, post)
-  ├─ Pagination
-  │    ├─ PreviousButton
-  │    ├─ PageInfo
-  │    └─ NextButton
-  └─ EmptyState (conditional)
+  │         ├─ CardHeader (author, score, age)
+  │         ├─ CardContent (post text)
+  │         └─ CardActions (generate, dismiss)
+  ├─ LoadMore (replaces Pagination)
+  │    ├─ LoadMoreButton
+  │    └─ ProgressIndicator ("X of Y loaded")
+  ├─ ErrorState (conditional - server unreachable)
+  └─ EmptyState (conditional - no opportunities)
+
+// Modal (rendered outside main tree)
+ResponseModal (full-screen on mobile)
+  ├─ ModalHeader (back button, title)
+  ├─ OriginalPostPreview (collapsible)
+  ├─ ResponseTextarea
+  ├─ CharacterCount
+  └─ ModalFooter (regenerate, post buttons)
 ```
+
+### 1.2 Key Changes from Original Design
+
+| Original | Updated | Reason |
+|----------|---------|--------|
+| Inline ResponseEditor | ResponseModal | Better mobile keyboard handling |
+| Numbered Pagination | LoadMore button | Better mobile UX |
+| Desktop-first | Mobile-first | Primary access from mobile devices |
+
+See [ADR-015](../../../../docs/architecture/decisions/015-responsive-web-design.md) for decision rationale.
 
 ---
 
@@ -83,14 +81,15 @@ interface DashboardState {
   loading: boolean;
   error: string | null;
   
-  // Filters & Pagination
+  // Filters & Load More
   statusFilter: OpportunityStatus | 'all';
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
+  loadedCount: number;      // Items currently loaded
+  totalCount: number;       // Total available
+  hasMore: boolean;         // More items to load
   
-  // Expansion
-  expandedOpportunityId: string | null;
+  // Modal State (replaces expandedOpportunityId)
+  selectedOpportunityId: string | null;  // For ResponseModal
+  editedResponseText: string;            // Current edits in modal
   
   // Action Loading States
   generatingResponseFor: string | null;  // opportunityId
@@ -99,28 +98,26 @@ interface DashboardState {
 }
 ```
 
-### 2.2 Initial State & Auto-Expansion
+### 2.2 Initial Load
 
 On page load:
-1. Fetch opportunities (page 1, status=pending by default)
+1. Fetch opportunities (first 20, status=pending by default)
 2. Fetch responses for those opportunity IDs
-3. Auto-expand the **first opportunity** that has a draft response
-4. If no drafts exist, expand the **first opportunity** in the list
+3. No auto-expansion - modal opens only when user taps "Generate Response" or card with draft
 
 ```typescript
-function determineInitialExpansion(
-  opportunities: OpportunityWithAuthor[],
-  responses: Map<string, Response>
-): string | null {
-  // First, try to find one with a draft
-  const withDraft = opportunities.find(
-    opp => responses.get(opp._id)?.status === 'draft'
-  );
-  if (withDraft) return withDraft._id;
-  
-  // Otherwise, expand first opportunity
-  return opportunities[0]?._id ?? null;
-}
+// Initial fetch
+const response = await fetch('/api/opportunities?status=pending&limit=20&offset=0&sort=-score');
+const { opportunities, total, hasMore } = await response.json();
+
+// Set initial state
+setState({
+  opportunities,
+  totalCount: total,
+  loadedCount: opportunities.length,
+  hasMore,
+  selectedOpportunityId: null,  // No modal open initially
+});
 ```
 
 ### 2.3 Draft Editing State
@@ -261,31 +258,38 @@ interface OpportunityCardProps {
 - Full post text (truncate at 300 chars with "Show more")
 - ResponseEditor component (if has response or generating)
 
-### 4.2 ResponseEditor
+### 4.2 ResponseModal
+
+> **Layout**: See [Responsive Web Design](./responsive-web-design.md#4-response-editor-modal) for full-screen mobile layout and Tailwind classes.
 
 **Props**:
 ```typescript
-interface ResponseEditorProps {
+interface ResponseModalProps {
+  isOpen: boolean;
+  opportunity: OpportunityWithAuthor | null;
   response: Response | undefined;
   isGenerating: boolean;
   isPosting: boolean;
   maxLength: number;  // 300 for Bluesky
-  onPost: (text: string) => void;
+  onClose: () => void;
+  onTextChange: (text: string) => void;
+  onPost: () => void;
   onRegenerate: () => void;
-  onDismissResponse: () => void;  // Dismiss the response, keep opportunity
 }
 ```
 
-**States**:
-1. **Generating**: Show loading spinner + "Generating response..."
-2. **Draft Ready**: Editable textarea + character count + action buttons
-3. **Posted**: Read-only text + link to platform post
+**Behavior**:
+- **Mobile**: Full-screen modal (`fixed inset-0`)
+- **Desktop**: Centered dialog with backdrop (`max-w-lg`)
+- **Generating**: Show loading spinner in textarea area
+- **Draft Ready**: Editable textarea + character count + action buttons in footer
+- **Posted**: Read-only with link to platform post, then auto-close
 
 **Character Count Display**:
 ```typescript
-// Simple format for v0.1
 const display = `${text.length}/${maxLength}`;
-// Example: "145/300"
+// Example: "247/300"
+// Color changes: slate-500 (normal) → amber-500 (>250) → red-500 (>290)
 ```
 
 ### 4.3 FilterBar
@@ -307,19 +311,41 @@ interface FilterBarProps {
 
 **Implementation**: Dropdown or horizontal tabs (implementer choice)
 
-### 4.4 Pagination
+### 4.4 LoadMore
+
+> **Layout**: See [Responsive Web Design](./responsive-web-design.md#6-load-more-pagination) for Tailwind implementation.
 
 **Props**:
 ```typescript
-interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  disabled: boolean;  // Disable during loading
+interface LoadMoreProps {
+  hasMore: boolean;
+  isLoading: boolean;
+  loadedCount: number;
+  totalCount: number;
+  onLoadMore: () => void;
 }
 ```
 
-**Display**: `[← Previous]  Page 1 of 3  [Next →]`
+**Behavior**:
+- Show "Load More" button when `hasMore === true`
+- Show loading spinner during fetch
+- Show "Showing all X opportunities" when no more to load
+- Progress: "20 of 47 loaded"
+
+**Load More Handler**:
+```typescript
+const handleLoadMore = async () => {
+  const offset = opportunities.length;
+  const response = await fetch(`/api/opportunities?status=${filter}&limit=20&offset=${offset}&sort=-score`);
+  const { opportunities: more, hasMore } = await response.json();
+  
+  setState(prev => ({
+    opportunities: [...prev.opportunities, ...more],
+    loadedCount: prev.loadedCount + more.length,
+    hasMore,
+  }));
+};
+```
 
 ---
 
@@ -454,12 +480,21 @@ Show skeleton UI:
 
 ## 9. Responsive Behavior
 
-**v0.1**: Desktop-optimized (min-width: 768px)
+> **Full Specification**: See [Responsive Web Design](./responsive-web-design.md) for complete mobile-first implementation details.
 
-**Breakpoints** (for future reference):
-- Desktop: 1024px+ (comfortable spacing)
-- Tablet: 768px-1023px (reduced padding)
-- Mobile: <768px (stacked layout, future)
+**v0.1**: Mobile-first design (per [ADR-015](../../../../docs/architecture/decisions/015-responsive-web-design.md))
+
+**Breakpoints** (Tailwind defaults):
+- Base (< 640px): Mobile - full-width cards, stacked buttons, 48px touch targets
+- `sm:` (≥ 640px): Large phones - same as mobile
+- `md:` (≥ 768px): Tablets - more padding, inline action buttons
+- `lg:` (≥ 1024px): Desktop - constrained width, comfortable spacing
+
+**Key Responsive Patterns**:
+- **OpportunityCard buttons**: Full-width stacked on mobile, inline on desktop
+- **ResponseModal**: Full-screen on mobile, centered dialog on desktop
+- **FilterBar**: Horizontal scroll with hidden scrollbar on mobile
+- **Touch targets**: All buttons `min-h-12` (48px) on mobile
 
 ---
 
@@ -501,7 +536,10 @@ Show skeleton UI:
 ## 12. References
 
 - **Decision Rationale**: [ADR-013](../../../../docs/architecture/decisions/013-opportunity-dashboard-ui.md)
+- **Responsive Design**: [ADR-015](../../../../docs/architecture/decisions/015-responsive-web-design.md) - Mobile-first decisions
+- **UI Layout**: [Responsive Web Design](./responsive-web-design.md) - Component layouts, Tailwind classes
 - **Test Guidance**: [Handoff Document](../handoffs/008-opportunity-dashboard-ui-handoff.md)
+- **Responsive Test Guidance**: [Responsive Handoff](../handoffs/011-responsive-web-design-handoff.md)
 - **API Specification**: [openapi.yaml](../../../../docs/api/openapi.yaml)
 - **Type Definitions**: 
   - [opportunity.ts](../../../../packages/shared/src/types/opportunity.ts)

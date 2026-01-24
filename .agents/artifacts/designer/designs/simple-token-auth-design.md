@@ -1,6 +1,7 @@
 # Simple Token Authentication - Design Document
 
 📋 **Decision Context**: [ADR-014: Simple Token Authentication](../../../../docs/architecture/decisions/014-simple-token-auth.md)
+📱 **UI Layout**: [Responsive Web Design](./responsive-web-design.md#1-login-page-login) - Mobile-first login page
 
 **Date**: 2026-01-24  
 **Designer**: Designer Agent  
@@ -12,10 +13,12 @@
 
 Simple token authentication protects the ngaj dashboard from unauthorized access on the local network. A pre-generated secret code is created during setup, stored in `.env`, and required to access the application. Session cookies provide persistent access within a browser session.
 
+> **UI Implementation**: This document covers authentication flow, token generation, and backend middleware. For login page layout and Tailwind classes, see [Responsive Web Design](./responsive-web-design.md#1-login-page-login).
+
 **Key Components**:
 - Token generation (in setup wizard)
 - Auth middleware (Express)
-- Login page (React)
+- Login page (React) - see responsive design doc for UI
 - Session management (in-memory)
 
 ---
@@ -256,180 +259,33 @@ app.use('/api/auth', authRoutes);
 
 ## 3. Frontend Login Page
 
-### 3.1 Login Page Component
+> **UI Implementation**: See [Responsive Web Design](./responsive-web-design.md#1-login-page-login) for the complete mobile-first LoginPage component with Tailwind classes.
 
-Location: `packages/frontend/src/pages/LoginPage.tsx`
+### 3.1 Login Page Behavior
 
-```tsx
-import { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+**Location**: `packages/frontend/src/pages/LoginPage.tsx`
 
-export function LoginPage() {
-  const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+**Key Features**:
+- Auto-uppercase input (code converted to uppercase as user types)
+- Form submission calls `POST /api/auth/login`
+- Success: Navigate to `/` (dashboard)
+- Error: Display error message below input
+- Loading state: Button shows "Verifying...", input disabled
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-
-      if (response.ok) {
-        navigate('/');
-      } else {
-        const data = await response.json();
-        setError(data.message || 'Invalid access code');
-      }
-    } catch {
-      setError('Connection error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="login-page">
-      <div className="login-container">
-        <h1 className="login-title">ngaj</h1>
-        <p className="login-subtitle">Enter your access code to continue</p>
-        
-        <form onSubmit={handleSubmit} className="login-form">
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="XXXX-XXXX-XXXX-XXXX"
-            className="login-input"
-            autoComplete="off"
-            autoFocus
-            disabled={loading}
-          />
-          
-          {error && (
-            <p className="login-error">{error}</p>
-          )}
-          
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading || !code.trim()}
-          >
-            {loading ? 'Verifying...' : 'Login'}
-          </button>
-        </form>
-        
-        <p className="login-hint">
-          Find your access code in the terminal where ngaj is running
-        </p>
-      </div>
-    </div>
-  );
-}
+**State**:
+```typescript
+const [code, setCode] = useState('');
+const [error, setError] = useState<string | null>(null);
+const [isLoading, setIsLoading] = useState(false);
 ```
 
-### 3.2 Login Page Styles
+**Responsive Requirements** (from [ADR-015](../../../../docs/architecture/decisions/015-responsive-web-design.md)):
+- Input font size ≥16px (prevents iOS auto-zoom)
+- Button height ≥48px (touch target)
+- Centered layout with `max-w-md` constraint
+- Full-width input and button
 
-Location: `packages/frontend/src/pages/LoginPage.css`
-
-```css
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-background);
-  padding: 1rem;
-}
-
-.login-container {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-
-.login-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.login-subtitle {
-  color: var(--color-text-secondary);
-  margin-bottom: 2rem;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.login-input {
-  padding: 1rem;
-  font-size: 1.25rem;
-  font-family: monospace;
-  text-align: center;
-  letter-spacing: 0.1em;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.login-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.login-input::placeholder {
-  color: var(--color-text-tertiary);
-  letter-spacing: 0.15em;
-}
-
-.login-error {
-  color: var(--color-error);
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.login-button {
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.login-button:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
-
-.login-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.login-hint {
-  margin-top: 2rem;
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
-}
-```
-
-### 3.3 Route Configuration
+### 3.2 Route Configuration
 
 Update `packages/frontend/src/App.tsx`:
 
@@ -615,6 +471,8 @@ Authentication is complete when:
 ## References
 
 - [ADR-014: Simple Token Authentication](../../../../docs/architecture/decisions/014-simple-token-auth.md) - Decision rationale
+- [ADR-015: Responsive Web Design](../../../../docs/architecture/decisions/015-responsive-web-design.md) - Mobile-first UI decisions
+- [Responsive Web Design](./responsive-web-design.md) - Login page UI layout and Tailwind classes
 - [ADR-011: Installation and Setup](../../../../docs/architecture/decisions/011-installation-and-setup.md) - Setup wizard context
 - [ADR-002: Environment Variables](../../../../docs/architecture/decisions/002-env-credentials.md) - `.env` storage
 - [Type Definitions](../../../../packages/shared/src/types/auth.ts) - Auth types and utilities

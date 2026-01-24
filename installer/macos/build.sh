@@ -69,8 +69,9 @@ if [ -f "${SCRIPT_DIR}/icon.icns" ]; then
     cp "${SCRIPT_DIR}/icon.icns" "${APP_BUNDLE_DIR}/Contents/Resources/"
 fi
 
-# Copy ngaj-start.sh to payload (will be installed to ~/.ngaj/scripts/ by postinstall)
+# Copy scripts to payload (will be installed to ~/.ngaj/scripts/ by postinstall)
 cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.sh" "${PAYLOAD_DIR}/scripts/"
+cp "${PROJECT_ROOT}/installer/scripts/ngaj-setup.sh" "${PAYLOAD_DIR}/scripts/"
 
 # Move app bundle to payload
 mv "${APP_BUNDLE_DIR}" "${PAYLOAD_DIR}/"

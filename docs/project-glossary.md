@@ -18,7 +18,7 @@
 - **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 60% recency (exponential decay) + 40% impact (reach and engagement)
 - **Recency Score**: Time-based score component (0-100) using exponential decay. Posts < 2 min = ~100, 30 min = ~37, 2 hours = ~1.
 - **Impact Score**: Reach/engagement score component (0-100) using logarithmic scale of author followers + post likes + reposts
-- **Queue**: Prioritized list of pending opportunities awaiting user review, sorted by total score descending
+- **Dashboard**: Prioritized list of pending opportunities awaiting user review, sorted by total score descending
 - **Handle**: Platform-specific username or identifier (e.g., @user.bsky.social for Bluesky, u/username for Reddit)
 
 ## Technical Terms

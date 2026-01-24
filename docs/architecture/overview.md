@@ -71,7 +71,7 @@ ngaj is a **proactive engagement companion** designed to help users maintain aut
 │ │ MongoDB   │ │ ChromaDB    │  │ File Storage │  │ Cron │  │
 │ │           │ │             │  │              │  │Sched.│  │
 │ │ - Config  │ │ - Vectors   │  │ - Uploaded   │  │      │  │
-│ │ - Queue   │ │ - Embeddings│  │   documents  │  └──────┘  │
+│ │ - Opps    │ │ - Embeddings│  │   documents  │  └──────┘  │
 │ │ - History │ │             │  │              │            │
 │ └───────────┘ └─────────────┘  └──────────────┘            │
 │                                                            │

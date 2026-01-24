@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Need to store account configs, opportunity queue, and response history.
+Need to store account configs, opportunity dashboard data, and response history.
 Options: SQLite, PostgreSQL, MongoDB, JSON files
 
 ## Decision

@@ -26,7 +26,7 @@ After installation (ADR-011), services are running and credentials are configure
 
 ## Decision
 
-We will implement a **multi-step web UI wizard** that runs on first launch, creates Profile and Account, and redirects to Opportunity Queue page on completion.
+We will implement a **multi-step web UI wizard** that runs on first launch, creates Profile and Account, and redirects to Opportunity Dashboard page on completion.
 
 ### 1. Wizard Activation
 
@@ -443,7 +443,7 @@ v0.1 wizard succeeds if:
 
 1. ✅ Non-technical user completes setup in <5 minutes
 2. ✅ Wizard validates Bluesky connection before proceeding
-3. ✅ User lands on Opportunity Queue page with functional app
+3. ✅ User lands on Opportunity Dashboard page with functional app
 4. ✅ Wizard only shows once (never again after completion)
 5. ✅ Clear error messages guide recovery on failures
 6. ✅ Form fields provide helpful tips (not overwhelming)

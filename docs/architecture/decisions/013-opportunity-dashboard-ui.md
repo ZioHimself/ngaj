@@ -1,4 +1,4 @@
-# ADR-013: Opportunity Queue User Interface
+# ADR-013: Opportunity Dashboard User Interface
 
 ## Status
 
@@ -6,7 +6,7 @@
 
 ## Context
 
-The Opportunity Queue is the **primary interface** for ngaj v0.1. This is where users spend most of their time: reviewing discovered opportunities, generating AI responses, editing drafts, and posting to Bluesky. The backend discovery system (ADR-008) surfaces relevant posts, but we need to decide how users interact with this queue.
+The Opportunity Dashboard is the **primary interface** for ngaj v0.1. This is where users spend most of their time: reviewing discovered opportunities, generating AI responses, editing drafts, and posting to Bluesky. The backend discovery system (ADR-008) surfaces relevant posts, but we need to decide how users interact with this list.
 
 **User Goal:** "I want to quickly scan opportunities, generate responses for the most interesting ones, and post after light editing."
 
@@ -64,7 +64,7 @@ Each opportunity displays (in order of prominence):
 - **Generate Response** - Calls Claude API, creates draft
 - **View/Edit Response** - Shows draft in expandable editor
 - **Post Response** - Submits to Bluesky
-- **Dismiss** - Removes from queue (mark as dismissed)
+- **Dismiss** - Removes from list (mark as dismissed)
 
 **Secondary Actions (Lower Priority for v0.1):**
 - Regenerate response (new version)
@@ -134,7 +134,7 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 
 ### 7. Real-Time Updates
 
-**Problem:** New opportunities discovered while user viewing queue
+**Problem:** New opportunities discovered while user viewing dashboard
 
 **Decision:** Manual refresh for v0.1 (no auto-polling)
 
@@ -365,7 +365,7 @@ Must follow:
 
 ## Success Criteria
 
-v0.1 Opportunity Queue succeeds if:
+v0.1 Opportunity Dashboard succeeds if:
 
 1. ✅ User can scan 20 opportunities in <60 seconds
 2. ✅ Generate response flow completes in <10 seconds (excluding API time)
@@ -410,5 +410,5 @@ v0.1 Opportunity Queue succeeds if:
 
 ## Related Documentation
 
-- Design Doc: `.agents/artifacts/designer/designs/opportunity-queue-ui-design.md` (to be created)
-- Handoff Doc: `.agents/artifacts/designer/handoffs/opportunity-queue-ui-handoff.md` (to be created)
+- Design Doc: `.agents/artifacts/designer/designs/opportunity-dashboard-ui-design.md` (to be created)
+- Handoff Doc: `.agents/artifacts/designer/handoffs/opportunity-dashboard-ui-handoff.md` (to be created)

@@ -1,7 +1,7 @@
 /**
  * Opportunities Page
  *
- * Main page showing discovered opportunities queue.
+ * Main page showing discovered opportunities dashboard.
  * This is a placeholder - full implementation per ADR-013.
  */
 

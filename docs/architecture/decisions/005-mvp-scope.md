@@ -21,7 +21,7 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 4. **Opportunity Discovery** - Scheduled cron job, simple scoring (impact + recency + keywords)
 5. **Quick Response Mode** - Claude-powered suggestions with knowledge context, user reviews and posts
 6. **Installation & Setup** - Self-contained installer with interactive CLI wizard, first-launch web UI setup (ADR-011, ADR-012)
-7. **Basic UI** - Opportunity queue (view, generate, edit, post responses), read-only settings page
+7. **Basic UI** - Opportunity dashboard (view, generate, edit, post responses), read-only settings page
 
 ### ❌ Deferred to Future Versions
 - **v0.2**: Multi-account, multi-platform (LinkedIn/Reddit), Toulmin analysis mode, knowledge base UI, dashboard overview, settings editing UI
@@ -54,7 +54,7 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 - Automatic dependency installation (Docker Desktop, databases)
 - First-launch web UI wizard (Profile/Account setup, discovery configuration)
 
-**Opportunity Queue Page** (Primary UI - ADR-013):
+**Opportunity Dashboard Page** (Primary UI - ADR-013):
 - List pending opportunities (post content, author, score)
 - Generate response button (calls Claude with knowledge context)
 - View/edit/post response workflow
@@ -69,7 +69,7 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 - Links to REST API documentation for advanced settings
 
 **Empty States:**
-- Empty opportunity queue messaging ("Next check in X minutes")
+- Empty opportunity dashboard messaging ("Next check in X minutes")
 - Helpful tips and placeholder text throughout
 
 ### Deferred to v0.2
@@ -82,7 +82,7 @@ ngaj has an ambitious vision with many features (multi-account, multi-platform, 
 
 ### Rationale
 
-**Why prioritize Opportunity Queue over Dashboard?**
+**Why prioritize Opportunity Dashboard over Overview Dashboard?**
 - Core value loop: Discover → Review → Respond
 - Dashboard is nice-to-have (tracking), not essential for MVP
 - Reduces scope to ship faster
@@ -143,4 +143,4 @@ If met → Proceed to v0.2
 - [ADR-002: Env Credentials](./002-env-credentials.md) - Simple for v0.1, evolvable
 - [ADR-011: Installation and Setup Architecture](./011-installation-and-setup.md) - Consumer-friendly installation experience
 - [ADR-012: First-Launch Setup Wizard](./012-first-launch-wizard.md) - Web UI guided setup flow
-- [ADR-013: Opportunity Queue UI](./013-opportunity-queue-ui.md) - Primary user interface for reviewing and responding
+- [ADR-013: Opportunity Dashboard UI](./013-opportunity-dashboard-ui.md) - Primary user interface for reviewing and responding

@@ -50,44 +50,114 @@ ngaj is fundamentally about **proactive, authentic engagement amplification**. I
   - Auto-scraping past posts
   - Advanced scoring models
 
-## Quick Start
+## Quick Start (Development)
+
+### Prerequisites
+
+- **Node.js** >= 20.0.0
+- **npm** >= 9.0.0
+- **Docker** (for MongoDB and ChromaDB)
+
+### Setup
 
 ```bash
-# Install dependencies
+# Clone the repository
+git clone https://github.com/ziohimself/ngaj.git
+cd ngaj
+
+# Install dependencies (monorepo with npm workspaces)
 npm install
 
-# Set up environment
-cp .env.example .env
-# Edit .env with your Bluesky credentials and API keys
+# Create environment file with your credentials
+cat > .env << 'EOF'
+# Bluesky Credentials
+BLUESKY_HANDLE=your.handle.bsky.social
+BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 
-# Start dependencies (MongoDB + ChromaDB)
-docker-compose up -d
+# AI Configuration
+ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 
-# Initialize database
-npm run db:init
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/ngaj
+CHROMA_URL=http://localhost:8000
 
-# Start development server
+# Application Settings
+PORT=3000
+NODE_ENV=development
+
+# Auth (generate a random string)
+LOGIN_SECRET=your-random-login-secret
+EOF
+
+# Start databases (development mode exposes ports locally)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Start development servers (backend + frontend with hot reload)
 npm run dev
 ```
 
 Open your browser to http://localhost:3000
 
+### Getting Credentials
+
+- **Bluesky App Password**: [bsky.app/settings/app-passwords](https://bsky.app/settings/app-passwords)
+- **Anthropic API Key**: [console.anthropic.com](https://console.anthropic.com)
+
+## Production Deployment
+
+For production, ngaj uses Docker Compose with pre-built images:
+
+```bash
+# Build all packages
+npm run build
+
+# Build Docker images
+npm run docker:build
+
+# Start production services
+docker compose up -d
+```
+
+Production expects credentials in `~/.ngaj/.env` (created by the setup wizard).
+
+## End-User Installation (Coming Soon)
+
+ngaj will provide native installers (`.pkg` for macOS, `.msi` for Windows) that:
+- Install Docker Desktop if needed
+- Run an interactive setup wizard for credentials
+- Start all services automatically
+
+See [ADR-011](docs/architecture/decisions/011-installation-and-setup.md) for details.
+
 ## Documentation
 
-- [Setup Guide](docs/setup.md) - Installation and configuration
+- [Setup Guide](docs/setup.md) - Detailed installation and configuration
 - [Architecture Overview](docs/architecture/overview.md) - System design
-- [API Specification](docs/architecture/api-spec.md) - REST endpoints
+- [API Specification](docs/api/openapi.yaml) - OpenAPI/Swagger spec
 - [Architecture Decisions](docs/architecture/decisions/) - ADRs
+
+## Project Structure
+
+ngaj uses npm workspaces (monorepo):
+
+```
+packages/
+├── shared/    # Shared types and utilities
+├── backend/   # Express API server
+├── frontend/  # React web application
+└── setup/     # CLI setup wizard
+```
 
 ## Tech Stack
 
-- **Frontend**: React + TypeScript + Tailwind CSS
+- **Frontend**: React + TypeScript + Tailwind CSS + Vite
 - **Backend**: Node.js + TypeScript + Express
-- **Database**: MongoDB (config, queue, history)
+- **Database**: MongoDB (profiles, accounts, opportunities)
 - **Vector Store**: ChromaDB (knowledge embeddings)
 - **AI**: Anthropic Claude API
 - **Social Platforms**: Bluesky (AT Protocol)
-- **Scheduler**: node-cron
+- **Testing**: Vitest + Playwright
+- **Build**: npm workspaces + Docker
 
 See [tech-stack.md](docs/tech-stack.md) for details.
 
@@ -105,4 +175,18 @@ See [tech-stack.md](docs/tech-stack.md) for details.
 
 ## Contributing
 
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for development guidelines.
+```bash
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Type check
+npm run type-check
+
+# Format code
+npm run format
+```
+
+See [docs/](docs/) for architecture and design documentation.

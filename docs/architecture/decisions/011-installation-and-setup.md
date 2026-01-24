@@ -3,7 +3,7 @@
 ## Status
 
 **Accepted** - January 18, 2026  
-**Updated** - January 18, 2026 (Refined: Containerized Setup Wizard approach)
+**Updated** - January 24, 2026 (Added: Application Launcher for day-2 restart experience)
 
 ## Context
 
@@ -491,6 +491,102 @@ v0.1 installation succeeds if:
 5. ✅ LAN IP displayed in terminal for mobile device access (if network available)
 6. ✅ User reaches working web UI without touching terminal/config files
 7. ✅ Clear error messages guide recovery on failures
+8. ✅ User can restart ngaj after laptop reboot via clickable app icon
+
+## Application Launcher (Day-2 Experience)
+
+### Problem
+
+After initial installation, how does a user **restart ngaj** on subsequent uses?
+
+- When user shuts down their laptop, Docker Desktop stops
+- On next boot, Docker Desktop may not auto-start
+- Even if Docker starts, ngaj services need to be brought up
+- User has no obvious way to "launch ngaj" like other apps
+
+### Decision
+
+Provide a **clickable application launcher** that:
+1. Opens a Terminal window showing startup progress
+2. Ensures Docker Desktop is running
+3. Starts ngaj services
+4. Displays login code and network address (always visible)
+5. Opens browser to network address
+6. Keeps terminal open until user closes it or presses Ctrl+C
+
+### User Experience
+
+**Click ngaj icon → Terminal opens with status:**
+```
+✅ ngaj is running!
+
+Dashboard:    http://192.168.1.42:3000
+Login code:   A1B2-C3D4-E5F6-G7H8
+
+(Use login code from any device on your WiFi)
+
+Press Ctrl+C to stop ngaj
+```
+
+**Browser auto-opens** to the network address.
+
+**To stop**: Close terminal window, press Ctrl+C, or shut down laptop.
+
+### Implementation
+
+**macOS**: Create `/Applications/ngaj.app` bundle
+- App icon visible in Dock, Launchpad, Spotlight
+- Launches Terminal with start script
+- Script: `~/.ngaj/scripts/ngaj-start.sh`
+
+**Windows**: Create Start Menu shortcut
+- Points to `ngaj-start.ps1` script
+- Opens PowerShell window with status display
+- Script: `%LOCALAPPDATA%\ngaj\scripts\ngaj-start.ps1`
+
+### Files Created by Installer
+
+```
+# macOS
+/Applications/ngaj.app/           # Clickable app bundle
+  Contents/
+    MacOS/ngaj-launcher           # Opens Terminal + runs start script
+    Info.plist                    # App metadata
+    Resources/icon.icns           # App icon
+
+~/.ngaj/scripts/
+  ngaj-start.sh                   # Actual start logic
+
+# Windows
+%LOCALAPPDATA%\ngaj\scripts\
+  ngaj-start.ps1                  # Start script
+
+Start Menu shortcut → ngaj-start.ps1
+```
+
+### Behavior Matrix
+
+| Scenario | Action |
+|----------|--------|
+| First click after laptop reboot | Docker starts → containers start → browser opens |
+| Click while already running | Containers already up (fast) → browser opens |
+| Click after Ctrl+C stopped it | Containers restart → browser opens |
+| Close terminal window | Containers continue running (detached) |
+| Ctrl+C in terminal | Containers stop gracefully |
+
+### Rationale
+
+**Why Terminal window (not background)?**
+- Shows login code (needed for mobile access)
+- Shows network URL (not localhost)
+- Familiar pattern for developer tools
+- User can see if something went wrong
+- Simple to implement (shell scripts)
+
+**Why not auto-start on login?**
+- Not necessary for v0.1
+- Can be added later as user preference
+- Keeps initial experience simple
 
 ## Future Enhancements
 
@@ -527,6 +623,7 @@ v0.1 installation succeeds if:
 - Design Doc: `.agents/artifacts/designer/designs/installation-setup-design.md`
 - Handoff Doc (Installation): `.agents/artifacts/designer/handoffs/006-installation-setup-handoff.md`
 - Handoff Doc (Network Access): `.agents/artifacts/designer/handoffs/010-network-access-display-handoff.md`
+- Handoff Doc (Application Launcher): `.agents/artifacts/designer/handoffs/012-application-launcher-handoff.md`
 - Type Definitions: `packages/shared/src/types/setup.ts`
 - GitHub Issue: [#10 - Installation and Setup](https://github.com/ZioHimself/ngaj/issues/10)
 
@@ -537,4 +634,4 @@ The installation feature requires restructuring to npm workspaces:
 - `packages/shared/` - Types used by backend, frontend, and setup
 - `installer/` - OS-specific packaging (macOS .pkg, Windows .msi)
 
-See Design Doc Section 8 for complete structure.
+See Design Doc Section 10 for complete structure.

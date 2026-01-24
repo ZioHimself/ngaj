@@ -2,7 +2,7 @@
 
 📋 **Decision Context**: [ADR-011: Installation and Setup Architecture](../../../../docs/architecture/decisions/011-installation-and-setup.md) - Read this first to understand **why** we chose this architecture.
 
-**Date**: 2026-01-18  
+**Date**: 2026-01-18 (Updated: 2026-01-24)  
 **Designer**: Designer Agent  
 **Status**: Approved
 
@@ -322,7 +322,366 @@ This approach keeps the container unaware of host networking - it just reads wha
 
 ---
 
-## 7. Success Criteria
+## 7. Application Launcher (Day-2 Restart)
+
+### 7.1 Overview
+
+After initial installation completes, the user needs a way to restart ngaj on subsequent uses (after laptop reboot, after manually stopping, etc.). The launcher provides a familiar "click to open" experience.
+
+**See ADR-011 Section "Application Launcher"** for decision rationale.
+
+### 7.2 macOS Implementation
+
+#### App Bundle Structure
+
+```
+/Applications/ngaj.app/
+  Contents/
+    MacOS/
+      ngaj-launcher              # Executable shell script
+    Info.plist                   # App metadata (CFBundleName, etc.)
+    Resources/
+      icon.icns                  # App icon (1024x1024 master)
+```
+
+#### Launcher Script (`ngaj-launcher`)
+
+```bash
+#!/bin/bash
+# ngaj-launcher - Opens Terminal and runs the start script
+# This script is the executable inside ngaj.app
+
+NGAJ_HOME="${HOME}/.ngaj"
+
+# Open Terminal with the start script
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "${NGAJ_HOME}/scripts/ngaj-start.sh"
+end tell
+EOF
+```
+
+#### Start Script (`~/.ngaj/scripts/ngaj-start.sh`)
+
+```bash
+#!/bin/bash
+# ngaj-start.sh - Starts ngaj services and displays status
+# Created by post-install script, lives in user's home directory
+
+set -e
+
+NGAJ_HOME="${HOME}/.ngaj"
+INSTALL_DIR="/Applications/ngaj"
+
+echo "🚀 Starting ngaj..."
+echo ""
+
+# Ensure Docker Desktop is running
+if ! docker info &> /dev/null 2>&1; then
+    echo "Starting Docker Desktop..."
+    open -a Docker
+    echo "Waiting for Docker daemon..."
+    until docker info &> /dev/null 2>&1; do
+        sleep 2
+    done
+    echo "✓ Docker is ready"
+    echo ""
+fi
+
+# Start services (idempotent - fast if already running)
+cd "${INSTALL_DIR}"
+docker compose up -d
+
+# Wait for backend health check
+echo "Waiting for services..."
+until curl -s http://localhost:3000/health > /dev/null 2>&1; do
+    sleep 1
+done
+
+# Detect LAN IP
+detect_lan_ip() {
+    for iface in en0 en1; do
+        ip=$(ipconfig getifaddr "$iface" 2>/dev/null)
+        if [ -n "$ip" ]; then
+            echo "$ip"
+            return
+        fi
+    done
+    echo "localhost"
+}
+
+LAN_IP=$(detect_lan_ip)
+
+# Read login code from .env
+LOGIN_CODE=$(grep '^LOGIN_SECRET=' "${NGAJ_HOME}/.env" 2>/dev/null | cut -d'=' -f2)
+
+# Clear and display status
+clear
+echo "✅ ngaj is running!"
+echo ""
+echo "Dashboard:    http://${LAN_IP}:3000"
+if [ -n "$LOGIN_CODE" ]; then
+    echo "Login code:   ${LOGIN_CODE}"
+fi
+echo ""
+echo "(Use login code from any device on your WiFi)"
+echo ""
+echo "Press Ctrl+C to stop ngaj"
+
+# Open browser to network address
+open "http://${LAN_IP}:3000"
+
+# Graceful shutdown handler
+cleanup() {
+    echo ""
+    echo "Stopping ngaj..."
+    docker compose -f "${INSTALL_DIR}/docker-compose.yml" down
+    echo "✓ ngaj stopped"
+    exit 0
+}
+
+trap cleanup INT TERM
+
+# Keep script running (terminal stays open)
+while true; do
+    sleep 86400
+done
+```
+
+#### Info.plist
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>ngaj-launcher</string>
+    <key>CFBundleIconFile</key>
+    <string>icon</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.ngaj.launcher</string>
+    <key>CFBundleName</key>
+    <string>ngaj</string>
+    <key>CFBundleDisplayName</key>
+    <string>ngaj</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
+```
+
+### 7.3 Windows Implementation
+
+#### Start Menu Shortcut
+
+Created at: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\ngaj.lnk`
+- Target: `powershell.exe -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\ngaj\scripts\ngaj-start.ps1"`
+- Icon: `%ProgramFiles%\ngaj\resources\ngaj.ico`
+- Start in: `%LOCALAPPDATA%\ngaj`
+
+#### Start Script (`%LOCALAPPDATA%\ngaj\scripts\ngaj-start.ps1`)
+
+```powershell
+# ngaj-start.ps1 - Starts ngaj services and displays status
+# Created by post-install script
+
+$ErrorActionPreference = "Stop"
+
+$NgajHome = "$env:LOCALAPPDATA\ngaj"
+$InstallDir = "$env:ProgramFiles\ngaj"
+
+Write-Host "🚀 Starting ngaj..." -ForegroundColor Cyan
+Write-Host ""
+
+# Ensure Docker Desktop is running
+$dockerRunning = $false
+try {
+    docker info 2>$null | Out-Null
+    $dockerRunning = $true
+} catch {
+    $dockerRunning = $false
+}
+
+if (-not $dockerRunning) {
+    Write-Host "Starting Docker Desktop..."
+    Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+    Write-Host "Waiting for Docker daemon..."
+    do {
+        Start-Sleep -Seconds 2
+        try {
+            docker info 2>$null | Out-Null
+            $dockerRunning = $true
+        } catch {
+            $dockerRunning = $false
+        }
+    } while (-not $dockerRunning)
+    Write-Host "✓ Docker is ready" -ForegroundColor Green
+    Write-Host ""
+}
+
+# Start services
+Set-Location $InstallDir
+docker compose up -d
+
+# Wait for backend health check
+Write-Host "Waiting for services..."
+do {
+    Start-Sleep -Seconds 1
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -UseBasicParsing -ErrorAction SilentlyContinue
+        $ready = $response.StatusCode -eq 200
+    } catch {
+        $ready = $false
+    }
+} while (-not $ready)
+
+# Detect LAN IP
+function Get-LanIP {
+    $addresses = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+        ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') -and
+        $_.IPAddress -notlike '127.*' -and
+        $_.IPAddress -notlike '169.254.*'
+    }
+    $wifi = $addresses | Where-Object { $_.InterfaceAlias -like '*Wi-Fi*' } | Select-Object -First 1
+    if ($wifi) { return $wifi.IPAddress }
+    $ethernet = $addresses | Where-Object { $_.InterfaceAlias -like '*Ethernet*' } | Select-Object -First 1
+    if ($ethernet) { return $ethernet.IPAddress }
+    return ($addresses | Select-Object -First 1).IPAddress
+}
+
+$LAN_IP = Get-LanIP
+if (-not $LAN_IP) { $LAN_IP = "localhost" }
+
+# Read login code from .env
+$LoginCode = ""
+$envPath = "$NgajHome\.env"
+if (Test-Path $envPath) {
+    $envContent = Get-Content $envPath
+    $loginLine = $envContent | Where-Object { $_ -match '^LOGIN_SECRET=' }
+    if ($loginLine) {
+        $LoginCode = $loginLine -replace '^LOGIN_SECRET=', ''
+    }
+}
+
+# Clear and display status
+Clear-Host
+Write-Host "✅ ngaj is running!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Dashboard:    http://${LAN_IP}:3000"
+if ($LoginCode) {
+    Write-Host "Login code:   $LoginCode"
+}
+Write-Host ""
+Write-Host "(Use login code from any device on your WiFi)"
+Write-Host ""
+Write-Host "Press Ctrl+C to stop ngaj"
+
+# Open browser
+Start-Process "http://${LAN_IP}:3000"
+
+# Keep window open and handle Ctrl+C
+try {
+    while ($true) {
+        Start-Sleep -Seconds 86400
+    }
+} finally {
+    Write-Host ""
+    Write-Host "Stopping ngaj..."
+    Set-Location $InstallDir
+    docker compose down
+    Write-Host "✓ ngaj stopped" -ForegroundColor Green
+}
+```
+
+### 7.4 Post-Install Script Updates
+
+The existing post-install scripts need to be updated to:
+1. Create the start scripts in user's data directory
+2. Create the app bundle (macOS) or Start Menu shortcut (Windows)
+3. Make scripts executable
+
+**macOS additions to `postinstall.sh`:**
+
+```bash
+# Create start script
+cat > "${NGAJ_HOME}/scripts/ngaj-start.sh" << 'STARTSCRIPT'
+# ... (contents from Section 7.2)
+STARTSCRIPT
+chmod +x "${NGAJ_HOME}/scripts/ngaj-start.sh"
+
+# Create ngaj.app bundle (simplified - actual implementation would copy from installer package)
+mkdir -p /Applications/ngaj.app/Contents/MacOS
+mkdir -p /Applications/ngaj.app/Contents/Resources
+
+cat > /Applications/ngaj.app/Contents/MacOS/ngaj-launcher << 'LAUNCHER'
+#!/bin/bash
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "${HOME}/.ngaj/scripts/ngaj-start.sh"
+end tell
+EOF
+LAUNCHER
+chmod +x /Applications/ngaj.app/Contents/MacOS/ngaj-launcher
+
+# Copy Info.plist and icon from installer package
+cp "${INSTALL_DIR}/resources/Info.plist" /Applications/ngaj.app/Contents/
+cp "${INSTALL_DIR}/resources/icon.icns" /Applications/ngaj.app/Contents/Resources/
+```
+
+**Windows additions to `postinstall.ps1`:**
+
+```powershell
+# Create start script
+$startScriptContent = @'
+# ... (contents from Section 7.3)
+'@
+Set-Content -Path "$NgajHome\scripts\ngaj-start.ps1" -Value $startScriptContent
+
+# Create Start Menu shortcut
+$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\ngaj.lnk")
+$Shortcut.TargetPath = "powershell.exe"
+$Shortcut.Arguments = "-ExecutionPolicy Bypass -File `"$NgajHome\scripts\ngaj-start.ps1`""
+$Shortcut.WorkingDirectory = $NgajHome
+$Shortcut.IconLocation = "$InstallDir\resources\ngaj.ico"
+$Shortcut.Description = "Start ngaj - Proactive Engagement Companion"
+$Shortcut.Save()
+```
+
+### 7.5 Behavior Details
+
+| User Action | Result |
+|-------------|--------|
+| Click ngaj icon | Terminal opens, Docker starts if needed, containers start, browser opens |
+| Click while already running | Containers already up (docker compose up -d is idempotent), browser opens |
+| Press Ctrl+C in terminal | Containers stop gracefully via `docker compose down` |
+| Close terminal window (X button) | Terminal closes, containers continue running in background |
+| Laptop shutdown | Docker Desktop stops, containers stop |
+| Laptop restart + click icon | Full startup sequence (Docker → containers → browser) |
+
+### 7.6 Icon Assets Needed
+
+**macOS**: `icon.icns` - Apple icon format
+- Master: 1024x1024 PNG
+- Generated sizes: 16, 32, 128, 256, 512, 1024
+
+**Windows**: `ngaj.ico` - Windows icon format
+- Sizes: 16x16, 32x32, 48x48, 256x256
+
+---
+
+## 8. Success Criteria
 
 Installation succeeds when:
 
@@ -339,7 +698,7 @@ Installation succeeds when:
 
 ---
 
-## 8. Future Enhancements (Out of Scope for v0.1)
+## 9. Future Enhancements (Out of Scope for v0.1)
 
 - Pre-flight checks (port conflicts, disk space, system requirements)
 - Automatic rollback on failure
@@ -348,12 +707,14 @@ Installation succeeds when:
 - Linux support (AppImage, Snap, or .deb)
 - Offline mode (bundle setup container image)
 - Web UI display of network URL (see Section 6.4)
+- Auto-start on login (user preference)
+- Menu bar status indicator (macOS)
 
 ---
 
-## 9. Project Structure
+## 10. Project Structure
 
-### 8.1 Package Layout
+### 10.1 Package Layout
 
 ```
 ngaj/
@@ -420,7 +781,7 @@ ngaj/
 └── turbo.json                   # Turborepo config (optional, for build orchestration)
 ```
 
-### 8.2 Package Dependencies
+### 10.2 Package Dependencies
 
 ```
 @ngaj/shared ─────────────────────────────────┐
@@ -436,14 +797,14 @@ ngaj/
                           └─── depends on ─────┘
 ```
 
-### 8.3 Docker Images
+### 10.3 Docker Images
 
 | Image | Source | Size | Purpose |
 |-------|--------|------|---------|
 | `ngaj/setup` | `packages/setup/Dockerfile` | ~50MB | Setup wizard (temporary) |
 | `ngaj/backend` | `packages/backend/Dockerfile` | ~150MB | Production backend |
 
-### 8.4 Build Commands
+### 10.4 Build Commands
 
 ```json
 {
@@ -467,9 +828,9 @@ ngaj/
 
 ---
 
-## 10. CI/CD Workflow Outline
+## 11. CI/CD Workflow Outline
 
-### 9.1 On Push/PR (`ci.yml`)
+### 11.1 On Push/PR (`ci.yml`)
 
 1. Checkout code
 2. Setup Node.js
@@ -480,7 +841,7 @@ ngaj/
 7. Build all packages (`npm run build`)
 8. Integration tests (`npm run test:integration`)
 
-### 9.2 On Release Tag (`release.yml`)
+### 11.2 On Release Tag (`release.yml`)
 
 1. Build Docker images
 2. Push to Docker Hub (`ngaj/setup`, `ngaj/backend`)
@@ -489,7 +850,7 @@ ngaj/
 5. Upload installers to GitHub Release
 6. Update release notes
 
-### 9.3 Matrix Strategy
+### 11.3 Matrix Strategy
 
 ```yaml
 jobs:

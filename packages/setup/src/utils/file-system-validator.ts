@@ -135,6 +135,20 @@ export interface ValidateWindowsStartScriptOptions {
   validatePowerShell?: (content: string) => Promise<{ valid: boolean; error?: string }>;
 }
 
+// ==========================================================================
+// Constants
+// ==========================================================================
+
+const MACOS_PATHS = {
+  launcher: '/Applications/ngaj.app/Contents/MacOS/ngaj-launcher',
+  infoPlist: '/Applications/ngaj.app/Contents/Info.plist',
+  iconFile: '/Applications/ngaj.app/Contents/Resources/icon.icns',
+};
+
+// ==========================================================================
+// Functions
+// ==========================================================================
+
 /**
  * Validate macOS app bundle structure
  *
@@ -147,9 +161,62 @@ export interface ValidateWindowsStartScriptOptions {
  * @returns Validation result with details
  */
 export async function validateMacOSAppBundle(
-  _options: ValidateMacOSAppBundleOptions
+  options: ValidateMacOSAppBundleOptions
 ): Promise<MacOSAppBundleResult> {
-  throw new Error('Not implemented');
+  const { fileExists, isExecutable, readFile } = options;
+  const errors: string[] = [];
+
+  // Check launcher exists
+  let launcherExists = false;
+  try {
+    launcherExists = await fileExists(MACOS_PATHS.launcher);
+  } catch {
+    launcherExists = false;
+  }
+  if (!launcherExists) {
+    errors.push('ngaj-launcher not found');
+  }
+
+  // Check launcher is executable
+  let launcherExecutable = false;
+  try {
+    launcherExecutable = launcherExists && (await isExecutable(MACOS_PATHS.launcher));
+  } catch {
+    launcherExecutable = false;
+  }
+  if (launcherExists && !launcherExecutable) {
+    errors.push('ngaj-launcher not executable');
+  }
+
+  // Check Info.plist
+  let infoPlistValid = false;
+  let bundleName: string | undefined;
+  try {
+    const plistContent = await readFile(MACOS_PATHS.infoPlist);
+    const parsed = parseInfoPlist(plistContent);
+    infoPlistValid = Object.keys(parsed).length > 0;
+    bundleName = parsed.CFBundleName;
+  } catch {
+    infoPlistValid = false;
+  }
+
+  // Check icon exists
+  let iconExists = false;
+  try {
+    iconExists = await fileExists(MACOS_PATHS.iconFile);
+  } catch {
+    iconExists = false;
+  }
+
+  return {
+    valid: errors.length === 0 && launcherExists && launcherExecutable && infoPlistValid,
+    errors,
+    launcherExists,
+    launcherExecutable,
+    infoPlistValid,
+    bundleName,
+    iconExists,
+  };
 }
 
 /**
@@ -164,9 +231,49 @@ export async function validateMacOSAppBundle(
  * @returns Validation result with details
  */
 export async function validateMacOSStartScript(
-  _options: ValidateMacOSStartScriptOptions
+  options: ValidateMacOSStartScriptOptions
 ): Promise<MacOSStartScriptResult> {
-  throw new Error('Not implemented');
+  const { fileExists, isExecutable, readFile, homeDir } = options;
+  const scriptPath = `${homeDir}/.ngaj/scripts/ngaj-start.sh`;
+  const errors: string[] = [];
+
+  // Check script exists
+  let exists = false;
+  try {
+    exists = await fileExists(scriptPath);
+  } catch {
+    exists = false;
+  }
+
+  // Check script is executable
+  let executable = false;
+  try {
+    executable = exists && (await isExecutable(scriptPath));
+  } catch {
+    executable = false;
+  }
+
+  // Check script content for required functions
+  let hasDetectLanIP = false;
+  let hasCleanup = false;
+  try {
+    if (exists) {
+      const content = await readFile(scriptPath);
+      hasDetectLanIP = content.includes('detect_lan_ip');
+      hasCleanup = content.includes('cleanup');
+    }
+  } catch {
+    // Keep defaults
+  }
+
+  return {
+    valid: exists && executable,
+    errors,
+    exists,
+    executable,
+    hasDetectLanIP,
+    hasCleanup,
+  };
 }
 
 /**
@@ -182,9 +289,53 @@ export async function validateMacOSStartScript(
  * @returns Validation result with details
  */
 export async function validateWindowsShortcut(
-  _options: ValidateWindowsShortcutOptions
+  options: ValidateWindowsShortcutOptions
 ): Promise<WindowsShortcutResult> {
-  throw new Error('Not implemented');
+  const { fileExists, readShortcut, appDataPath } = options;
+  const shortcutPath = `${appDataPath}\\Microsoft\\Windows\\Start Menu\\Programs\\ngaj.lnk`;
+  const errors: string[] = [];
+
+  // Check shortcut exists
+  let exists = false;
+  try {
+    exists = await fileExists(shortcutPath);
+  } catch {
+    exists = false;
+  }
+
+  // Read shortcut properties
+  let targetCorrect = false;
+  let argumentsCorrect = false;
+  let iconValid = false;
+
+  try {
+    const props = await readShortcut(shortcutPath);
+
+    // Check target is powershell.exe
+    targetCorrect = props.target.toLowerCase().includes('powershell.exe');
+
+    // Check arguments contain the start script
+    argumentsCorrect =
+      props.arguments.includes('ngaj-start.ps1') ||
+      props.arguments.includes('-File') ||
+      props.arguments.includes('-ExecutionPolicy');
+
+    // Check icon exists
+    if (props.icon) {
+      iconValid = await fileExists(props.icon);
+    }
+  } catch {
+    // Keep defaults
+  }
+
+  return {
+    valid: exists && targetCorrect,
+    errors,
+    exists,
+    targetCorrect,
+    argumentsCorrect,
+    iconValid,
+  };
 }
 
 /**
@@ -198,9 +349,41 @@ export async function validateWindowsShortcut(
  * @returns Validation result with details
  */
 export async function validateWindowsStartScript(
-  _options: ValidateWindowsStartScriptOptions
+  options: ValidateWindowsStartScriptOptions
 ): Promise<WindowsStartScriptResult> {
-  throw new Error('Not implemented');
+  const { fileExists, readFile, localAppDataPath, validatePowerShell } = options;
+  const scriptPath = `${localAppDataPath}\\ngaj\\scripts\\ngaj-start.ps1`;
+  const errors: string[] = [];
+
+  // Check script exists
+  let exists = false;
+  try {
+    exists = await fileExists(scriptPath);
+  } catch {
+    exists = false;
+  }
+
+  // Validate PowerShell syntax
+  let syntaxValid = false;
+  try {
+    if (exists && validatePowerShell) {
+      const content = await readFile(scriptPath);
+      const result = await validatePowerShell(content);
+      syntaxValid = result.valid;
+    } else {
+      // If no validator provided, assume valid if exists
+      syntaxValid = exists;
+    }
+  } catch {
+    syntaxValid = false;
+  }
+
+  return {
+    valid: exists && syntaxValid,
+    errors,
+    exists,
+    syntaxValid,
+  };
 }
 
 /**
@@ -209,6 +392,73 @@ export async function validateWindowsStartScript(
  * @param content - Raw Info.plist XML content
  * @returns Parsed key-value pairs
  */
-export function parseInfoPlist(_content: string): ParsedInfoPlist {
-  throw new Error('Not implemented');
+export function parseInfoPlist(content: string): ParsedInfoPlist {
+  const result: ParsedInfoPlist = {};
+
+  if (!content || typeof content !== 'string') {
+    return result;
+  }
+
+  // Check if it looks like valid plist XML
+  if (!content.includes('<plist') || !content.includes('<dict>')) {
+    return result;
+  }
+
+  try {
+    // Extract key-value pairs from plist XML
+    // This is a simplified parser for common plist elements
+
+    // Extract string values: <key>NAME</key>\s*<string>VALUE</string>
+    const stringPattern = /<key>(\w+)<\/key>\s*<string>([^<]*)<\/string>/g;
+    let match: RegExpExecArray | null;
+    while ((match = stringPattern.exec(content)) !== null) {
+      const key = match[1] as keyof ParsedInfoPlist;
+      const value = match[2];
+      if (key in result || isValidPlistKey(key)) {
+        (result as Record<string, string | boolean>)[key] = value;
+      }
+    }
+
+    // Extract boolean true values: <key>NAME</key>\s*<true/>
+    const truePattern = /<key>(\w+)<\/key>\s*<true\s*\/>/g;
+    while ((match = truePattern.exec(content)) !== null) {
+      const key = match[1] as keyof ParsedInfoPlist;
+      if (isValidPlistKey(key)) {
+        (result as Record<string, string | boolean>)[key] = true;
+      }
+    }
+
+    // Extract boolean false values: <key>NAME</key>\s*<false/>
+    const falsePattern = /<key>(\w+)<\/key>\s*<false\s*\/>/g;
+    while ((match = falsePattern.exec(content)) !== null) {
+      const key = match[1] as keyof ParsedInfoPlist;
+      if (isValidPlistKey(key)) {
+        (result as Record<string, string | boolean>)[key] = false;
+      }
+    }
+  } catch {
+    // Return empty result on parse error
+    return {};
+  }
+
+  return result;
+}
+
+/**
+ * Check if a key is a valid Info.plist key we care about
+ */
+function isValidPlistKey(key: string): key is keyof ParsedInfoPlist {
+  const validKeys: (keyof ParsedInfoPlist)[] = [
+    'CFBundleExecutable',
+    'CFBundleIconFile',
+    'CFBundleIdentifier',
+    'CFBundleName',
+    'CFBundleDisplayName',
+    'CFBundlePackageType',
+    'CFBundleShortVersionString',
+    'CFBundleVersion',
+    'LSMinimumSystemVersion',
+    'NSHighResolutionCapable',
+  ];
+  return validKeys.includes(key as keyof ParsedInfoPlist);
 }

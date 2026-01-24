@@ -57,8 +57,24 @@ export interface CreateTerminalOutputOptions {
  * @param options - Options including LAN IP and port
  * @returns Formatted output string
  */
-export function formatNetworkAccessDisplay(_options: FormatNetworkAccessOptions): string {
-  throw new Error('Not implemented');
+export function formatNetworkAccessDisplay(options: FormatNetworkAccessOptions): string {
+  const { lanIP, port } = options;
+  const lines: string[] = [];
+
+  // Header
+  lines.push('✓ Backend running');
+  lines.push('');
+
+  // Local access URL (always shown)
+  lines.push(`  Local access:   http://localhost:${port}`);
+
+  // Network access URL (only if IP available)
+  if (lanIP) {
+    lines.push(`  Network access: http://${lanIP}:${port}`);
+    lines.push('  (Use this URL from your mobile device on the same WiFi)');
+  }
+
+  return lines.join('\n');
 }
 
 /**
@@ -71,8 +87,17 @@ export function formatNetworkAccessDisplay(_options: FormatNetworkAccessOptions)
  * @param loginCode - The login code to display
  * @returns Formatted output string, empty string if no code
  */
-export function formatLoginCodeDisplay(_loginCode: string): string {
-  throw new Error('Not implemented');
+export function formatLoginCodeDisplay(loginCode: string): string {
+  // Handle empty or whitespace-only login codes
+  if (!loginCode || !loginCode.trim()) {
+    return '';
+  }
+
+  const lines: string[] = [];
+  lines.push(`  Login code: ${loginCode}`);
+  lines.push('  (Enter this code when prompted in your browser)');
+
+  return lines.join('\n');
 }
 
 /**
@@ -84,8 +109,21 @@ export function formatLoginCodeDisplay(_loginCode: string): string {
  * @param options - Options including LAN IP, login code, and port
  * @returns Formatted output string
  */
-export function formatStatusDisplay(_options: FormatStatusDisplayOptions): string {
-  throw new Error('Not implemented');
+export function formatStatusDisplay(options: FormatStatusDisplayOptions): string {
+  const { lanIP, loginCode, port } = options;
+
+  // Get network access display
+  const networkDisplay = formatNetworkAccessDisplay({ lanIP, port });
+
+  // Get login code display
+  const loginCodeDisplay = formatLoginCodeDisplay(loginCode);
+
+  // Combine with proper spacing
+  if (loginCodeDisplay) {
+    return `${networkDisplay}\n\n${loginCodeDisplay}`;
+  }
+
+  return networkDisplay;
 }
 
 /**
@@ -99,6 +137,15 @@ export function formatStatusDisplay(_options: FormatStatusDisplayOptions): strin
  * @param options - Options including data fetching functions
  * @returns Complete formatted terminal output
  */
-export async function createTerminalOutput(_options: CreateTerminalOutputOptions): Promise<string> {
-  throw new Error('Not implemented');
+export async function createTerminalOutput(options: CreateTerminalOutputOptions): Promise<string> {
+  const { getLanIP, readLoginCode, port } = options;
+
+  // Fetch data in parallel for efficiency
+  const [lanIP, loginCodeResult] = await Promise.all([getLanIP(), readLoginCode()]);
+
+  // Extract login code from result
+  const loginCode = loginCodeResult.success ? loginCodeResult.loginCode : '';
+
+  // Format and return
+  return formatStatusDisplay({ lanIP, loginCode, port });
 }

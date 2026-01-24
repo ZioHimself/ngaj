@@ -48,8 +48,34 @@ export type EnvVariables = Record<string, string>;
  * @param options - Options including file path and read function
  * @returns Result with login code and success status
  */
-export async function readLoginCode(_options: ReadLoginCodeOptions): Promise<LoginCodeResult> {
-  throw new Error('Not implemented');
+export async function readLoginCode(options: ReadLoginCodeOptions): Promise<LoginCodeResult> {
+  const { envPath, readFile } = options;
+
+  try {
+    const content = await readFile(envPath);
+    const envVars = parseEnvFile(content);
+    const loginCode = envVars.LOGIN_SECRET ?? '';
+
+    return {
+      success: true,
+      loginCode,
+    };
+  } catch (error) {
+    // Handle file not found or permission errors gracefully
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isNotFound = errorMessage.includes('ENOENT') || errorMessage.includes('not found');
+    const isPermissionError = errorMessage.includes('EACCES') || errorMessage.includes('permission');
+
+    return {
+      success: false,
+      loginCode: '',
+      error: isNotFound
+        ? 'File not found'
+        : isPermissionError
+          ? 'Permission denied'
+          : errorMessage,
+    };
+  }
 }
 
 /**
@@ -66,6 +92,49 @@ export async function readLoginCode(_options: ReadLoginCodeOptions): Promise<Log
  * @param content - Raw .env file content
  * @returns Parsed environment variables
  */
-export function parseEnvFile(_content: string): EnvVariables {
-  throw new Error('Not implemented');
+export function parseEnvFile(content: string): EnvVariables {
+  const result: EnvVariables = {};
+
+  if (!content || typeof content !== 'string') {
+    return result;
+  }
+
+  // Normalize line endings (handle Windows CRLF)
+  const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+  for (const line of lines) {
+    // Skip empty lines
+    if (!line.trim()) {
+      continue;
+    }
+
+    // Skip comment lines
+    if (line.trim().startsWith('#')) {
+      continue;
+    }
+
+    // Find the first equals sign
+    const equalsIndex = line.indexOf('=');
+    if (equalsIndex === -1) {
+      // Invalid line format, skip
+      continue;
+    }
+
+    const key = line.substring(0, equalsIndex).trim();
+    let value = line.substring(equalsIndex + 1).trim();
+
+    // Skip if key is empty
+    if (!key) {
+      continue;
+    }
+
+    // Handle quoted values (both single and double quotes)
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    result[key] = value;
+  }
+
+  return result;
 }

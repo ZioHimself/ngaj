@@ -40,6 +40,10 @@ export interface HandleShutdownOptions {
   timeoutMs?: number;
 }
 
+// Store handlers so we can remove them later
+let sigintHandler: (() => void) | null = null;
+let sigtermHandler: (() => void) | null = null;
+
 /**
  * Install signal handlers for graceful shutdown
  *
@@ -50,8 +54,23 @@ export interface HandleShutdownOptions {
  * @param options - Options including shutdown callback
  * @returns Cleanup function to remove handlers
  */
-export function installShutdownHandler(_options: InstallShutdownHandlerOptions): () => void {
-  throw new Error('Not implemented');
+export function installShutdownHandler(options: InstallShutdownHandlerOptions): () => void {
+  const { onShutdown } = options;
+
+  // Create handlers
+  sigintHandler = () => {
+    void onShutdown();
+  };
+  sigtermHandler = () => {
+    void onShutdown();
+  };
+
+  // Register handlers
+  process.on('SIGINT', sigintHandler);
+  process.on('SIGTERM', sigtermHandler);
+
+  // Return cleanup function
+  return removeShutdownHandler;
 }
 
 /**
@@ -60,7 +79,14 @@ export function installShutdownHandler(_options: InstallShutdownHandlerOptions):
  * Safe to call multiple times.
  */
 export function removeShutdownHandler(): void {
-  throw new Error('Not implemented');
+  if (sigintHandler) {
+    process.removeListener('SIGINT', sigintHandler);
+    sigintHandler = null;
+  }
+  if (sigtermHandler) {
+    process.removeListener('SIGTERM', sigtermHandler);
+    sigtermHandler = null;
+  }
 }
 
 /**
@@ -74,6 +100,50 @@ export function removeShutdownHandler(): void {
  * @param options - Options including exec function and install directory
  * @returns Result indicating success or failure
  */
-export async function handleShutdown(_options: HandleShutdownOptions): Promise<ShutdownResult> {
-  throw new Error('Not implemented');
+export async function handleShutdown(options: HandleShutdownOptions): Promise<ShutdownResult> {
+  const { exec, installDir, log, timeoutMs = 30000 } = options;
+
+  // Display stopping message
+  log('Stopping ngaj...');
+
+  // Create a promise that resolves on timeout with failure
+  const timeoutPromise = new Promise<ShutdownResult>((resolve) => {
+    setTimeout(() => {
+      log('Error: Shutdown timed out');
+      resolve({
+        success: false,
+        error: 'Shutdown timed out',
+      });
+    }, timeoutMs);
+  });
+
+  // Create the actual shutdown promise
+  const shutdownPromise = (async (): Promise<ShutdownResult> => {
+    try {
+      const result = await exec(`cd "${installDir}" && docker compose down`);
+
+      if (result.exitCode !== 0) {
+        log(`Error: ${result.output}`);
+        return {
+          success: false,
+          error: result.output,
+        };
+      }
+
+      log('✓ ngaj stopped');
+      return {
+        success: true,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log(`Error: ${errorMessage}`);
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  })();
+
+  // Race between shutdown and timeout
+  return Promise.race([shutdownPromise, timeoutPromise]);
 }

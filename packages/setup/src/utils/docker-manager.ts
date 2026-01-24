@@ -125,7 +125,13 @@ export interface WaitForHealthCheckOptions {
 }
 
 // ==========================================================================
-// Functions (Stubs)
+// Constants
+// ==========================================================================
+
+const DOCKER_NOT_INSTALLED_EXIT_CODE = 127;
+
+// ==========================================================================
+// Functions
 // ==========================================================================
 
 /**
@@ -135,8 +141,18 @@ export interface WaitForHealthCheckOptions {
  * @returns True if Docker is running, false if not running
  * @throws DockerNotInstalledError if Docker is not installed
  */
-export async function checkDockerRunning(_options: CheckDockerOptions): Promise<boolean> {
-  throw new Error('Not implemented');
+export async function checkDockerRunning(options: CheckDockerOptions): Promise<boolean> {
+  const { exec } = options;
+
+  const result = await exec('docker info');
+
+  // Exit code 127 typically means command not found
+  if (result.exitCode === DOCKER_NOT_INSTALLED_EXIT_CODE || result.output.includes('command not found')) {
+    throw new DockerNotInstalledError();
+  }
+
+  // Exit code 0 means Docker is running
+  return result.exitCode === 0;
 }
 
 /**
@@ -144,8 +160,16 @@ export async function checkDockerRunning(_options: CheckDockerOptions): Promise<
  *
  * @param options - Options including platform and exec function
  */
-export async function startDockerDesktop(_options: StartDockerDesktopOptions): Promise<void> {
-  throw new Error('Not implemented');
+export async function startDockerDesktop(options: StartDockerDesktopOptions): Promise<void> {
+  const { platform, exec } = options;
+
+  if (platform === 'darwin') {
+    await exec('open -a Docker');
+  } else if (platform === 'win32') {
+    // Windows: Start Docker Desktop via PowerShell
+    await exec('Start-Process "C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe"');
+  }
+  // Linux: Docker doesn't have a desktop app, daemon should be started via systemd
 }
 
 /**
@@ -154,8 +178,34 @@ export async function startDockerDesktop(_options: StartDockerDesktopOptions): P
  * @param options - Options including exec function and timeout settings
  * @throws DockerDaemonTimeoutError if timeout exceeded
  */
-export async function waitForDockerDaemon(_options: WaitForDockerDaemonOptions): Promise<void> {
-  throw new Error('Not implemented');
+export async function waitForDockerDaemon(options: WaitForDockerDaemonOptions): Promise<void> {
+  const { exec, maxWaitMs = 60000, pollIntervalMs = 1000, onStartDocker } = options;
+
+  const startTime = Date.now();
+
+  // Check if already running first
+  const initialResult = await exec('docker info');
+  if (initialResult.exitCode === 0) {
+    return; // Already running
+  }
+
+  // Start Docker Desktop if callback provided
+  if (onStartDocker) {
+    await onStartDocker();
+  }
+
+  // Poll until Docker is ready or timeout
+  while (Date.now() - startTime < maxWaitMs) {
+    const result = await exec('docker info');
+    if (result.exitCode === 0) {
+      return;
+    }
+
+    // Wait before next poll
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
+
+  throw new DockerDaemonTimeoutError(maxWaitMs);
 }
 
 /**
@@ -165,8 +215,27 @@ export async function waitForDockerDaemon(_options: WaitForDockerDaemonOptions):
  * @returns Result indicating success or failure
  * @throws PortConflictError if port 3000 is in use
  */
-export async function startServices(_options: StartServicesOptions): Promise<ServiceResult> {
-  throw new Error('Not implemented');
+export async function startServices(options: StartServicesOptions): Promise<ServiceResult> {
+  const { exec, installDir } = options;
+
+  const result = await exec(`cd "${installDir}" && docker compose up -d`);
+
+  // Check for port conflict error
+  if (result.output.includes('port is already allocated') || result.output.includes('address already in use')) {
+    throw new PortConflictError();
+  }
+
+  if (result.exitCode !== 0) {
+    return {
+      success: false,
+      message: result.output,
+    };
+  }
+
+  return {
+    success: true,
+    message: result.output,
+  };
 }
 
 /**
@@ -175,8 +244,35 @@ export async function startServices(_options: StartServicesOptions): Promise<Ser
  * @param options - Options including exec function and install directory
  * @returns Result indicating success or failure
  */
-export async function stopServices(_options: StopServicesOptions): Promise<ServiceResult> {
-  throw new Error('Not implemented');
+export async function stopServices(options: StopServicesOptions): Promise<ServiceResult> {
+  const { exec, installDir, timeoutMs = 30000 } = options;
+
+  // Create a promise that rejects on timeout
+  const timeoutPromise = new Promise<ServiceResult>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('Services failed to stop: timeout exceeded'));
+    }, timeoutMs);
+  });
+
+  // Create the actual exec promise
+  const execPromise = (async () => {
+    const result = await exec(`cd "${installDir}" && docker compose down`);
+
+    if (result.exitCode !== 0) {
+      return {
+        success: false,
+        message: result.output,
+      };
+    }
+
+    return {
+      success: true,
+      message: result.output,
+    };
+  })();
+
+  // Race between exec and timeout
+  return Promise.race([execPromise, timeoutPromise]);
 }
 
 /**
@@ -185,6 +281,24 @@ export async function stopServices(_options: StopServicesOptions): Promise<Servi
  * @param options - Options including fetch function and timeout settings
  * @throws HealthCheckTimeoutError if timeout exceeded
  */
-export async function waitForHealthCheck(_options: WaitForHealthCheckOptions): Promise<void> {
-  throw new Error('Not implemented');
+export async function waitForHealthCheck(options: WaitForHealthCheckOptions): Promise<void> {
+  const { fetch, url, maxWaitMs = 60000, pollIntervalMs = 1000 } = options;
+
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitMs) {
+    try {
+      const response = await fetch(url);
+      if (response.ok && response.status === 200) {
+        return;
+      }
+    } catch {
+      // Connection refused or other error, continue polling
+    }
+
+    // Wait before next poll
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
+
+  throw new HealthCheckTimeoutError();
 }

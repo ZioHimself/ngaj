@@ -181,7 +181,8 @@ describe('Graceful Shutdown', () => {
         timeoutMs: 30000,
       });
 
-      vi.advanceTimersByTime(35000);
+      // Use async timer advancement for proper Promise handling
+      await vi.advanceTimersByTimeAsync(35000);
 
       await expect(result).resolves.toEqual(
         expect.objectContaining({

@@ -133,16 +133,18 @@ describe('Docker Detection', () => {
       vi.useFakeTimers();
       const mockExec = vi.fn().mockResolvedValue({ exitCode: 1, output: 'Cannot connect...' });
 
+      // Create promise and immediately attach rejection handler to prevent unhandled rejection
       const promise = waitForDockerDaemon({
         exec: mockExec,
         maxWaitMs: 60000,
         pollIntervalMs: 1000,
-      });
+      }).catch((e) => e); // Catch and return error
 
-      // Advance time past timeout
-      vi.advanceTimersByTime(65000);
+      // Advance time past timeout (use async version for proper Promise handling)
+      await vi.advanceTimersByTimeAsync(65000);
 
-      await expect(promise).rejects.toThrow(DockerDaemonTimeoutError);
+      const error = await promise;
+      expect(error).toBeInstanceOf(DockerDaemonTimeoutError);
       vi.useRealTimers();
     });
 
@@ -298,15 +300,18 @@ describe('Docker Detection', () => {
       vi.useFakeTimers();
       const mockExec = vi.fn().mockImplementation(() => new Promise(() => {})); // Never resolves
 
+      // Create promise and immediately attach rejection handler to prevent unhandled rejection
       const promise = stopServices({
         exec: mockExec,
         installDir: '/Applications/ngaj',
         timeoutMs: 30000,
-      });
+      }).catch((e) => e); // Catch and return error
 
-      vi.advanceTimersByTime(35000);
+      // Use async timer advancement for proper Promise handling
+      await vi.advanceTimersByTimeAsync(35000);
 
-      await expect(promise).rejects.toThrow(/timeout|failed to stop/i);
+      const error = await promise;
+      expect(error.message).toMatch(/timeout|failed to stop/i);
       vi.useRealTimers();
     });
   });
@@ -344,16 +349,19 @@ describe('Docker Detection', () => {
       vi.useFakeTimers();
       const mockFetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
 
+      // Create promise and immediately attach rejection handler to prevent unhandled rejection
       const promise = waitForHealthCheck({
         fetch: mockFetch,
         url: 'http://localhost:3000/health',
         maxWaitMs: 60000,
         pollIntervalMs: 1000,
-      });
+      }).catch((e) => e); // Catch and return error to prevent unhandled rejection
 
-      vi.advanceTimersByTime(65000);
+      // Use async timer advancement to properly handle Promise resolution
+      await vi.advanceTimersByTimeAsync(65000);
 
-      await expect(promise).rejects.toThrow(HealthCheckTimeoutError);
+      const error = await promise;
+      expect(error).toBeInstanceOf(HealthCheckTimeoutError);
       vi.useRealTimers();
     });
 
@@ -362,16 +370,19 @@ describe('Docker Detection', () => {
       vi.useFakeTimers();
       const mockFetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
 
+      // Create promise and immediately attach rejection handler to prevent unhandled rejection
       const promise = waitForHealthCheck({
         fetch: mockFetch,
         url: 'http://localhost:3000/health',
         maxWaitMs: 60000,
         pollIntervalMs: 1000,
-      });
+      }).catch((e) => e); // Catch and return error to prevent unhandled rejection
 
-      vi.advanceTimersByTime(65000);
+      // Use async timer advancement to properly handle Promise resolution
+      await vi.advanceTimersByTimeAsync(65000);
 
-      await expect(promise).rejects.toThrow(errorScenarios.healthCheckTimeout.message);
+      const error = await promise;
+      expect(error.message).toBe(errorScenarios.healthCheckTimeout.message);
       vi.useRealTimers();
     });
   });

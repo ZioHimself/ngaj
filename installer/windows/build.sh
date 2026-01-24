@@ -44,6 +44,7 @@ cp "${PROJECT_ROOT}/docker-compose.yml" "${PAYLOAD_DIR}/"
 # Copy scripts
 cp "${PROJECT_ROOT}/installer/scripts/postinstall.ps1" "${PAYLOAD_DIR}/scripts/"
 cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.ps1" "${PAYLOAD_DIR}/scripts/"
+cp "${PROJECT_ROOT}/installer/scripts/ngaj-setup.ps1" "${PAYLOAD_DIR}/scripts/"
 
 # Create install.bat
 cat > "${PAYLOAD_DIR}/install.bat" << 'INSTALL_EOF'

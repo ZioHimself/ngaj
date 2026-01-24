@@ -48,12 +48,21 @@ Copy-Item "$ProjectRoot\docker-compose.yml" "$PayloadDir\"
 New-Item -ItemType Directory -Force -Path "$PayloadDir\scripts" | Out-Null
 Copy-Item "$ProjectRoot\installer\scripts\postinstall.ps1" "$PayloadDir\scripts\"
 Copy-Item "$ProjectRoot\installer\scripts\ngaj-start.ps1" "$PayloadDir\scripts\"
+Copy-Item "$ProjectRoot\installer\scripts\ngaj-setup.ps1" "$PayloadDir\scripts\"
 
 # Create install.bat for easy installation
 $installBat = @"
 @echo off
 echo Installing ngaj...
 echo.
+
+REM Check for admin rights
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Please run this script as Administrator.
+    pause
+    exit /b 1
+)
 
 REM Create installation directory
 if not exist "%ProgramFiles%\ngaj" mkdir "%ProgramFiles%\ngaj"
@@ -78,21 +87,32 @@ $uninstallBat = @"
 echo Uninstalling ngaj...
 echo.
 
+REM Check for admin rights
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Please run this script as Administrator.
+    pause
+    exit /b 1
+)
+
 REM Stop services
 cd /d "%ProgramFiles%\ngaj"
 docker compose down 2>nul
+
+REM Remove Start Menu shortcut
+del "%APPDATA%\Microsoft\Windows\Start Menu\Programs\ngaj.lnk" 2>nul
 
 REM Remove installation directory
 rmdir /s /q "%ProgramFiles%\ngaj" 2>nul
 
 REM Remove user data (optional - ask user)
 echo.
-set /p REMOVE_DATA="Remove user data (~\.ngaj)? [y/N]: "
+set /p REMOVE_DATA="Remove user data (%LOCALAPPDATA%\ngaj)? [y/N]: "
 if /i "%REMOVE_DATA%"=="y" (
-    rmdir /s /q "%USERPROFILE%\.ngaj" 2>nul
+    rmdir /s /q "%LOCALAPPDATA%\ngaj" 2>nul
     echo User data removed.
 ) else (
-    echo User data preserved at %USERPROFILE%\.ngaj
+    echo User data preserved at %LOCALAPPDATA%\ngaj
 )
 
 echo.

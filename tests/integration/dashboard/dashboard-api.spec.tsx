@@ -22,13 +22,14 @@ import {
   dashboardResponseFixtures,
 } from '@tests/fixtures/dashboard-fixtures';
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Create a fresh mock for each test to avoid parallel test interference
+let mockFetch: ReturnType<typeof vi.fn>;
 
 describe('Dashboard API Integration', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Create fresh mock before each test
+    mockFetch = vi.fn();
+    global.fetch = mockFetch;
   });
 
   afterEach(() => {
@@ -433,9 +434,11 @@ describe('Dashboard API Integration', () => {
 
       await user.click(screen.getByRole('button', { name: /post response/i }));
 
-      // Assert - should show posted badge
+      // Assert - should show posted badge (use class selector to distinguish from filter button)
       await waitFor(() => {
-        expect(screen.getByText(/posted/i)).toBeInTheDocument();
+        const postedBadge = document.querySelector('.posted-badge');
+        expect(postedBadge).toBeInTheDocument();
+        expect(postedBadge).toHaveTextContent('Posted');
       });
     });
 
@@ -556,13 +559,15 @@ describe('Dashboard API Integration', () => {
       // Act
       render(<OpportunitiesDashboard accountId="acc-1" />);
 
+      // Wait for opportunity card to render, then find dismiss button by class
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /dismiss/i })
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('opportunity-card')).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /dismiss/i }));
+      // Click the dismiss button (has class dismiss-btn, not the filter button "Dismissed")
+      const dismissBtn = document.querySelector('.dismiss-btn') as HTMLButtonElement;
+      expect(dismissBtn).toBeInTheDocument();
+      await user.click(dismissBtn);
 
       // Assert
       await waitFor(() => {
@@ -603,22 +608,21 @@ describe('Dashboard API Integration', () => {
       // Act
       render(<OpportunitiesDashboard accountId="acc-1" />);
 
+      // Wait for opportunity text to appear (full text since it's < 100 chars)
       await waitFor(() => {
         expect(
-          screen.getByText(
-            dashboardOpportunityFixtures.pending.content.text.slice(0, 50)
-          )
+          screen.getByText(dashboardOpportunityFixtures.pending.content.text)
         ).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /dismiss/i }));
+      // Click the dismiss button using class selector
+      const dismissBtn = document.querySelector('.dismiss-btn') as HTMLButtonElement;
+      await user.click(dismissBtn);
 
       // Assert - opportunity should be removed (pending filter)
       await waitFor(() => {
         expect(
-          screen.queryByText(
-            dashboardOpportunityFixtures.pending.content.text.slice(0, 50)
-          )
+          screen.queryByText(dashboardOpportunityFixtures.pending.content.text)
         ).not.toBeInTheDocument();
       });
     });

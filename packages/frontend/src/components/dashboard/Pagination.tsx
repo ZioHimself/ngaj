@@ -1,5 +1,5 @@
 /**
- * Pagination Component (Stub)
+ * Pagination Component
  *
  * Page navigation for opportunities list.
  *
@@ -13,7 +13,38 @@ export interface PaginationProps {
   isLoading: boolean;
 }
 
-export function Pagination(_props: PaginationProps): JSX.Element {
-  // TODO: Implement component - Test-Writer stub only
-  throw new Error('Pagination not implemented');
+export function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+  isLoading,
+}: PaginationProps): JSX.Element {
+  const isFirstPage = currentPage <= 1;
+  const isLastPage = currentPage >= totalPages;
+
+  return (
+    <div className="pagination">
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={isLoading || isFirstPage}
+        aria-label="Previous page"
+      >
+        Previous
+      </button>
+
+      <span className="page-info">
+        Page {currentPage} of {totalPages}
+      </span>
+
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={isLoading || isLastPage}
+        aria-label="Next page"
+      >
+        Next
+      </button>
+    </div>
+  );
 }

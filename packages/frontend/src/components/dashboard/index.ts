@@ -11,7 +11,7 @@ export { ResponseEditor } from './ResponseEditor';
 export type { ResponseEditorProps } from './ResponseEditor';
 
 export { FilterBar } from './FilterBar';
-export type { FilterBarProps } from './FilterBar';
+export type { FilterBarProps, DashboardFilterValue } from './FilterBar';
 
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';

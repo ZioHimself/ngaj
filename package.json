@@ -57,6 +57,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/express-session": "^1.18.2",
     "@types/node": "^24.9.2",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
@@ -69,7 +70,7 @@
     "jsdom": "^27.4.0",
     "mongodb-memory-server": "^11.0.1",
     "prettier": "^3.7.4",
-    "supertest": "^7.1.4",
+    "supertest": "^7.2.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2",
@@ -83,5 +84,8 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "express-session": "^1.19.0"
   }
 }

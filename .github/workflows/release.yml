@@ -70,36 +70,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Build macOS installer
+        run: npm run installer:macos
+
+      - name: Rename installer with version
         run: |
-          # Create staging directory
-          mkdir -p staging/ngaj
-          
-          # Copy docker-compose and scripts
-          cp docker-compose.yml staging/ngaj/
-          cp -r installer/scripts staging/ngaj/
-          
-          # Make scripts executable
-          chmod +x staging/ngaj/scripts/*.sh
-          
-          # Build .pkg installer
-          pkgbuild \
-            --root staging/ngaj \
-            --identifier com.ngaj.app \
-            --version ${{ steps.version.outputs.VERSION }} \
-            --install-location /Applications/ngaj \
-            --scripts installer/scripts \
-            ngaj-${{ steps.version.outputs.VERSION }}-macos.pkg
+          mv dist/ngaj-installer-*.pkg dist/ngaj-${{ steps.version.outputs.VERSION }}-macos.pkg
 
       - name: Upload macOS installer
         uses: actions/upload-artifact@v4
         with:
           name: installer-macos
-          path: ngaj-*.pkg
+          path: dist/ngaj-*.pkg
 
   installer-windows:
     name: Windows Installer

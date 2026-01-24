@@ -1,0 +1,21 @@
+#!/bin/bash
+# ngaj Application Launcher
+# This script is the CFBundleExecutable for ngaj.app
+# It opens Terminal and runs the ngaj-start.sh script
+
+NGAJ_HOME="${HOME}/.ngaj"
+START_SCRIPT="${NGAJ_HOME}/scripts/ngaj-start.sh"
+
+# Check if start script exists
+if [ ! -f "${START_SCRIPT}" ]; then
+    osascript -e 'display dialog "ngaj is not properly installed.\n\nMissing: ~/.ngaj/scripts/ngaj-start.sh\n\nPlease reinstall ngaj." buttons {"OK"} default button "OK" with icon stop with title "ngaj Error"'
+    exit 1
+fi
+
+# Open Terminal and run the start script
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "${START_SCRIPT}"
+end tell
+EOF

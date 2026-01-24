@@ -34,6 +34,8 @@
     "docker:build:backend": "docker build -t ngaj/backend -f packages/backend/Dockerfile .",
     "docker:build:setup": "docker build -t ngaj/setup -f packages/setup/Dockerfile .",
     "docker:push": "docker push ngaj/backend && docker push ngaj/setup",
+    "installer:macos": "bash installer/macos/build.sh",
+    "installer:macos:full": "npm run docker:build && npm run installer:macos",
     "db:init": "tsx scripts/init-db.ts",
     "db:reset": "tsx scripts/reset-db.ts"
   },

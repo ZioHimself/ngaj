@@ -133,3 +133,39 @@ jobs:
           file: packages/setup/Dockerfile
           push: false
           tags: ngaj/setup:test
+
+  installer-macos:
+    name: macOS Installer Build Test
+    runs-on: macos-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Verify installer scripts syntax
+        run: |
+          bash -n installer/macos/build.sh
+          bash -n installer/scripts/postinstall.sh
+          bash -n installer/scripts/ngaj-start.sh
+
+      - name: Build macOS installer package
+        run: npm run installer:macos
+
+      - name: Verify installer was created
+        run: |
+          ls -la dist/
+          test -f dist/ngaj-installer-*.pkg
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer-test
+          path: dist/ngaj-installer-*.pkg
+          retention-days: 7

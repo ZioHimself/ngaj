@@ -214,6 +214,12 @@ export interface OpportunityWithAuthor<TId = string> extends Opportunity<TId> {
 }
 
 /**
+ * Sort options for opportunity list queries.
+ * Prefix with '-' for descending order.
+ */
+export type OpportunitySort = 'score' | '-score' | 'discoveredAt' | '-discoveredAt';
+
+/**
  * Filters for querying opportunities.
  */
 export interface OpportunityFilters {
@@ -225,6 +231,44 @@ export interface OpportunityFilters {
 
   /** Pagination offset */
   offset?: number;
+}
+
+/**
+ * Full query parameters for listing opportunities.
+ * Used by frontend to construct API requests.
+ */
+export interface ListOpportunitiesQuery {
+  /** Filter by status (default: 'pending') */
+  status?: OpportunityStatus | 'all';
+  
+  /** Maximum results per page (default: 20, max: 100) */
+  limit?: number;
+  
+  /** Pagination offset (default: 0) */
+  offset?: number;
+  
+  /** Sort field and direction (default: '-score') */
+  sort?: OpportunitySort;
+}
+
+/**
+ * Paginated opportunities result from API.
+ */
+export interface PaginatedOpportunities {
+  /** Opportunities with populated author data */
+  opportunities: OpportunityWithAuthor[];
+  
+  /** Total count matching filters */
+  total: number;
+  
+  /** Items per page */
+  limit: number;
+  
+  /** Items skipped */
+  offset: number;
+  
+  /** Whether more pages exist */
+  hasMore: boolean;
 }
 
 const VALID_PLATFORMS: Platform[] = ['bluesky', 'linkedin', 'reddit'];

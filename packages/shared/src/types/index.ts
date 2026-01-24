@@ -4,8 +4,15 @@
  * @module types
  */
 
-// Core utilities (ID types, type guard factories)
-export type { EntityId, IdValidator, TypeGuardFactory } from './core.js';
+// Core utilities (ID types, type guard factories, API types)
+export type {
+  EntityId,
+  IdValidator,
+  TypeGuardFactory,
+  PaginatedResult,
+  ApiResponse,
+  ApiError,
+} from './core.js';
 export { isStringId, isValidDate, isPlainObject } from './core.js';
 
 // Profile types
@@ -60,8 +67,11 @@ export type {
   Opportunity,
   OpportunityScore,
   OpportunityStatus,
+  OpportunitySort,
   OpportunityWithAuthor,
   OpportunityFilters,
+  ListOpportunitiesQuery,
+  PaginatedOpportunities,
   Author,
   RawPost,
   RawAuthor,
@@ -82,6 +92,9 @@ export type {
   PlatformConstraints,
   CreateResponseInput,
   UpdateResponseInput,
+  ListResponsesQuery,
+  GenerateResponseInput,
+  ListResponsesResult,
 } from './response.js';
 export { isResponse, isOpportunityAnalysis, createResponseGuard } from './response.js';
 

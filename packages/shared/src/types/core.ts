@@ -58,3 +58,54 @@ export function isValidDate(value: unknown): value is Date {
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+
+/**
+ * Generic paginated result wrapper for list endpoints.
+ * 
+ * @typeParam T - Type of items in the result
+ */
+export interface PaginatedResult<T> {
+  /** Array of items for current page */
+  items: T[];
+  
+  /** Total count of items matching the query */
+  total: number;
+  
+  /** Number of items per page */
+  limit: number;
+  
+  /** Number of items skipped */
+  offset: number;
+  
+  /** Whether there are more items after this page */
+  hasMore: boolean;
+}
+
+/**
+ * Standard API response wrapper.
+ * All REST endpoints return this shape.
+ */
+export interface ApiResponse<T = unknown> {
+  /** Whether the request succeeded */
+  success: boolean;
+  
+  /** Response data (present on success) */
+  data?: T;
+  
+  /** Error details (present on failure) */
+  error?: ApiError;
+}
+
+/**
+ * Standard API error shape.
+ */
+export interface ApiError {
+  /** Error code (e.g., "VALIDATION_ERROR", "NOT_FOUND") */
+  code: string;
+  
+  /** Human-readable error message */
+  message: string;
+  
+  /** Additional error details */
+  details?: Record<string, unknown>;
+}

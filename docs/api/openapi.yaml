@@ -416,6 +416,54 @@ paths:
           $ref: '#/components/responses/NotFound'
 
   # ==================== Response Endpoints ====================
+  /responses:
+    get:
+      tags:
+        - Responses
+      summary: List responses by opportunity IDs
+      description: |
+        Retrieve responses for multiple opportunities in a single request.
+        Returns the latest version of each response (highest version number).
+        Used by the dashboard to batch-load responses for a page of opportunities.
+      operationId: listResponsesByOpportunities
+      parameters:
+        - name: opportunityIds
+          in: query
+          required: true
+          description: Comma-separated list of opportunity IDs
+          schema:
+            type: string
+          example: "507f1f77bcf86cd799439011,507f1f77bcf86cd799439012"
+      responses:
+        '200':
+          description: Responses retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          responses:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Response'
+              example:
+                success: true
+                data:
+                  responses:
+                    - _id: "507f1f77bcf86cd799439014"
+                      opportunityId: "507f1f77bcf86cd799439011"
+                      status: "draft"
+                      suggestedText: "Great point about..."
+                      finalText: "Great point about..."
+                      version: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /responses/generate:
     post:
       tags:

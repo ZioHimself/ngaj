@@ -329,3 +329,31 @@ export type CreateResponseInput<TId = string> = Omit<Response<TId>, '_id' | 'upd
 export interface UpdateResponseInput {
   text: string;
 }
+
+/**
+ * Query parameters for batch fetching responses by opportunity IDs.
+ * Used by dashboard to load responses for a page of opportunities.
+ */
+export interface ListResponsesQuery {
+  /** Comma-separated opportunity IDs */
+  opportunityIds: string;
+}
+
+/**
+ * Input for generating a new response.
+ */
+export interface GenerateResponseInput {
+  /** Opportunity to generate response for */
+  opportunityId: string;
+  
+  /** Generation mode (v0.1: only 'quick' supported) */
+  mode: 'quick';
+}
+
+/**
+ * Result of batch fetching responses.
+ */
+export interface ListResponsesResult {
+  /** Responses keyed implicitly by opportunityId (latest version per opportunity) */
+  responses: Response[];
+}

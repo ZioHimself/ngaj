@@ -91,10 +91,13 @@ Steps map to `SetupWizardStep` type in `src/shared/types/setup.ts`.
    - Test connection (minimal API call)
    - Re-prompt on failure (retry loop)
 4. **Validation** (`validation`):
+   - Generate `LOGIN_SECRET` (16 alphanumeric chars with dashes, see [ADR-014](../../../../docs/architecture/decisions/014-simple-token-auth.md))
    - Format `.env` file content (uses `PLATFORM_ENV_VARS`, `AI_PROVIDER_ENV_VARS`)
    - Write to `/data/.env` (mounted volume)
    - Verify file exists
-5. **Complete** (`complete`) - Container destroyed, credentials remain on host
+5. **Complete** (`complete`):
+   - Display generated `LOGIN_SECRET` to user
+   - Container destroyed, credentials remain on host
 
 ### 2.3 Validation Logic
 
@@ -166,7 +169,7 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 **Volume Mounts**:
 - `~/.ngaj/data/mongodb:/data/db` - MongoDB persistence
 - `~/.ngaj/data/chromadb:/chroma/chroma` - ChromaDB persistence
-- `~/.ngaj/.env:/app/.env` - Environment variables (read-only in container)
+- `~/.ngaj/.env:/app/.env` - Environment variables (includes `LOGIN_SECRET` for auth)
 
 **Network**: Internal Docker network, backend exposes port 3000 to host
 
@@ -218,7 +221,108 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 
 ---
 
-## 6. Success Criteria
+## 6. Network Access Display
+
+### 6.1 Purpose
+
+Enable access to the ngaj dashboard from mobile devices on the same local network. After services start successfully, the post-install script detects and displays the host's LAN IP address.
+
+### 6.2 Implementation (v0.1 - Terminal Only)
+
+**macOS** (`installer/scripts/postinstall.sh`):
+
+```bash
+# After docker-compose up -d and health check...
+
+# Detect LAN IP (prefer WiFi interface, then any non-localhost)
+detect_lan_ip() {
+  # Try common WiFi interfaces first
+  for iface in en0 en1; do
+    ip=$(ipconfig getifaddr "$iface" 2>/dev/null)
+    if [ -n "$ip" ]; then
+      echo "$ip"
+      return
+    fi
+  done
+  # Fallback: first non-localhost IPv4 from hostname
+  hostname -I 2>/dev/null | awk '{print $1}'
+}
+
+LAN_IP=$(detect_lan_ip)
+
+echo "✓ Backend running"
+echo ""
+echo "  Local access:   http://localhost:3000"
+if [ -n "$LAN_IP" ]; then
+  echo "  Network access: http://${LAN_IP}:3000"
+  echo "  (Use this URL from your mobile device on the same WiFi)"
+fi
+```
+
+**Windows** (`installer/scripts/postinstall.ps1`):
+
+```powershell
+# After docker-compose up -d and health check...
+
+function Get-LanIP {
+    # Get IPv4 addresses that are DHCP or Manual (not APIPA, not loopback)
+    $addresses = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+        ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') -and
+        $_.IPAddress -notlike '127.*' -and
+        $_.IPAddress -notlike '169.254.*'
+    }
+    # Prefer WiFi, then Ethernet
+    $wifi = $addresses | Where-Object { $_.InterfaceAlias -like '*Wi-Fi*' } | Select-Object -First 1
+    if ($wifi) { return $wifi.IPAddress }
+    
+    $ethernet = $addresses | Where-Object { $_.InterfaceAlias -like '*Ethernet*' } | Select-Object -First 1
+    if ($ethernet) { return $ethernet.IPAddress }
+    
+    # Fallback to any valid address
+    return ($addresses | Select-Object -First 1).IPAddress
+}
+
+$LAN_IP = Get-LanIP
+
+Write-Host "✓ Backend running"
+Write-Host ""
+Write-Host "  Local access:   http://localhost:3000"
+if ($LAN_IP) {
+    Write-Host "  Network access: http://${LAN_IP}:3000"
+    Write-Host "  (Use this URL from your mobile device on the same WiFi)"
+}
+```
+
+### 6.3 Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| No network interfaces | Skip network URL, show localhost only |
+| VPN active | May show VPN IP (e.g., `10.8.x.x`) - functional, acceptable |
+| Multiple interfaces (WiFi + Ethernet) | Prefer WiFi on macOS, WiFi then Ethernet on Windows |
+| APIPA address only (`169.254.x.x`) | Skip (no valid network), show localhost only |
+| IP changes between runs | Re-detect on every startup (script runs each time) |
+
+### 6.4 Future Enhancement (v0.2)
+
+To display the network URL in the web UI:
+
+1. **Persist IP to `.env`**: After detection, append `HOST_LAN_IP=192.168.1.x` to `.env`
+2. **Backend reads `.env`**: On startup, backend reads `HOST_LAN_IP` environment variable
+3. **API endpoint**: Backend exposes `GET /api/system/info` returning:
+   ```json
+   {
+     "localUrl": "http://localhost:3000",
+     "networkUrl": "http://192.168.1.42:3000"
+   }
+   ```
+4. **Web UI**: Settings page displays both URLs
+
+This approach keeps the container unaware of host networking - it just reads what the host script wrote.
+
+---
+
+## 7. Success Criteria
 
 Installation succeeds when:
 
@@ -227,14 +331,15 @@ Installation succeeds when:
 3. ✅ Credentials collected and validated
 4. ✅ `.env` file written to `~/.ngaj/.env`
 5. ✅ Production services started and healthy
-6. ✅ Browser opens to `http://localhost:3000`
-7. ✅ User reaches first-launch wizard (ADR-012)
+6. ✅ LAN IP detected and displayed in terminal (if network available)
+7. ✅ Browser opens to `http://localhost:3000`
+8. ✅ User reaches first-launch wizard (ADR-012)
 
 **Time Target**: <10 minutes (excluding Docker Desktop download time)
 
 ---
 
-## 7. Future Enhancements (Out of Scope for v0.1)
+## 8. Future Enhancements (Out of Scope for v0.1)
 
 - Pre-flight checks (port conflicts, disk space, system requirements)
 - Automatic rollback on failure
@@ -242,12 +347,11 @@ Installation succeeds when:
 - Automatic update mechanism
 - Linux support (AppImage, Snap, or .deb)
 - Offline mode (bundle setup container image)
+- Web UI display of network URL (see Section 6.4)
 
 ---
 
----
-
-## 8. Project Structure
+## 9. Project Structure
 
 ### 8.1 Package Layout
 
@@ -363,7 +467,7 @@ ngaj/
 
 ---
 
-## 9. CI/CD Workflow Outline
+## 10. CI/CD Workflow Outline
 
 ### 9.1 On Push/PR (`ci.yml`)
 

@@ -217,11 +217,41 @@ C:\Users\<user>\AppData\Local\ngaj\   # User data directory
   BLUESKY_HANDLE=@user.bsky.social
   BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
   ANTHROPIC_API_KEY=sk-ant-xxxxx
+  LOGIN_SECRET=A1B2-C3D4-E5F6-G7H8
   ```
 
-### 6. Error Handling & Recovery
+**Login Secret** (see [ADR-014](./014-simple-token-auth.md)):
+- Generated automatically (16 alphanumeric chars with dashes)
+- Displayed in terminal for user to access dashboard from mobile
 
-**Fail-Loud Strategy (v0.1):**
+### 6. Network Access Display (v0.1)
+
+After services start, the post-install script detects and displays the host's LAN IP address, enabling access from mobile devices on the same network.
+
+**Flow**:
+```
+Backend starts → Health check passes → Detect host LAN IP → Display in terminal
+```
+
+**Terminal Output**:
+```
+✓ Backend running
+
+  Local access:   http://localhost:3000
+  Network access: http://192.168.1.42:3000
+  (Use this URL from your mobile device on the same WiFi)
+```
+
+**Detection Strategy**:
+- macOS: `ipconfig getifaddr en0` (WiFi) with fallbacks
+- Windows: `Get-NetIPAddress` filtering for DHCP/Manual, non-localhost
+- If no valid IP found: Skip network URL, show localhost only
+
+**v0.2 Enhancement**: Persist IP to `.env` as `HOST_LAN_IP`, expose via backend API `/api/system/info`, display in web UI settings.
+
+### 7. Error Handling & Recovery (v0.1)
+
+**Fail-Loud Strategy:**
 
 When installation fails:
 1. Display clear error message
@@ -458,8 +488,9 @@ v0.1 installation succeeds if:
 2. ✅ Installation completes in <10 minutes (excluding Docker download time)
 3. ✅ Credential validation catches invalid inputs before starting services
 4. ✅ Services start automatically and survive restarts
-5. ✅ User reaches working web UI without touching terminal/config files
-6. ✅ Clear error messages guide recovery on failures
+5. ✅ LAN IP displayed in terminal for mobile device access (if network available)
+6. ✅ User reaches working web UI without touching terminal/config files
+7. ✅ Clear error messages guide recovery on failures
 
 ## Future Enhancements
 
@@ -488,12 +519,14 @@ v0.1 installation succeeds if:
 - [ADR-002: Environment Variables for Credentials](./002-env-credentials.md) - Secrets storage strategy
 - [ADR-005: MVP Scope](./005-mvp-scope.md) - v0.1 feature scope and target audience
 - [ADR-012: First-Launch Setup Wizard](./012-first-launch-wizard.md) - Web UI setup after installation
+- [ADR-014: Simple Token Authentication](./014-simple-token-auth.md) - Login secret generated during setup
 - [Docker Desktop Licensing](https://www.docker.com/pricing/faq/) - Commercial use requires license
 
 ## Related Documentation
 
 - Design Doc: `.agents/artifacts/designer/designs/installation-setup-design.md`
-- Handoff Doc: `.agents/artifacts/designer/handoffs/006-installation-setup-handoff.md`
+- Handoff Doc (Installation): `.agents/artifacts/designer/handoffs/006-installation-setup-handoff.md`
+- Handoff Doc (Network Access): `.agents/artifacts/designer/handoffs/010-network-access-display-handoff.md`
 - Type Definitions: `packages/shared/src/types/setup.ts`
 - GitHub Issue: [#10 - Installation and Setup](https://github.com/ZioHimself/ngaj/issues/10)
 

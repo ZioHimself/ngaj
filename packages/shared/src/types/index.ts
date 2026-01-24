@@ -138,3 +138,25 @@ export {
   DEFAULT_SCHEDULE_PRESET,
   WIZARD_VALIDATION,
 } from './wizard.js';
+
+// Auth types (simple token authentication)
+export type {
+  LoginSecret,
+  LoginRequest,
+  LoginSuccessResponse,
+  LoginErrorResponse,
+  LoginResponse,
+  AuthStatusResponse,
+  LogoutResponse,
+  SessionData,
+} from './auth.js';
+export {
+  LOGIN_SECRET_PATTERN,
+  LOGIN_SECRET_CHARSET,
+  LOGIN_SECRET_CONFIG,
+  PUBLIC_ROUTES,
+  PUBLIC_PREFIXES,
+  isPublicRoute,
+  isValidLoginSecretFormat,
+  normalizeLoginCode,
+} from './auth.js';

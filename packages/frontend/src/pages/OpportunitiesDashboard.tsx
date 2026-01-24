@@ -2,8 +2,10 @@
  * OpportunitiesDashboard Page
  *
  * Main dashboard page for viewing and managing opportunities.
+ * Mobile-first responsive design with LoadMore pagination.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,7 +16,7 @@ import type {
 } from '@ngaj/shared';
 import {
   FilterBar,
-  Pagination,
+  LoadMore,
   OpportunityCard,
   type DashboardFilterValue,
 } from '../components/dashboard';
@@ -32,9 +34,9 @@ interface DashboardState {
   total: number;
   hasMore: boolean;
   isLoading: boolean;
+  isLoadingMore: boolean;
   error: string | null;
   filter: DashboardFilterValue;
-  currentPage: number;
   generatingIds: Set<string>;
   postingIds: Set<string>;
   editedResponses: Map<string, string>;
@@ -49,22 +51,27 @@ export function OpportunitiesDashboard({
     total: 0,
     hasMore: false,
     isLoading: true,
+    isLoadingMore: false,
     error: null,
     filter: 'pending',
-    currentPage: 1,
     generatingIds: new Set(),
     postingIds: new Set(),
     editedResponses: new Map(),
   });
 
   /**
-   * Fetch opportunities from API
+   * Fetch opportunities from API (initial load or filter change)
    */
   const fetchOpportunities = useCallback(
-    async (filter: DashboardFilterValue, page: number) => {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    async (filter: DashboardFilterValue, append: boolean = false) => {
+      // Set appropriate loading state
+      if (append) {
+        setState((prev) => ({ ...prev, isLoadingMore: true, error: null }));
+      } else {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      }
 
-      const offset = (page - 1) * PAGE_SIZE;
+      const offset = append ? state.opportunities.length : 0;
       // 'draft' filter is handled client-side after fetch; for API, treat as 'pending'
       // 'all' means no status filter
       const statusParam = filter === 'all' ? '' : filter === 'draft' ? 'pending' : filter;
@@ -76,29 +83,33 @@ export function OpportunitiesDashboard({
           throw new Error('Failed to fetch opportunities');
         }
         const data: PaginatedOpportunities = await res.json();
-        const opportunities = data.opportunities || [];
+        const newOpportunities = data.opportunities || [];
 
         setState((prev) => ({
           ...prev,
-          opportunities,
+          opportunities: append
+            ? [...prev.opportunities, ...newOpportunities]
+            : newOpportunities,
           total: data.total || 0,
           hasMore: data.hasMore || false,
           isLoading: false,
+          isLoadingMore: false,
         }));
 
         // Fetch responses for these opportunities
-        if (opportunities.length > 0) {
-          await fetchResponses(opportunities.map((o) => o._id));
+        if (newOpportunities.length > 0) {
+          await fetchResponses(newOpportunities.map((o) => o._id));
         }
       } catch {
         setState((prev) => ({
           ...prev,
           isLoading: false,
+          isLoadingMore: false,
           error: 'Failed to load opportunities. Please try again.',
         }));
       }
     },
-    []
+    [state.opportunities.length]
   );
 
   /**
@@ -191,6 +202,7 @@ export function OpportunitiesDashboard({
           opportunities: prev.opportunities.filter(
             (o) => o._id !== opportunityId
           ),
+          total: Math.max(0, prev.total - 1),
         }));
       }
     } catch {
@@ -298,33 +310,29 @@ export function OpportunitiesDashboard({
     setState((prev) => ({
       ...prev,
       filter,
-      currentPage: 1,
+      opportunities: [], // Reset opportunities on filter change
     }));
-    fetchOpportunities(filter, 1);
+    fetchOpportunities(filter, false);
   };
 
   /**
-   * Handle page change
+   * Handle load more
    */
-  const handlePageChange = (page: number) => {
-    setState((prev) => ({ ...prev, currentPage: page }));
-    fetchOpportunities(state.filter, page);
+  const handleLoadMore = () => {
+    fetchOpportunities(state.filter, true);
   };
 
   /**
    * Retry loading
    */
   const handleRetry = () => {
-    fetchOpportunities(state.filter, state.currentPage);
+    fetchOpportunities(state.filter, false);
   };
 
   // Initial load - only run once on mount
   useEffect(() => {
-    fetchOpportunities(state.filter, state.currentPage);
-  }, [fetchOpportunities]);
-
-  // Calculate total pages
-  const totalPages = Math.max(1, Math.ceil(state.total / PAGE_SIZE));
+    fetchOpportunities(state.filter, false);
+  }, []);
 
   // Find response for an opportunity
   const getResponseForOpportunity = (
@@ -403,14 +411,13 @@ export function OpportunitiesDashboard({
         })}
       </div>
 
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={state.currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          isLoading={state.isLoading}
-        />
-      )}
+      <LoadMore
+        hasMore={state.hasMore}
+        isLoading={state.isLoadingMore}
+        onLoadMore={handleLoadMore}
+        loadedCount={opportunities.length}
+        totalCount={state.total}
+      />
     </div>
   );
 }

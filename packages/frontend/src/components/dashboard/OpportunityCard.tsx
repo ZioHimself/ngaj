@@ -2,8 +2,10 @@
  * OpportunityCard Component
  *
  * Displays a single opportunity with actions.
+ * Mobile-first responsive design with touch-friendly buttons.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 import type { OpportunityWithAuthor, Response } from '@ngaj/shared';
@@ -103,41 +105,48 @@ export function OpportunityCard({
   };
 
   return (
-    <div
+    <article
       data-testid="opportunity-card"
-      className={`opportunity-card ${isPosted ? 'dimmed' : ''}`}
+      className={`bg-white border border-slate-200 rounded-xl p-4 sm:p-6 ${isPosted ? 'dimmed opacity-60' : ''}`}
     >
       {/* Header: Author info and score */}
-      <div className="card-header">
-        <div className="author-info">
-          <span className="author-handle">{author.handle}</span>
-          <span className="follower-count">
+      <header
+        data-testid="card-header"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 mb-3"
+      >
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium text-slate-900 truncate">
+            {author.handle}
+          </span>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-500">
             {formatFollowerCount(author.followerCount)} followers
           </span>
         </div>
-        <div className="meta-info">
-          <span className="score">{scoring.total}</span>
-          <span className="time">
-            {formatRelativeTime(new Date(content.createdAt))}
-          </span>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span>{scoring.total}</span>
+          <span className="text-slate-400">•</span>
+          <span>{formatRelativeTime(new Date(content.createdAt))}</span>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="card-content">
+      <div className="text-slate-700 mb-4 leading-relaxed">
         <p data-testid="opportunity-text">{displayText}</p>
       </div>
 
       {/* Posted badge and link */}
       {hasPostedResponse && (
-        <div className="posted-status">
-          <span className="posted-badge">Posted</span>
+        <div className="posted-status flex items-center gap-3 mb-4">
+          <span className="posted-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Posted
+          </span>
           {response.platformPostUrl && (
             <a
               href={response.platformPostUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="platform-link"
+              className="platform-link text-sm text-blue-500 hover:text-blue-600"
             >
               View on Bluesky
             </a>
@@ -160,19 +169,22 @@ export function OpportunityCard({
 
       {/* Actions (when pending with no response) */}
       {!hasPostedResponse && !hasDraft && !isGenerating && (
-        <div className="card-actions">
+        <div
+          data-testid="card-actions"
+          className="flex flex-col sm:flex-row gap-3 sm:justify-end"
+        >
           <button
             type="button"
             onClick={() => onGenerateResponse(opportunity._id)}
             disabled={isGenerating}
-            className="generate-btn"
+            className="generate-btn btn btn-primary h-12 sm:h-10 w-full sm:w-auto"
           >
             {isGenerating ? 'Generating...' : 'Generate Response'}
           </button>
           <button
             type="button"
             onClick={() => onDismiss(opportunity._id)}
-            className="dismiss-btn"
+            className="dismiss-btn btn btn-secondary h-12 sm:h-10 w-full sm:w-auto"
           >
             Dismiss
           </button>
@@ -181,16 +193,19 @@ export function OpportunityCard({
 
       {/* Actions for draft (Dismiss only - other actions in ResponseEditor) */}
       {hasDraft && !hasPostedResponse && (
-        <div className="card-actions draft-actions">
+        <div
+          data-testid="card-actions"
+          className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-4"
+        >
           <button
             type="button"
             onClick={() => onDismiss(opportunity._id)}
-            className="dismiss-btn"
+            className="dismiss-btn btn btn-secondary h-12 sm:h-10 w-full sm:w-auto"
           >
             Dismiss
           </button>
         </div>
       )}
-    </div>
+    </article>
   );
 }

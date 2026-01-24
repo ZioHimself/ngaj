@@ -9,6 +9,7 @@
  * opportunities by status.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -187,6 +188,121 @@ describe('FilterBar', () => {
       buttons.forEach((button) => {
         expect(button).toBeDisabled();
       });
+    });
+  });
+
+  describe('Mobile Scroll Behavior (ADR-015)', () => {
+    it('should have overflow-x-auto for mobile horizontal scroll', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const nav = screen.getByRole('navigation');
+      expect(nav).toHaveClass('overflow-x-auto');
+    });
+
+    it('should have scrollbar-hide class to hide scrollbar', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const nav = screen.getByRole('navigation');
+      expect(nav).toHaveClass('scrollbar-hide');
+    });
+
+    it('should have shrink-0 on filter buttons to prevent shrinking', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('shrink-0');
+      });
+    });
+
+    it('should have gap-2 between filter buttons', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const nav = screen.getByRole('navigation');
+      expect(nav).toHaveClass('gap-2');
+    });
+  });
+
+  describe('Button Styling (ADR-015)', () => {
+    it('should use pill-shaped buttons (rounded-full)', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('rounded-full');
+      });
+    });
+
+    it('should have consistent padding (px-4 py-2)', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('px-4', 'py-2');
+      });
+    });
+
+    it('should use text-sm for filter button text', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('text-sm');
+      });
+    });
+
+    it('should have font-medium for button text weight', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('font-medium');
+      });
+    });
+
+    it('should have transition-colors for smooth state changes', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} />);
+
+      // Assert
+      const buttons = screen.getAllByRole('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveClass('transition-colors');
+      });
+    });
+
+    it('should apply active styling (bg-blue-500 text-white) to selected filter', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} currentFilter="pending" />);
+
+      // Assert
+      const pendingButton = screen.getByRole('button', { name: /pending/i });
+      expect(pendingButton).toHaveClass('bg-blue-500', 'text-white');
+    });
+
+    it('should apply inactive styling (bg-slate-100 text-slate-600) to unselected filters', () => {
+      // Arrange & Act
+      render(<FilterBar {...defaultProps} currentFilter="pending" />);
+
+      // Assert
+      const allButton = screen.getByRole('button', { name: /^all$/i });
+      expect(allButton).toHaveClass('bg-slate-100', 'text-slate-600');
     });
   });
 });

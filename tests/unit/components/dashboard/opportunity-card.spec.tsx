@@ -9,6 +9,7 @@
  * in the dashboard.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -379,6 +380,136 @@ describe('OpportunityCard', () => {
 
       // Assert
       expect(screen.getByText(/generating/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Responsive Layout (ADR-015)', () => {
+    it('should render buttons in flex-col layout on mobile (stacked)', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert - actions container should have flex-col for mobile
+      const actionsContainer = screen.getByTestId('card-actions');
+      expect(actionsContainer).toHaveClass('flex-col');
+    });
+
+    it('should have sm:flex-row for desktop inline buttons', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert - actions container should have sm:flex-row
+      const actionsContainer = screen.getByTestId('card-actions');
+      expect(actionsContainer).toHaveClass('sm:flex-row');
+    });
+
+    it('should have h-12 button height on mobile (48px touch target)', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const generateButton = screen.getByRole('button', {
+        name: /generate response/i,
+      });
+      expect(generateButton).toHaveClass('h-12');
+    });
+
+    it('should have sm:h-10 for smaller desktop buttons', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const generateButton = screen.getByRole('button', {
+        name: /generate response/i,
+      });
+      expect(generateButton).toHaveClass('sm:h-10');
+    });
+
+    it('should have w-full buttons on mobile', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const generateButton = screen.getByRole('button', {
+        name: /generate response/i,
+      });
+      expect(generateButton).toHaveClass('w-full');
+    });
+
+    it('should have sm:w-auto for auto-width desktop buttons', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const generateButton = screen.getByRole('button', {
+        name: /generate response/i,
+      });
+      expect(generateButton).toHaveClass('sm:w-auto');
+    });
+
+    it('should render header in flex-col on mobile', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const header = screen.getByTestId('card-header');
+      expect(header).toHaveClass('flex-col');
+    });
+
+    it('should render header in sm:flex-row on desktop', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const header = screen.getByTestId('card-header');
+      expect(header).toHaveClass('sm:flex-row');
+    });
+
+    it('should use responsive padding (p-4 sm:p-6)', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const card = screen.getByTestId('opportunity-card');
+      expect(card).toHaveClass('p-4', 'sm:p-6');
+    });
+
+    it('should use rounded-xl for card border radius', () => {
+      // Arrange
+      const opportunity = dashboardOpportunityFixtures.pending;
+
+      // Act
+      render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
+
+      // Assert
+      const card = screen.getByTestId('opportunity-card');
+      expect(card).toHaveClass('rounded-xl');
     });
   });
 });

@@ -9,6 +9,7 @@
  * Uses mocked fetch to simulate backend responses.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -664,8 +665,52 @@ describe('Dashboard API Integration', () => {
     });
   });
 
-  describe('Pagination', () => {
-    it('should update offset when page changes', async () => {
+  describe('Load More (ADR-015)', () => {
+    it('should show "Load More" button when hasMore is true', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.opportunitiesPage1,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      // Assert
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /load more/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('should display "{loadedCount} of {totalCount} loaded"', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.opportunitiesPage1,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      // Assert
+      await waitFor(() => {
+        expect(screen.getByText(/20 of 45 loaded/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should append opportunities when Load More clicked', async () => {
       // Arrange
       mockFetch
         .mockResolvedValueOnce({
@@ -691,18 +736,153 @@ describe('Dashboard API Integration', () => {
       render(<OpportunitiesDashboard accountId="acc-1" />);
 
       await waitFor(() => {
-        expect(screen.getByText(/page 1/i)).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /load more/i })
+        ).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /next/i }));
+      await user.click(screen.getByRole('button', { name: /load more/i }));
+
+      // Assert - should fetch with offset=20
+      await waitFor(() => {
+        const loadMoreCalls = mockFetch.mock.calls.filter((call) =>
+          (call[0] as string).includes('offset=20')
+        );
+        expect(loadMoreCalls.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('should update count after loading more', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.opportunitiesPage1,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.opportunitiesPage2,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      const user = userEvent.setup();
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/20 of 45 loaded/i)).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /load more/i }));
+
+      // Assert - count should update
+      await waitFor(() => {
+        expect(screen.getByText(/40 of 45 loaded/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should hide "Load More" when all loaded', async () => {
+      // Arrange - return response where hasMore is false
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            ...mockApiResponses.opportunitiesPage1,
+            hasMore: false,
+            total: 20,
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
 
       // Assert
       await waitFor(() => {
-        const pageTwoCalls = mockFetch.mock.calls.filter((call) =>
-          (call[0] as string).includes('offset=20')
-        );
-        expect(pageTwoCalls.length).toBeGreaterThan(0);
+        expect(
+          screen.queryByRole('button', { name: /load more/i })
+        ).not.toBeInTheDocument();
       });
+    });
+
+    it('should display "Showing all X opportunities" when all loaded', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            ...mockApiResponses.opportunitiesPage1,
+            hasMore: false,
+            total: 20,
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      // Assert
+      await waitFor(() => {
+        expect(
+          screen.getByText(/showing all 20 opportunities/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('should disable Load More button during loading', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.opportunitiesPage1,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        })
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) =>
+              setTimeout(
+                () =>
+                  resolve({
+                    ok: true,
+                    json: async () => mockApiResponses.opportunitiesPage2,
+                  }),
+                100
+              )
+            )
+        );
+
+      const user = userEvent.setup();
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /load more/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /load more/i }));
+
+      // Assert - button should be disabled and show loading
+      expect(screen.getByRole('button', { name: /loading/i })).toBeDisabled();
     });
   });
 

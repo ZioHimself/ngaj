@@ -4,8 +4,10 @@
  * Fixtures for Opportunity Dashboard UI testing.
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
+import { vi } from 'vitest';
 import type {
   OpportunityWithAuthor,
   Author,
@@ -423,3 +425,149 @@ export const filterStatusOptions = [
  * Type for filter status values
  */
 export type FilterStatusValue = (typeof filterStatusOptions)[number]['value'];
+
+/**
+ * LoadMore component props interface
+ * @see ADR-015: Mobile-First Responsive Web Design
+ */
+export interface LoadMoreProps {
+  hasMore: boolean;
+  isLoading: boolean;
+  onLoadMore: () => void;
+  loadedCount: number;
+  totalCount: number;
+}
+
+/**
+ * Factory to create LoadMore props for testing
+ * @see ADR-015: Mobile-First Responsive Web Design
+ */
+export const createLoadMoreProps = (
+  overrides?: Partial<LoadMoreProps>
+): LoadMoreProps => ({
+  hasMore: true,
+  isLoading: false,
+  onLoadMore: vi.fn(),
+  loadedCount: 20,
+  totalCount: 45,
+  ...overrides,
+});
+
+/**
+ * Pre-configured LoadMore fixtures
+ */
+export const loadMoreFixtures = {
+  /**
+   * Initial state with more items to load
+   */
+  hasMore: createLoadMoreProps({
+    hasMore: true,
+    loadedCount: 20,
+    totalCount: 45,
+  }),
+
+  /**
+   * All items loaded, no more to fetch
+   */
+  allLoaded: createLoadMoreProps({
+    hasMore: false,
+    loadedCount: 45,
+    totalCount: 45,
+  }),
+
+  /**
+   * Loading state while fetching more
+   */
+  loading: createLoadMoreProps({
+    hasMore: true,
+    isLoading: true,
+    loadedCount: 20,
+    totalCount: 45,
+  }),
+
+  /**
+   * Empty state (no items)
+   */
+  empty: createLoadMoreProps({
+    hasMore: false,
+    loadedCount: 0,
+    totalCount: 0,
+  }),
+};
+
+/**
+ * ResponseModal component props interface
+ * @see ADR-015: Mobile-First Responsive Web Design
+ */
+export interface ResponseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  opportunity: OpportunityWithAuthor<string>;
+  response: Response<string>;
+  onPost: () => void;
+  onRegenerate: () => void;
+  onTextChange: (text: string) => void;
+  isPosting: boolean;
+  isRegenerating: boolean;
+}
+
+/**
+ * Factory to create ResponseModal props for testing
+ * @see ADR-015: Mobile-First Responsive Web Design
+ */
+export const createResponseModalProps = (
+  overrides?: Partial<ResponseModalProps>
+): ResponseModalProps => ({
+  isOpen: true,
+  onClose: vi.fn(),
+  opportunity: dashboardOpportunityFixtures.withDraft,
+  response: dashboardResponseFixtures.draft,
+  onPost: vi.fn(),
+  onRegenerate: vi.fn(),
+  onTextChange: vi.fn(),
+  isPosting: false,
+  isRegenerating: false,
+  ...overrides,
+});
+
+/**
+ * Pre-configured ResponseModal fixtures
+ */
+export const responseModalFixtures = {
+  /**
+   * Open modal with draft response
+   */
+  open: createResponseModalProps({
+    isOpen: true,
+  }),
+
+  /**
+   * Closed modal
+   */
+  closed: createResponseModalProps({
+    isOpen: false,
+  }),
+
+  /**
+   * Modal in posting state
+   */
+  posting: createResponseModalProps({
+    isPosting: true,
+  }),
+
+  /**
+   * Modal in regenerating state
+   */
+  regenerating: createResponseModalProps({
+    isRegenerating: true,
+  }),
+
+  /**
+   * Modal with empty response text
+   */
+  emptyText: createResponseModalProps({
+    response: createDashboardResponse('opp-draft', {
+      text: '',
+    }),
+  }),
+};

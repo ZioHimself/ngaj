@@ -2,6 +2,7 @@
  * Dashboard Components - Index
  *
  * @see ADR-013: Opportunity Dashboard UI
+ * @see ADR-015: Mobile-First Responsive Web Design
  */
 
 export { OpportunityCard } from './OpportunityCard';
@@ -15,3 +16,10 @@ export type { FilterBarProps, DashboardFilterValue } from './FilterBar';
 
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';
+
+// ADR-015: Mobile-First Responsive Components
+export { LoadMore } from './LoadMore';
+export type { LoadMoreProps } from './LoadMore';
+
+export { ResponseModal } from './ResponseModal';
+export type { ResponseModalProps } from './ResponseModal';

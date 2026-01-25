@@ -1,5 +1,5 @@
 # ngaj Backend Production Dockerfile
-# Build: docker build -t ngaj/backend -f packages/backend/Dockerfile .
+# Build: docker build -t ziohimself/ngaj-backend -f packages/backend/Dockerfile .
 # Run from project root to include packages/shared
 
 FROM node:20-alpine AS builder

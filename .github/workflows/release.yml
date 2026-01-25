@@ -47,8 +47,8 @@ jobs:
           file: packages/backend/Dockerfile
           push: true
           tags: |
-            ngaj/backend:latest
-            ngaj/backend:${{ steps.version.outputs.VERSION }}
+            ziohimself/ngaj-backend:latest
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
 
       - name: Build and push setup image
         uses: docker/build-push-action@v5
@@ -57,8 +57,8 @@ jobs:
           file: packages/setup/Dockerfile
           push: true
           tags: |
-            ngaj/setup:latest
-            ngaj/setup:${{ steps.version.outputs.VERSION }}
+            ziohimself/ngaj-setup:latest
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
 
   # Build native installers
   installer-macos:
@@ -176,8 +176,8 @@ jobs:
             ### Docker Images
             
             ```bash
-            docker pull ngaj/backend:${{ steps.version.outputs.VERSION }}
-            docker pull ngaj/setup:${{ steps.version.outputs.VERSION }}
+            docker pull ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
+            docker pull ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
             ```
             
             ### What's Changed

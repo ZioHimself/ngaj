@@ -36,7 +36,7 @@
     "start": "node dist/index.js",
     "type-check": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist",
-    "docker:build": "docker build -t ngaj/setup -f Dockerfile ../.."
+    "docker:build": "docker build -t ziohimself/ngaj-setup -f Dockerfile ../.."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",

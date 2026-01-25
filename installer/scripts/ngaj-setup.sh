@@ -91,7 +91,7 @@ echo -e "${GREEN}✓ Docker is ready${NC}"
 # Pull setup container
 echo ""
 echo "Pulling ngaj setup container..."
-docker pull ngaj/setup:latest
+docker pull ziohimself/ngaj-setup:latest
 
 # Run setup wizard with volume mount
 echo ""
@@ -101,7 +101,7 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 docker run --rm -it \
     -v "${NGAJ_HOME}:/data" \
-    ngaj/setup:latest
+    ziohimself/ngaj-setup:latest
 
 # Check if setup completed (.env exists)
 if [ ! -f "${NGAJ_HOME}/.env" ]; then

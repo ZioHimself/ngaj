@@ -42,7 +42,7 @@ services:
       start_period: 10s
 
   backend:
-    image: ngaj/backend:latest
+    image: ziohimself/ngaj-backend:latest
     container_name: ngaj-backend
     restart: unless-stopped
     ports:

@@ -1,5 +1,5 @@
 # ngaj Setup Wizard Dockerfile
-# Build: docker build -t ngaj/setup -f packages/setup/Dockerfile .
+# Build: docker build -t ziohimself/ngaj-setup -f packages/setup/Dockerfile .
 # Run from project root to include packages/shared
 
 FROM node:20-alpine AS builder

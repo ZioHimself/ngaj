@@ -134,8 +134,8 @@ Packages depend on each other via workspace protocol:
 ### Docker Images
 | Image | Source | Purpose |
 |-------|--------|---------|
-| `ngaj/backend` | `packages/backend/` | Production API server |
-| `ngaj/setup` | `packages/setup/` | Installation wizard (temporary) |
+| `ziohimself/ngaj-backend` | `packages/backend/` | Production API server |
+| `ziohimself/ngaj-setup` | `packages/setup/` | Installation wizard (temporary) |
 
 ### Native Installers
 Built via CI/CD on release:

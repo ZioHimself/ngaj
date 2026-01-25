@@ -14,7 +14,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 
 **Key Components**:
 - OS-specific installer scripts (macOS bash, Windows PowerShell)
-- Pre-built setup container (`ngaj/setup:latest`) with Node.js CLI wizard
+- Pre-built setup container (`ziohimself/ngaj-setup:latest`) with Node.js CLI wizard
 - Docker Compose configuration for production services
 - Volume-mounted credential storage
 
@@ -35,7 +35,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 - Launch setup container
 
 **Phase 2: Containerized Setup Wizard** (Platform-Agnostic)
-- Pull `ngaj/setup:latest` from Docker Hub
+- Pull `ziohimself/ngaj-setup:latest` from Docker Hub
 - Run interactive CLI wizard inside container
 - Collect and validate credentials
 - Write `.env` file to mounted volume (`~/.ngaj/.env` on host)
@@ -65,7 +65,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 
 ### 2.1 Container Specification
 
-**Image**: `ngaj/setup:latest` (pre-built on Docker Hub)
+**Image**: `ziohimself/ngaj-setup:latest` (pre-built on Docker Hub)
 - Base: `node:20-alpine` (~50MB)
 - Dependencies: `inquirer.js`, `@atproto/api`, `@anthropic-ai/sdk`
 - Entrypoint: Interactive Node.js CLI script
@@ -131,7 +131,7 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 - Check for Docker (`command -v docker`)
 - Download Docker Desktop if missing (curl + dmg mount)
 - Wait for Docker daemon (`until docker info &> /dev/null; do sleep 1; done`)
-- Pull setup container (`docker pull ngaj/setup:latest`)
+- Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
 - Run setup container with volume mount
 - Start production services (`docker-compose up -d`)
 - Open browser (`open http://localhost:3000`)
@@ -147,7 +147,7 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 - Check for Docker (`Get-Command docker`)
 - Download Docker Desktop if missing (Invoke-WebRequest + silent install)
 - Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-- Pull setup container (`docker pull ngaj/setup:latest`)
+- Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
 - Run setup container with volume mount
 - Start production services (`docker-compose up -d`)
 - Open browser (`Start-Process "http://localhost:3000"`)
@@ -801,8 +801,8 @@ ngaj/
 
 | Image | Source | Size | Purpose |
 |-------|--------|------|---------|
-| `ngaj/setup` | `packages/setup/Dockerfile` | ~50MB | Setup wizard (temporary) |
-| `ngaj/backend` | `packages/backend/Dockerfile` | ~150MB | Production backend |
+| `ziohimself/ngaj-setup` | `packages/setup/Dockerfile` | ~50MB | Setup wizard (temporary) |
+| `ziohimself/ngaj-backend` | `packages/backend/Dockerfile` | ~150MB | Production backend |
 
 ### 10.4 Build Commands
 
@@ -816,9 +816,9 @@ ngaj/
     "build:shared": "npm -w @ngaj/shared run build",
     
     "docker:build": "npm run docker:build:backend && npm run docker:build:setup",
-    "docker:build:backend": "docker build -t ngaj/backend -f packages/backend/Dockerfile .",
-    "docker:build:setup": "docker build -t ngaj/setup -f packages/setup/Dockerfile .",
-    "docker:push": "docker push ngaj/backend && docker push ngaj/setup",
+    "docker:build:backend": "docker build -t ziohimself/ngaj-backend -f packages/backend/Dockerfile .",
+    "docker:build:setup": "docker build -t ziohimself/ngaj-setup -f packages/setup/Dockerfile .",
+    "docker:push": "docker push ziohimself/ngaj-backend && docker push ziohimself/ngaj-setup",
     
     "installer:macos": "cd installer/macos && ./build.sh",
     "installer:windows": "cd installer/windows && ./build.ps1"
@@ -844,7 +844,7 @@ ngaj/
 ### 11.2 On Release Tag (`release.yml`)
 
 1. Build Docker images
-2. Push to Docker Hub (`ngaj/setup`, `ngaj/backend`)
+2. Push to Docker Hub (`ziohimself/ngaj-setup`, `ziohimself/ngaj-backend`)
 3. Build macOS installer (macOS runner)
 4. Build Windows installer (Windows runner)
 5. Upload installers to GitHub Release

@@ -57,9 +57,9 @@ export const MACOS_PATTERNS = {
   // Waits for Docker daemon using while loop with docker info
   waitsForDocker: /while\s+!\s+docker\s+info|until\s+docker\s+info/,
   // Pulls the setup container
-  pullsSetupContainer: /docker\s+pull\s+ngaj\/setup/,
+  pullsSetupContainer: /docker\s+pull\s+ziohimself\/ngaj-setup/,
   // Runs the setup wizard container
-  runsSetupWizard: /docker\s+run[\s\S]*ngaj\/setup/,
+  runsSetupWizard: /docker\s+run[\s\S]*ziohimself\/ngaj-setup/,
   // Checks if .env file exists after setup
   checksEnvFile: /-f\s+"\$\{NGAJ_HOME\}\/\.env"/,
   // Starts production services with docker compose
@@ -82,9 +82,9 @@ export const WINDOWS_PATTERNS = {
   // Waits for Docker daemon using while loop
   waitsForDocker: /while\s+\(-not\s+\(docker\s+info/,
   // Pulls the setup container
-  pullsSetupContainer: /docker\s+pull\s+ngaj\/setup/,
+  pullsSetupContainer: /docker\s+pull\s+ziohimself\/ngaj-setup/,
   // Runs the setup wizard container
-  runsSetupWizard: /docker\s+run[\s\S]*ngaj\/setup/,
+  runsSetupWizard: /docker\s+run[\s\S]*ziohimself\/ngaj-setup/,
   // Checks if .env file exists using Test-Path
   checksEnvFile: /Test-Path.*\\\.env/,
   // Starts production services with docker compose

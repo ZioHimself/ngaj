@@ -127,7 +127,7 @@ jobs:
           context: .
           file: packages/backend/Dockerfile
           push: false
-          tags: ngaj/backend:test
+          tags: ziohimself/ngaj-backend:test
 
       - name: Build setup Docker image
         uses: docker/build-push-action@v5
@@ -135,7 +135,7 @@ jobs:
           context: .
           file: packages/setup/Dockerfile
           push: false
-          tags: ngaj/setup:test
+          tags: ziohimself/ngaj-setup:test
 
   installer-macos:
     name: macOS Installer Build Test

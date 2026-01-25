@@ -42,7 +42,7 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 - Uninstall instructions (manual for v0.1)
 
 **What's downloaded during installation:**
-- Setup container image (`ngaj/setup:latest`, ~50MB) - Pulled from Docker Hub
+- Setup container image (`ziohimself/ngaj-setup:latest`, ~50MB) - Pulled from Docker Hub
 - Production container images (~300MB) - Pulled by Docker Compose
 
 **What's NOT bundled:**
@@ -72,10 +72,10 @@ We will implement a **Docker-based self-contained installer** that downloads dep
                      ↓
 ┌─────────────────────────────────────────────────┐
 │ 4. Launch setup container                       │
-│    → docker pull ngaj/setup:latest (~50MB)     │
+│    → docker pull ziohimself/ngaj-setup:latest (~50MB)     │
 │    → docker run --rm -it \                      │
 │         -v ~/.ngaj:/data \                      │
-│         ngaj/setup:latest                       │
+│         ziohimself/ngaj-setup:latest                       │
 └─────────────────────────────────────────────────┘
                      ↓
 ┌─────────────────────────────────────────────────┐
@@ -169,7 +169,7 @@ C:\Users\<user>\AppData\Local\ngaj\   # User data directory
 - `ngaj-frontend` (Served as static files by backend in production)
 
 **Setup Container (separate, not in docker-compose):**
-- `ngaj/setup:latest` (pre-built on Docker Hub)
+- `ziohimself/ngaj-setup:latest` (pre-built on Docker Hub)
   - Node.js runtime
   - inquirer.js for prompts
   - Bluesky/Claude API clients for validation
@@ -428,12 +428,12 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
   - Check for Docker Desktop (`command -v docker`)
   - Download if missing (curl + dmg mount + copy to /Applications)
   - Wait for Docker daemon (`until docker info &> /dev/null; do sleep 1; done`)
-  - Pull setup container (`docker pull ngaj/setup:latest`)
+  - Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
   - Run setup container with volume mount:
     ```bash
     docker run --rm -it \
       -v ~/.ngaj:/data \
-      ngaj/setup:latest
+      ziohimself/ngaj-setup:latest
     ```
   - Start production services (`cd /Applications/ngaj && docker-compose up -d`)
   - Open browser (`open http://localhost:3000`)
@@ -445,12 +445,12 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
   - Check for Docker Desktop (`Get-Command docker`)
   - Download if missing (Invoke-WebRequest + silent install)
   - Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-  - Pull setup container (`docker pull ngaj/setup:latest`)
+  - Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
   - Run setup container with volume mount:
     ```powershell
     docker run --rm -it `
       -v "$env:USERPROFILE\.ngaj:/data" `
-      ngaj/setup:latest
+      ziohimself/ngaj-setup:latest
     ```
   - Start production services (`cd "C:\Program Files\ngaj"; docker-compose up -d`)
   - Open browser (`Start-Process "http://localhost:3000"`)
@@ -461,7 +461,7 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
 
 **Type Definitions:** `packages/shared/src/types/setup.ts` - Platform-abstracted credential types
 
-**Image:** Pre-built `ngaj/setup:latest` on Docker Hub
+**Image:** Pre-built `ziohimself/ngaj-setup:latest` on Docker Hub
 - Base: `node:20-alpine` (~50MB)
 - Dependencies: inquirer.js, @atproto/api, @anthropic-ai/sdk
 - Entrypoint: `/app/setup.js` (interactive wizard)

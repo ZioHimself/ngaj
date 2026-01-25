@@ -159,4 +159,5 @@ export {
   isPublicRoute,
   isValidLoginSecretFormat,
   normalizeLoginCode,
+  generateLoginSecret,
 } from './auth.js';

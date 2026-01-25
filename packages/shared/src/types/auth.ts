@@ -144,3 +144,50 @@ export function isValidLoginSecretFormat(secret: string): boolean {
 export function normalizeLoginCode(code: string): string {
   return code.toUpperCase().trim();
 }
+
+// =============================================================================
+// Generation
+// =============================================================================
+
+/**
+ * Generates a login secret in format XXXX-XXXX-XXXX-XXXX.
+ *
+ * Uses cryptographically random values from the allowed character set:
+ * - Uppercase letters: A-Z (26)
+ * - Digits: 0-9 (10)
+ * - Safe special chars: _, ., +, :, ,, @ (6)
+ *
+ * Total entropy: 42^16 ≈ 1.3 × 10^26 combinations
+ *
+ * @returns A randomly generated login secret string
+ *
+ * @example
+ * const secret = generateLoginSecret();
+ * // Returns something like "A1B2-C3D4-E5F6-G7H8"
+ */
+export function generateLoginSecret(): string {
+  const { segmentLength, segmentCount, separator } = LOGIN_SECRET_CONFIG;
+  const segments: string[] = [];
+  const totalLength = segmentLength * segmentCount;
+
+  // Generate all random bytes at once
+  const randomValues = new Uint8Array(totalLength);
+  
+  // Use globalThis.crypto.getRandomValues - available in:
+  // - All modern browsers
+  // - Node.js 19+ (global)
+  // - Node.js 15+ with webcrypto polyfill
+  globalThis.crypto.getRandomValues(randomValues);
+
+  for (let i = 0; i < segmentCount; i++) {
+    let segment = '';
+    for (let j = 0; j < segmentLength; j++) {
+      const byteIndex = i * segmentLength + j;
+      const randomIndex = randomValues[byteIndex] % LOGIN_SECRET_CHARSET.length;
+      segment += LOGIN_SECRET_CHARSET.charAt(randomIndex);
+    }
+    segments.push(segment);
+  }
+
+  return segments.join(separator);
+}

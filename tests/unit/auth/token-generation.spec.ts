@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { generateLoginSecret } from '@ngaj/setup/generators/secret';
 import {
+  generateLoginSecret,
   LOGIN_SECRET_PATTERN,
   LOGIN_SECRET_CHARSET,
   LOGIN_SECRET_CONFIG,

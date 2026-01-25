@@ -27,6 +27,9 @@ jobs:
       - name: Build shared package
         run: npm run build:shared
 
+      - name: Build setup package
+        run: npm run build -w @ngaj/setup
+
       - name: Type check all packages
         run: npm run type-check
 

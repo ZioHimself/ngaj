@@ -222,14 +222,18 @@ jobs:
         run: bash -n installer/windows/build.sh && echo "✓ build.sh syntax OK"
 
       - name: Build Windows installer package
-        shell: bash
-        run: npm run installer:windows
+        shell: pwsh
+        run: |
+          # Use PowerShell script which uses Compress-Archive (native to Windows)
+          & installer/windows/build.ps1
 
       - name: Verify installer was created
-        shell: bash
+        shell: pwsh
         run: |
-          ls -la dist/
-          test -f dist/ngaj-installer-*-windows.zip
+          Get-ChildItem dist/
+          if (-not (Test-Path "dist/ngaj-installer-*-windows.zip")) {
+            throw "Installer ZIP not found"
+          }
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4

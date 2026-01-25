@@ -24,7 +24,7 @@ $Identifier = "com.ngaj.installer"
 $BuildDir = "$ProjectRoot\dist\installer-build"
 $PayloadDir = "$BuildDir\payload"
 $OutputDir = "$ProjectRoot\dist"
-$OutputZip = "$OutputDir\ngaj-installer-$Version.zip"
+$OutputZip = "$OutputDir\ngaj-installer-$Version-windows.zip"
 
 Write-Host "Building ngaj Windows Installer v$Version" -ForegroundColor Cyan
 Write-Host "===========================================" -ForegroundColor Cyan

@@ -46,33 +46,53 @@ export interface ScriptValidationResult {
 }
 
 /**
- * Expected patterns for macOS bash scripts
+ * Expected patterns for macOS bash scripts (ngaj-setup.sh)
+ * These patterns match the interactive setup wizard script.
  */
 export const MACOS_PATTERNS = {
-  checksDocker: /command\s+-v\s+docker/,
-  createsDataDirs: /mkdir\s+-p\s+"\$\{?NGAJ_HOME\}?/,
-  waitsForDocker: /until\s+docker\s+info/,
+  // Checks for Docker using 'command -v docker' or similar
+  checksDocker: /command\s+-v\s+docker|docker\s+info/,
+  // Uses NGAJ_HOME directory (created by postinstall, used by setup)
+  createsDataDirs: /NGAJ_HOME="\$\{HOME\}\/\.ngaj"/,
+  // Waits for Docker daemon using while loop with docker info
+  waitsForDocker: /while\s+!\s+docker\s+info|until\s+docker\s+info/,
+  // Pulls the setup container
   pullsSetupContainer: /docker\s+pull\s+ngaj\/setup/,
+  // Runs the setup wizard container
   runsSetupWizard: /docker\s+run[\s\S]*ngaj\/setup/,
-  checksEnvFile: /\[\s*!\s+-f\s+"\$\{?NGAJ_HOME\}?\/\.env"\s*\]/,
+  // Checks if .env file exists after setup
+  checksEnvFile: /-f\s+"\$\{NGAJ_HOME\}\/\.env"/,
+  // Starts production services with docker compose
   startsServices: /docker\s+compose\s+up/,
+  // Waits for health check endpoint
   waitsForHealth: /curl.*localhost:3000\/health/,
-  opensBrowser: /open\s+.*localhost:3000/,
+  // Opens browser to the dashboard (open command with URL)
+  opensBrowser: /open\s+"http:\/\//,
 } as const;
 
 /**
- * Expected patterns for Windows PowerShell scripts
+ * Expected patterns for Windows PowerShell scripts (ngaj-setup.ps1)
+ * These patterns match the interactive setup wizard script.
  */
 export const WINDOWS_PATTERNS = {
+  // Checks for Docker using Get-Command
   checksDocker: /Get-Command\s+docker/,
-  createsDataDirs: /New-Item.*\$NgajHome/,
-  waitsForDocker: /while.*docker\s+info/,
+  // Uses NgajHome directory (created by postinstall, used by setup)
+  createsDataDirs: /\$NgajHome\s*=\s*"\$env:LOCALAPPDATA\\ngaj"/,
+  // Waits for Docker daemon using while loop
+  waitsForDocker: /while\s+\(-not\s+\(docker\s+info/,
+  // Pulls the setup container
   pullsSetupContainer: /docker\s+pull\s+ngaj\/setup/,
+  // Runs the setup wizard container
   runsSetupWizard: /docker\s+run[\s\S]*ngaj\/setup/,
-  checksEnvFile: /Test-Path.*\.env/,
+  // Checks if .env file exists using Test-Path
+  checksEnvFile: /Test-Path.*\\\.env/,
+  // Starts production services with docker compose
   startsServices: /docker\s+compose\s+up/,
+  // Waits for health check using Invoke-WebRequest
   waitsForHealth: /Invoke-WebRequest.*localhost:3000\/health/,
-  opensBrowser: /Start-Process.*localhost:3000/,
+  // Opens browser using Start-Process with URL
+  opensBrowser: /Start-Process\s+"http:\/\//,
 } as const;
 
 /**

@@ -69,7 +69,11 @@ export function LoginPage(): React.ReactElement {
           <input
             type="text"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              setCode(e.target.value.toUpperCase());
+              // Clear error when user starts typing again
+              if (error) setError(null);
+            }}
             placeholder="XXXX-XXXX-XXXX-XXXX"
             className="
               w-full px-4 py-4 

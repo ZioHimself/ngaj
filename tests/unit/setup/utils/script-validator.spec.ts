@@ -1,8 +1,12 @@
 /**
- * Script Validator Tests (Red Phase)
+ * Script Validator Tests
  * 
  * Tests for OS-specific installation script validation.
- * These tests are expected to FAIL until implementation is complete.
+ * Validates the setup scripts (ngaj-setup.sh/ps1) which contain the
+ * interactive setup wizard logic including Docker checks, service start,
+ * health checks, and browser open.
+ * 
+ * Note: postinstall scripts are minimal launchers that delegate to setup scripts.
  * 
  * @see ADR-011: Installation and Setup Architecture
  */
@@ -19,9 +23,10 @@ import {
 } from '@ngaj/setup/utils/script-validator.js';
 
 // Read actual script files - use process.cwd() which is workspace root in vitest
+// We validate the setup scripts which contain the full setup logic
 const SCRIPTS_DIR = resolve(process.cwd(), 'installer/scripts');
-const macosScript = readFileSync(resolve(SCRIPTS_DIR, 'postinstall.sh'), 'utf-8');
-const windowsScript = readFileSync(resolve(SCRIPTS_DIR, 'postinstall.ps1'), 'utf-8');
+const macosScript = readFileSync(resolve(SCRIPTS_DIR, 'ngaj-setup.sh'), 'utf-8');
+const windowsScript = readFileSync(resolve(SCRIPTS_DIR, 'ngaj-setup.ps1'), 'utf-8');
 
 describe('Script Validator', () => {
   describe('validateMacOSScript', () => {

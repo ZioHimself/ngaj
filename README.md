@@ -1,4 +1,8 @@
-# ngaj
+<p align="center">
+  <img src="packages/frontend/src/assets/logo-horizontal.png" alt="ngaj logo" width="400">
+</p>
+
+<h1 align="center">ngaj</h1>
 
 [![CI Pipeline](https://github.com/ziohimself/ngaj/workflows/CI%20Pipeline/badge.svg)](https://github.com/ziohimself/ngaj/actions)
 [![codecov](https://codecov.io/gh/ziohimself/ngaj/branch/main/graph/badge.svg)](https://codecov.io/gh/ziohimself/ngaj)

@@ -64,10 +64,8 @@ cp "${SCRIPT_DIR}/Info.plist" "${APP_BUNDLE_DIR}/Contents/"
 cp "${SCRIPT_DIR}/ngaj-launcher" "${APP_BUNDLE_DIR}/Contents/MacOS/ngaj"
 chmod +x "${APP_BUNDLE_DIR}/Contents/MacOS/ngaj"
 
-# Copy icon (if exists, otherwise skip)
-if [ -f "${SCRIPT_DIR}/icon.icns" ]; then
-    cp "${SCRIPT_DIR}/icon.icns" "${APP_BUNDLE_DIR}/Contents/Resources/"
-fi
+# Copy icon
+cp "${SCRIPT_DIR}/resources/ngaj.icns" "${APP_BUNDLE_DIR}/Contents/Resources/"
 
 # Copy scripts to payload (will be installed to ~/.ngaj/scripts/ by postinstall)
 cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.sh" "${PAYLOAD_DIR}/scripts/"

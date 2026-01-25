@@ -17,7 +17,9 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-VERSION=$(node -p "require('${PROJECT_ROOT}/package.json').version")
+
+# Get version using npm (works cross-platform without path issues)
+VERSION=$(npm pkg get version --json | tr -d '"')
 
 # Build directories
 BUILD_DIR="${PROJECT_ROOT}/dist/installer-build-windows"

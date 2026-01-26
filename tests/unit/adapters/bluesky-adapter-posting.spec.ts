@@ -46,8 +46,7 @@ describe('BlueskyAdapter', () => {
         // Mock post (create response)
         mockAgent.post.mockResolvedValue({
           uri: 'at://did:plc:user456.../app.bsky.feed.post/xyz789',
-          cid: 'response-cid-789',
-          createdAt: '2026-01-04T12:00:00.000Z'
+          cid: 'response-cid-789'
         });
 
         // Mock session to get handle
@@ -61,7 +60,8 @@ describe('BlueskyAdapter', () => {
         expect(result.postId).toBe('at://did:plc:user456.../app.bsky.feed.post/xyz789');
         expect(result.postUrl).toMatch(/https:\/\/bsky\.app\/profile\/.+\/post\//);
         expect(result.postedAt).toBeInstanceOf(Date);
-        expect(result.postedAt.toISOString()).toBe('2026-01-04T12:00:00.000Z');
+        // postedAt should be close to now (within a few seconds)
+        expect(Date.now() - result.postedAt.getTime()).toBeLessThan(5000);
 
         // Verify agent.post was called with correct parameters
         expect(mockAgent.post).toHaveBeenCalledWith({
@@ -79,9 +79,9 @@ describe('BlueskyAdapter', () => {
         });
       });
 
-      it('should use platform timestamp (not local)', async () => {
+      it('should use current timestamp for postedAt', async () => {
         const parentPostId = 'at://did:plc:parent.../post/123';
-        const platformTimestamp = '2026-01-04T15:30:45.123Z';
+        const beforePost = new Date();
 
         mockAgent.getPostThread.mockResolvedValue({
           data: {
@@ -97,16 +97,17 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: 'at://did:plc:user.../post/456',
-          cid: 'cid-456',
-          createdAt: platformTimestamp
+          cid: 'cid-456'
         });
 
         (mockAgent as any).session = { handle: 'user.bsky.social' };
 
         const result = await adapter.post(parentPostId, 'Response text');
+        const afterPost = new Date();
 
-        expect(result.postedAt).toEqual(new Date(platformTimestamp));
-        expect(result.postedAt.getTime()).toBe(new Date(platformTimestamp).getTime());
+        // postedAt should be between before and after the post call
+        expect(result.postedAt.getTime()).toBeGreaterThanOrEqual(beforePost.getTime());
+        expect(result.postedAt.getTime()).toBeLessThanOrEqual(afterPost.getTime());
       });
     });
 
@@ -129,8 +130,7 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: 'at://did:plc:bob.../app.bsky.feed.post/reply456',
-          cid: 'reply-cid-456',
-          createdAt: '2026-01-04T12:00:00Z'
+          cid: 'reply-cid-456'
         });
 
         (mockAgent as any).session = { handle: 'bob.bsky.social' };
@@ -184,8 +184,7 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: 'at://did:plc:carol.../app.bsky.feed.post/reply789',
-          cid: 'reply-cid-789',
-          createdAt: '2026-01-04T12:00:00Z'
+          cid: 'reply-cid-789'
         });
 
         (mockAgent as any).session = { handle: 'carol.bsky.social' };
@@ -228,8 +227,7 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: postUri,
-          cid: 'cid-456',
-          createdAt: '2026-01-04T12:00:00Z'
+          cid: 'cid-456'
         });
 
         (mockAgent as any).session = { handle };
@@ -255,8 +253,7 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: postUri,
-          cid: 'cid-456',
-          createdAt: '2026-01-04T12:00:00Z'
+          cid: 'cid-456'
         });
 
         (mockAgent as any).session = { handle };
@@ -282,8 +279,7 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockResolvedValue({
           uri: 'at://did:plc:user.../post/abc',
-          cid: 'cid-abc',
-          createdAt: '2026-01-04T12:00:00Z'
+          cid: 'cid-abc'
         });
 
         (mockAgent as any).session = { handle: 'user.bsky.social' };

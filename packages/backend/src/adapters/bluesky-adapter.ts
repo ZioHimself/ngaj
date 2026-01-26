@@ -59,7 +59,6 @@ interface ReplyRef {
 interface PostResponse {
   uri: string;
   cid: string;
-  createdAt: string;
 }
 
 /**
@@ -292,10 +291,11 @@ export class BlueskyAdapter implements IPlatformAdapter {
       const postUrl = `https://bsky.app/profile/${handle}/post/${rkey}`;
 
       // 5. Return PostResult with platform metadata
+      // Note: Bluesky API doesn't return createdAt, use current timestamp
       return {
         postId: result.uri,
         postUrl,
-        postedAt: new Date(result.createdAt),
+        postedAt: new Date(),
       };
     } catch (error: unknown) {
       // Map Bluesky errors to platform posting errors

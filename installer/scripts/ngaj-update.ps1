@@ -10,7 +10,6 @@
 $ErrorActionPreference = "Stop"
 
 $NgajHome = "$env:LOCALAPPDATA\ngaj"
-$EnvFile = "$NgajHome\.env"
 
 # Header
 Clear-Host
@@ -87,33 +86,31 @@ try {
     exit 1
 }
 
-# Generate new login secret
+# Generate new login secret using setup container
 Write-Host ""
 Write-Host "Generating new login secret..." -ForegroundColor Cyan
-$bytes = New-Object byte[] 3
-[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-$newSecret = [BitConverter]::ToString($bytes) -replace '-', ''
 
+# Ensure ngaj home directory exists
 if (-not (Test-Path $NgajHome)) {
     New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
 }
 
-if (Test-Path $EnvFile) {
-    $envContent = Get-Content $EnvFile -Raw
-    if ($envContent -match "(?m)^LOGIN_SECRET=") {
-        # Update existing line
-        $envContent = $envContent -replace "(?m)^LOGIN_SECRET=.*", "LOGIN_SECRET=$newSecret"
-        Set-Content -Path $EnvFile -Value $envContent.TrimEnd() -NoNewline
-        Add-Content -Path $EnvFile -Value ""
-    } else {
-        # Add new line
-        Add-Content -Path $EnvFile -Value "LOGIN_SECRET=$newSecret"
+# Run setup container with --regenerate-secret flag to generate new secret
+# The container outputs only the new secret on stdout
+try {
+    $newSecret = docker run --rm -v "${NgajHome}:/data" ziohimself/ngaj-setup:stable --regenerate-secret 2>$null
+    $newSecret = $newSecret.Trim()
+    
+    if ([string]::IsNullOrEmpty($newSecret)) {
+        throw "Empty secret returned"
     }
-} else {
-    # Create .env file with LOGIN_SECRET
-    Set-Content -Path $EnvFile -Value "LOGIN_SECRET=$newSecret"
+    Write-Host "New login secret generated" -ForegroundColor Green
+} catch {
+    Write-Host "Failed to generate new login secret" -ForegroundColor Red
+    Write-Host ""
+    Read-Host "Press Enter to exit"
+    exit 1
 }
-Write-Host "New login secret generated" -ForegroundColor Green
 
 # Display success message
 Write-Host ""

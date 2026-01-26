@@ -2,7 +2,7 @@
  * Environment file writer
  */
 
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import type { SetupConfiguration, BlueskyCredentials, AnthropicCredentials } from '@ngaj/shared';
 import { generateLoginSecret } from '@ngaj/shared';
@@ -76,4 +76,44 @@ export async function writeEnvFile(config: SetupConfiguration): Promise<WriteEnv
   writeFileSync(ENV_FILE_PATH, content, 'utf-8');
 
   return { loginSecret };
+}
+
+/**
+ * Regenerate only the LOGIN_SECRET in an existing .env file
+ * Creates the file with only LOGIN_SECRET if it doesn't exist
+ * @returns The new login secret
+ */
+export async function regenerateLoginSecret(): Promise<string> {
+  const newSecret = generateLoginSecret();
+  
+  // Ensure directory exists
+  const dir = dirname(ENV_FILE_PATH);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+  
+  if (existsSync(ENV_FILE_PATH)) {
+    // Read existing file and update LOGIN_SECRET
+    let content = readFileSync(ENV_FILE_PATH, 'utf-8');
+    
+    if (/^LOGIN_SECRET=.*/m.test(content)) {
+      // Update existing LOGIN_SECRET line
+      content = content.replace(/^LOGIN_SECRET=.*/m, `LOGIN_SECRET=${newSecret}`);
+    } else {
+      // Append LOGIN_SECRET to the file
+      const lines = content.split('\n');
+      // Ensure file ends with newline before adding new line
+      if (lines[lines.length - 1] !== '') {
+        content += '\n';
+      }
+      content += `LOGIN_SECRET=${newSecret}\n`;
+    }
+    
+    writeFileSync(ENV_FILE_PATH, content, 'utf-8');
+  } else {
+    // Create new file with only LOGIN_SECRET
+    writeFileSync(ENV_FILE_PATH, `LOGIN_SECRET=${newSecret}\n`, 'utf-8');
+  }
+  
+  return newSecret;
 }

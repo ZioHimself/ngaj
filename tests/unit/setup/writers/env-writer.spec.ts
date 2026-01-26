@@ -8,17 +8,19 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { writeEnvFile } from '@ngaj/setup/writers/env-writer.js';
+import { writeEnvFile, regenerateLoginSecret } from '@ngaj/setup/writers/env-writer.js';
 import {
   validSetupConfiguration,
   createMockSetupConfiguration,
   validBlueskyCredentials,
   validAnthropicCredentials,
 } from '@tests/fixtures/setup-fixtures';
+import { LOGIN_SECRET_PATTERN } from '@ngaj/shared';
 
 // Mock fs module
 vi.mock('fs', () => ({
   writeFileSync: vi.fn(),
+  readFileSync: vi.fn(),
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),
 }));
@@ -164,6 +166,120 @@ describe('writeEnvFile', () => {
       
       expect(writtenContent).toContain('BLUESKY_HANDLE=');
       expect(writtenContent).toContain('BLUESKY_APP_PASSWORD=');
+    });
+  });
+});
+
+describe('regenerateLoginSecret', () => {
+  let mockWriteFileSync: ReturnType<typeof vi.fn>;
+  let mockReadFileSync: ReturnType<typeof vi.fn>;
+  let mockExistsSync: ReturnType<typeof vi.fn>;
+  let mockMkdirSync: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const fs = await import('fs');
+    mockWriteFileSync = fs.writeFileSync as ReturnType<typeof vi.fn>;
+    mockReadFileSync = fs.readFileSync as ReturnType<typeof vi.fn>;
+    mockExistsSync = fs.existsSync as ReturnType<typeof vi.fn>;
+    mockMkdirSync = fs.mkdirSync as ReturnType<typeof vi.fn>;
+  });
+
+  describe('when .env file exists', () => {
+    it('should update existing LOGIN_SECRET line', async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(
+        '# ngaj Configuration\nBLUESKY_HANDLE=test.bsky.social\nLOGIN_SECRET=OLD1-SECR-ET12-3456\nPORT=3000\n'
+      );
+
+      const newSecret = await regenerateLoginSecret();
+
+      expect(newSecret).toMatch(LOGIN_SECRET_PATTERN);
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
+        '/data/.env',
+        expect.stringContaining(`LOGIN_SECRET=${newSecret}`),
+        'utf-8'
+      );
+      // Should NOT contain old secret
+      const writtenContent = mockWriteFileSync.mock.calls[0][1] as string;
+      expect(writtenContent).not.toContain('OLD1-SECR-ET12-3456');
+      // Should preserve other content
+      expect(writtenContent).toContain('BLUESKY_HANDLE=test.bsky.social');
+      expect(writtenContent).toContain('PORT=3000');
+    });
+
+    it('should append LOGIN_SECRET if not present in existing file', async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(
+        '# ngaj Configuration\nBLUESKY_HANDLE=test.bsky.social\nPORT=3000\n'
+      );
+
+      const newSecret = await regenerateLoginSecret();
+
+      expect(newSecret).toMatch(LOGIN_SECRET_PATTERN);
+      const writtenContent = mockWriteFileSync.mock.calls[0][1] as string;
+      expect(writtenContent).toContain(`LOGIN_SECRET=${newSecret}`);
+      expect(writtenContent).toContain('BLUESKY_HANDLE=test.bsky.social');
+    });
+
+    it('should handle file without trailing newline', async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue('PORT=3000');
+
+      const newSecret = await regenerateLoginSecret();
+
+      const writtenContent = mockWriteFileSync.mock.calls[0][1] as string;
+      // Should have newline before LOGIN_SECRET
+      expect(writtenContent).toBe(`PORT=3000\nLOGIN_SECRET=${newSecret}\n`);
+    });
+  });
+
+  describe('when .env file does not exist', () => {
+    it('should create new file with only LOGIN_SECRET', async () => {
+      // First call for directory check returns true, second for file check returns false
+      mockExistsSync.mockImplementation((path: string) => {
+        if (path === '/data') return true;
+        return false; // File doesn't exist
+      });
+
+      const newSecret = await regenerateLoginSecret();
+
+      expect(newSecret).toMatch(LOGIN_SECRET_PATTERN);
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
+        '/data/.env',
+        `LOGIN_SECRET=${newSecret}\n`,
+        'utf-8'
+      );
+    });
+
+    it('should create directory if it does not exist', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await regenerateLoginSecret();
+
+      expect(mockMkdirSync).toHaveBeenCalledWith('/data', { recursive: true });
+    });
+  });
+
+  describe('secret format', () => {
+    it('should return secret in XXXX-XXXX-XXXX-XXXX format', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const newSecret = await regenerateLoginSecret();
+
+      expect(newSecret).toMatch(LOGIN_SECRET_PATTERN);
+      expect(newSecret.split('-')).toHaveLength(4);
+      expect(newSecret.split('-').every(segment => segment.length === 4)).toBe(true);
+    });
+
+    it('should generate different secrets on each call', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const secret1 = await regenerateLoginSecret();
+      const secret2 = await regenerateLoginSecret();
+
+      // While theoretically could be the same, probability is ~1.3×10^-26
+      expect(secret1).not.toBe(secret2);
     });
   });
 });

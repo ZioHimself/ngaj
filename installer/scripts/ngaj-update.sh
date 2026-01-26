@@ -11,7 +11,6 @@
 set -e
 
 NGAJ_HOME="${HOME}/.ngaj"
-ENV_FILE="${NGAJ_HOME}/.env"
 
 # Colors for terminal output
 RED='\033[0;31m'
@@ -82,25 +81,20 @@ else
     exit 1
 fi
 
-# Generate new login secret
+# Generate new login secret using setup container
 echo ""
 echo -e "${BLUE}Generating new login secret...${NC}"
-NEW_SECRET=$(openssl rand -hex 3 | tr '[:lower:]' '[:upper:]')
 
-if [ -f "${ENV_FILE}" ]; then
-    # Update existing LOGIN_SECRET or add it
-    if grep -q "^LOGIN_SECRET=" "${ENV_FILE}"; then
-        # Update existing line
-        sed -i.bak "s/^LOGIN_SECRET=.*/LOGIN_SECRET=${NEW_SECRET}/" "${ENV_FILE}"
-        rm -f "${ENV_FILE}.bak"
-    else
-        # Add new line
-        echo "LOGIN_SECRET=${NEW_SECRET}" >> "${ENV_FILE}"
-    fi
-else
-    # Create .env file with LOGIN_SECRET
-    mkdir -p "${NGAJ_HOME}"
-    echo "LOGIN_SECRET=${NEW_SECRET}" > "${ENV_FILE}"
+# Ensure ngaj home directory exists
+mkdir -p "${NGAJ_HOME}"
+
+# Run setup container with --regenerate-secret flag to generate new secret
+# The container outputs only the new secret on stdout
+NEW_SECRET=$(docker run --rm -v "${NGAJ_HOME}:/data" ziohimself/ngaj-setup:stable --regenerate-secret 2>/dev/null)
+
+if [ -z "${NEW_SECRET}" ]; then
+    echo -e "${RED}❌ Failed to generate new login secret${NC}"
+    exit 1
 fi
 echo -e "${GREEN}✓ New login secret generated${NC}"
 

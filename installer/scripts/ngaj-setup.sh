@@ -93,13 +93,18 @@ echo ""
 echo "Pulling ngaj setup container..."
 docker pull ziohimself/ngaj-setup:stable
 
+# Ensure ngaj home directory exists with correct permissions
+mkdir -p "${NGAJ_HOME}"
+
 # Run setup wizard with volume mount
+# Use host user's UID/GID to ensure write permissions to mounted volume
 echo ""
 echo -e "${BLUE}════════════════════════════════════════${NC}"
 echo -e "${BLUE}         Credentials Setup              ${NC}"
 echo -e "${BLUE}════════════════════════════════════════${NC}"
 echo ""
 docker run --rm -it \
+    --user "$(id -u):$(id -g)" \
     -v "${NGAJ_HOME}:/data" \
     ziohimself/ngaj-setup:stable
 

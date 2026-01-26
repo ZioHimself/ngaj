@@ -87,6 +87,11 @@ Write-Host ""
 Write-Host "Pulling ngaj setup container..."
 docker pull ziohimself/ngaj-setup:stable
 
+# Ensure ngaj home directory exists
+if (-not (Test-Path $NgajHome)) {
+    New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
+}
+
 # Run setup wizard with volume mount
 Write-Host ""
 Write-Host "=======================================" -ForegroundColor Cyan

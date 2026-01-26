@@ -13,13 +13,17 @@ import { CronScheduler, type ICronScheduler } from './scheduler/cron-scheduler.j
 import { DiscoveryService } from './services/discovery-service.js';
 import { ScoringService } from './services/scoring-service.js';
 import { BlueskyAdapter } from './adapters/bluesky-adapter.js';
+import { ClaudeClient } from './clients/claude-client.js';
+import { ResponseSuggestionService, type IChromaClient } from './services/response-suggestion-service.js';
+import type { KBChunk } from './utils/prompt-builder.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from project root
+// When running as workspace, cwd may be package dir, so we specify the path
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -311,6 +315,80 @@ app.get('/api/responses', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching responses:', error);
     res.status(500).json({ error: 'Failed to fetch responses' });
+  }
+});
+
+// Generate response for an opportunity (ADR-009)
+app.post('/api/responses/generate', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { opportunityId } = req.body;
+
+    if (!opportunityId) {
+      res.status(400).json({ error: 'opportunityId is required' });
+      return;
+    }
+
+    // Check for Claude API key
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicApiKey) {
+      res.status(503).json({
+        error: 'AI service not configured',
+        message: 'ANTHROPIC_API_KEY not set. Please configure your Claude API key.',
+      });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+
+    // Get first account and profile (MVP simplification)
+    const accountsCollection = db.collection('accounts');
+    const profilesCollection = db.collection('profiles');
+    
+    const account = await accountsCollection.findOne({});
+    if (!account) {
+      res.status(400).json({ error: 'No account configured' });
+      return;
+    }
+
+    const profile = await profilesCollection.findOne({});
+    if (!profile) {
+      res.status(400).json({ error: 'No profile configured' });
+      return;
+    }
+
+    // Create Claude client
+    const claudeClient = new ClaudeClient(anthropicApiKey);
+
+    // Create stub ChromaDB client (KB search not yet implemented - graceful degradation)
+    const chromaClient: IChromaClient = {
+      search: async (): Promise<KBChunk[]> => [],
+    };
+
+    // Create platform adapter
+    const agent = new BskyAgent({ service: 'https://bsky.social' });
+    const platformAdapter = new BlueskyAdapter(agent);
+
+    // Create response suggestion service
+    const responseSuggestionService = new ResponseSuggestionService(
+      db,
+      claudeClient,
+      chromaClient,
+      platformAdapter
+    );
+
+    // Generate response
+    const response = await responseSuggestionService.generateResponse(
+      new ObjectId(opportunityId),
+      new ObjectId(account._id),
+      new ObjectId(profile._id)
+    );
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error generating response:', error);
+    const message = error instanceof Error ? error.message : 'Failed to generate response';
+    res.status(500).json({ error: message });
   }
 });
 

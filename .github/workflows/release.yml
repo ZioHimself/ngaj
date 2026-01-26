@@ -113,6 +113,9 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Install zip utility
+        run: choco install zip -y
+
       - name: Build Windows installer
         shell: bash
         run: npm run installer:windows

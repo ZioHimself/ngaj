@@ -1,6 +1,6 @@
 # ngaj Backend Production Dockerfile
 # Build: docker build -t ziohimself/ngaj-backend -f packages/backend/Dockerfile .
-# Run from project root to include packages/shared
+# Run from project root to include packages/shared and packages/frontend
 
 FROM node:20-alpine AS builder
 
@@ -10,17 +10,20 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/backend/package.json ./packages/backend/
+COPY packages/frontend/package.json ./packages/frontend/
 
 # Install dependencies
-RUN npm ci --workspace=@ngaj/shared --workspace=@ngaj/backend
+RUN npm ci --workspace=@ngaj/shared --workspace=@ngaj/backend --workspace=@ngaj/frontend
 
 # Copy source code
 COPY packages/shared ./packages/shared
 COPY packages/backend ./packages/backend
+COPY packages/frontend ./packages/frontend
 
-# Build shared first, then backend
+# Build shared first, then backend and frontend
 RUN npm run build -w @ngaj/shared
 RUN npm run build -w @ngaj/backend
+RUN npm run build -w @ngaj/frontend
 
 # Production image
 FROM node:20-alpine
@@ -35,6 +38,7 @@ COPY --from=builder /app/packages/backend/package.json ./packages/backend/
 # Copy built artifacts
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+COPY --from=builder /app/packages/frontend/dist ./packages/frontend/dist
 
 # Install production dependencies only for both workspaces
 RUN npm ci --workspace=@ngaj/shared --workspace=@ngaj/backend --omit=dev

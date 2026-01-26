@@ -78,12 +78,36 @@ mv "${APP_BUNDLE_DIR}" "${PAYLOAD_DIR}/"
 
 echo "Building package with pkgbuild..."
 
+# Create component plist to prevent pkgbuild from relocating the app bundle
+COMPONENT_PLIST="${BUILD_DIR}/component.plist"
+cat > "${COMPONENT_PLIST}" << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <key>BundleHasStrictIdentifier</key>
+        <false/>
+        <key>BundleIsRelocatable</key>
+        <false/>
+        <key>BundleIsVersionChecked</key>
+        <false/>
+        <key>BundleOverwriteAction</key>
+        <string>upgrade</string>
+        <key>RootRelativeBundlePath</key>
+        <string>ngaj.app</string>
+    </dict>
+</array>
+</plist>
+PLIST
+
 pkgbuild \
     --root "${PAYLOAD_DIR}" \
     --scripts "${SCRIPTS_DIR}" \
     --identifier "${IDENTIFIER}" \
     --version "${VERSION}" \
     --install-location "${INSTALL_LOCATION}" \
+    --component-plist "${COMPONENT_PLIST}" \
     "${OUTPUT_PKG}"
 
 echo ""

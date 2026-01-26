@@ -32,6 +32,13 @@ if [ -d "${INSTALL_DIR}/ngaj.app" ]; then
     cp -R "${INSTALL_DIR}/ngaj.app" "/Applications/"
 fi
 
+# Ask user if they want to add ngaj to Dock
+osascript -e 'display dialog "Would you like to add ngaj to your Dock?" buttons {"No Thanks", "Add to Dock"} default button "Add to Dock"' | grep -q "Add to Dock" && {
+    sudo -u "${CURRENT_USER}" defaults write com.apple.dock persistent-apps -array-add \
+        "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/ngaj.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+    sudo -u "${CURRENT_USER}" killall Dock
+}
+
 # Open Terminal to run the interactive setup wizard
 # This runs AFTER the installer UI closes
 osascript <<EOF

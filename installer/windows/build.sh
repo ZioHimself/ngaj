@@ -4,7 +4,8 @@
 # Can be run on macOS, Linux, or Windows (via Git Bash/WSL)
 #
 # Prerequisites:
-# - zip command available
+# - On Windows: PowerShell (built-in)
+# - On macOS/Linux: zip command
 #
 # Usage:
 #   ./installer/windows/build.sh
@@ -121,9 +122,15 @@ UNINSTALL_EOF
 
 echo "Creating installer package..."
 
-# Create ZIP archive
+# Create ZIP archive (use PowerShell on Windows, zip elsewhere)
 cd "${PAYLOAD_DIR}"
-zip -r "${OUTPUT_ZIP}" .
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+  # Windows: use PowerShell's Compress-Archive (built-in, no external deps)
+  powershell -Command "Compress-Archive -Path '${PAYLOAD_DIR}/*' -DestinationPath '${OUTPUT_ZIP}' -Force"
+else
+  # macOS/Linux: use zip command
+  zip -r "${OUTPUT_ZIP}" .
+fi
 
 # Calculate size
 SIZE=$(du -h "${OUTPUT_ZIP}" | cut -f1)

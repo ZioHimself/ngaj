@@ -26,10 +26,13 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock onLoginSuccess callback
+const mockOnLoginSuccess = vi.fn();
+
 const renderLoginPage = () => {
   return render(
     <BrowserRouter>
-      <LoginPage />
+      <LoginPage onLoginSuccess={mockOnLoginSuccess} />
     </BrowserRouter>
   );
 };
@@ -38,6 +41,7 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockReset();
+    mockOnLoginSuccess.mockReset();
   });
 
   afterEach(() => {
@@ -261,6 +265,122 @@ describe('LoginPage', () => {
       // Assert
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Auth State Callback', () => {
+    it('should call onLoginSuccess before navigating on successful login', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(loginSuccessResponse),
+      });
+
+      renderLoginPage();
+      const input = screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX');
+      const button = screen.getByRole('button', { name: /login/i });
+
+      // Act
+      await user.type(input, TEST_LOGIN_SECRET);
+      await user.click(button);
+
+      // Assert - onLoginSuccess should be called
+      await waitFor(() => {
+        expect(mockOnLoginSuccess).toHaveBeenCalledTimes(1);
+      });
+
+      // And navigation should also happen
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('should NOT call onLoginSuccess on failed login', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve(invalidCodeErrorResponse),
+      });
+
+      renderLoginPage();
+      const input = screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX');
+      const button = screen.getByRole('button', { name: /login/i });
+
+      // Act
+      await user.type(input, 'WRONG-CODE-HERE-1234');
+      await user.click(button);
+
+      // Assert - wait for error to appear
+      await waitFor(() => {
+        expect(screen.getByText(/incorrect/i)).toBeInTheDocument();
+      });
+
+      // onLoginSuccess should NOT be called
+      expect(mockOnLoginSuccess).not.toHaveBeenCalled();
+    });
+
+    it('should NOT call onLoginSuccess on network error', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      renderLoginPage();
+      const input = screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX');
+      const button = screen.getByRole('button', { name: /login/i });
+
+      // Act
+      await user.type(input, TEST_LOGIN_SECRET);
+      await user.click(button);
+
+      // Assert - wait for error to appear
+      await waitFor(() => {
+        expect(screen.getByText(/error/i)).toBeInTheDocument();
+      });
+
+      // onLoginSuccess should NOT be called
+      expect(mockOnLoginSuccess).not.toHaveBeenCalled();
+    });
+
+    it('should call onLoginSuccess on retry after initial failure', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 401,
+          json: () => Promise.resolve(invalidCodeErrorResponse),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(loginSuccessResponse),
+        });
+
+      renderLoginPage();
+      const input = screen.getByPlaceholderText(
+        'XXXX-XXXX-XXXX-XXXX'
+      ) as HTMLInputElement;
+      const button = screen.getByRole('button', { name: /login/i });
+
+      // First attempt - fail
+      await user.type(input, 'WRONG-CODE-HERE-1234');
+      await user.click(button);
+      await waitFor(() => {
+        expect(screen.getByText(/incorrect/i)).toBeInTheDocument();
+      });
+
+      // Verify onLoginSuccess was NOT called on failure
+      expect(mockOnLoginSuccess).not.toHaveBeenCalled();
+
+      // Second attempt - success
+      await user.clear(input);
+      await user.type(input, TEST_LOGIN_SECRET);
+      await user.click(button);
+
+      // Assert - onLoginSuccess should be called after successful retry
+      await waitFor(() => {
+        expect(mockOnLoginSuccess).toHaveBeenCalledTimes(1);
       });
     });
   });

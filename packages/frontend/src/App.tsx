@@ -85,7 +85,7 @@ function App() {
             isAuthenticated ? (
               <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
             ) : (
-              <LoginPage />
+              <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />
             )
           }
         />

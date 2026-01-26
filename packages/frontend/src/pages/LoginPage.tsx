@@ -11,6 +11,10 @@
 import React, { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface LoginPageProps {
+  onLoginSuccess: () => void;
+}
+
 /**
  * LoginPage component displays a form for entering the access code.
  *
@@ -23,7 +27,7 @@ import { useNavigate } from 'react-router-dom';
  * - 48px touch targets for mobile
  * - Prevents iOS auto-zoom with text-base (16px) font
  */
-export function LoginPage(): React.ReactElement {
+export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElement {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +46,8 @@ export function LoginPage(): React.ReactElement {
       });
 
       if (response.ok) {
-        // Successful login - navigate to home/dashboard
+        // Successful login - update auth state and navigate
+        onLoginSuccess();
         navigate('/');
       } else {
         const data = await response.json();

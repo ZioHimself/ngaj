@@ -16,7 +16,7 @@ export async function promptBlueskyCredentials(): Promise<BlueskyCredentials> {
       {
         type: 'input',
         name: 'handle',
-        message: 'Your Bluesky handle:',
+        message: 'Your Bluesky handle (e.g., @yourname.bsky.social):',
         validate: (input: string) => {
           if (!CREDENTIAL_PATTERNS.blueskyHandle.test(input)) {
             return `Invalid format. Expected: @username.bsky.social`;

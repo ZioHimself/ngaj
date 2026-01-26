@@ -49,12 +49,12 @@ describe('LoginPage', () => {
   });
 
   describe('Rendering', () => {
-    it('should render the login page title', () => {
+    it('should render the login page logo', () => {
       // Arrange & Act
       renderLoginPage();
 
       // Assert
-      expect(screen.getByText('ngaj')).toBeInTheDocument();
+      expect(screen.getByAltText('ngaj')).toBeInTheDocument();
     });
 
     it('should render the subtitle text', () => {

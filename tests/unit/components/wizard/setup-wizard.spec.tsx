@@ -60,11 +60,12 @@ describe('SetupWizard', () => {
   });
 
   describe('Rendering', () => {
-    it('should render the wizard title', async () => {
+    it('should render the wizard header with logo', async () => {
       renderSetupWizard();
 
       await waitFor(() => {
-        expect(screen.getByText('ngaj Setup')).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+        expect(screen.getByText('Setup')).toBeInTheDocument();
       });
     });
 
@@ -147,7 +148,7 @@ describe('SetupWizard', () => {
 
       // Wait for initial load
       await waitFor(() => {
-        expect(screen.getByText('ngaj Setup')).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
       });
 
       // Step 1: Fill profile form
@@ -269,7 +270,7 @@ describe('SetupWizard', () => {
       renderSetupWizard();
 
       await waitFor(() => {
-        expect(screen.getByText('ngaj Setup')).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
       });
 
       // Complete steps 1-2 quickly

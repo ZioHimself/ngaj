@@ -16,6 +16,7 @@ import {
   StepAccount,
   StepDiscovery,
 } from '../components/wizard';
+import logoHorizontal from '../assets/logo-horizontal.png';
 
 type WizardStep = 1 | 2 | 3;
 
@@ -108,8 +109,8 @@ export function SetupWizard({ onSetupComplete }: SetupWizardProps) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading...</p>
+          <img src={logoHorizontal} alt="ngaj" className="h-8 mx-auto mb-6 opacity-60" />
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>
     );
@@ -121,7 +122,10 @@ export function SetupWizard({ onSetupComplete }: SetupWizardProps) {
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-slate-800">ngaj Setup</h1>
+            <div className="flex items-center gap-3">
+              <img src={logoHorizontal} alt="ngaj" className="h-7" />
+              <span className="text-slate-400 font-medium">Setup</span>
+            </div>
             <span className="text-sm text-slate-500">
               Step {state.currentStep} of 3
             </span>

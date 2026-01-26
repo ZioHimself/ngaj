@@ -8,6 +8,7 @@
  */
 
 import { OpportunitiesDashboard } from './OpportunitiesDashboard';
+import logoHorizontal from '../assets/logo-horizontal.png';
 
 export function Opportunities() {
   // TODO: Get accountId from auth context in production
@@ -18,7 +19,7 @@ export function Opportunities() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <h1 className="text-xl font-bold text-slate-800">ngaj</h1>
+          <img src={logoHorizontal} alt="ngaj" className="h-7" />
         </div>
       </header>
 

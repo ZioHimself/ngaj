@@ -48,8 +48,11 @@ describe('App Routing', () => {
       // Act
       render(<App />);
 
-      // Assert
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      // Assert - loading state shows logo and spinner
+      expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+      // Check for the spinner element (animate-spin class)
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).toBeInTheDocument();
     });
 
     it('should redirect to login when not authenticated (401)', async () => {
@@ -61,7 +64,7 @@ describe('App Routing', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /ngaj/i })).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX')).toBeInTheDocument();
       });
     });
@@ -93,7 +96,8 @@ describe('App Routing', () => {
 
       // Assert - should see setup wizard
       await waitFor(() => {
-        expect(screen.getByText(/ngaj setup/i)).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+        expect(screen.getByText('Setup')).toBeInTheDocument();
       });
     });
 
@@ -128,8 +132,8 @@ describe('App Routing', () => {
 
       // Assert - should see opportunities page (not setup wizard)
       await waitFor(() => {
-        // Should NOT see setup wizard
-        expect(screen.queryByText(/ngaj setup/i)).not.toBeInTheDocument();
+        // Should NOT see setup wizard "Setup" label
+        expect(screen.queryByText('Setup')).not.toBeInTheDocument();
       });
     });
   });
@@ -204,7 +208,7 @@ describe('App Routing', () => {
       // Assert - should NOT see setup wizard (should be on opportunities)
       await waitFor(
         () => {
-          expect(screen.queryByText(/ngaj setup/i)).not.toBeInTheDocument();
+          expect(screen.queryByText('Setup')).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -241,7 +245,8 @@ describe('App Routing', () => {
       // Assert - should see setup wizard
       await waitFor(
         () => {
-          expect(screen.getByText(/ngaj setup/i)).toBeInTheDocument();
+          expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+          expect(screen.getByText('Setup')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -261,7 +266,8 @@ describe('App Routing', () => {
 
       // Assert - should show setup wizard (default to no profile)
       await waitFor(() => {
-        expect(screen.getByText(/ngaj setup/i)).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+        expect(screen.getByText('Setup')).toBeInTheDocument();
       });
     });
 
@@ -277,7 +283,8 @@ describe('App Routing', () => {
 
       // Assert - should show setup wizard (default to no profile on error)
       await waitFor(() => {
-        expect(screen.getByText(/ngaj setup/i)).toBeInTheDocument();
+        expect(screen.getByAltText('ngaj')).toBeInTheDocument();
+        expect(screen.getByText('Setup')).toBeInTheDocument();
       });
     });
   });
@@ -324,7 +331,7 @@ describe('App Routing', () => {
 
       // Assert - should NOT be on setup page
       await waitFor(() => {
-        expect(screen.queryByText(/ngaj setup/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('Setup')).not.toBeInTheDocument();
       });
     });
   });

@@ -204,7 +204,8 @@ test.describe('Wizard Activation', () => {
 
     await page.goto('/setup');
     await expect(page).toHaveURL('/setup');
-    await expect(page.getByText('ngaj Setup')).toBeVisible();
+    await expect(page.getByAltText('ngaj')).toBeVisible();
+    await expect(page.getByText('Setup')).toBeVisible();
   });
 });
 

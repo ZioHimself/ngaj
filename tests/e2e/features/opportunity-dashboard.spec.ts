@@ -1098,7 +1098,7 @@ test.describe('Empty State', () => {
 
     await page.goto('/opportunities');
 
-    await expect(page.getByText('No opportunities found')).toBeVisible();
+    await expect(page.getByText('No pending opportunities')).toBeVisible();
   });
 
   test('should display Refresh button in empty state', async ({ page }) => {

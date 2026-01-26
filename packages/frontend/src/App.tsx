@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SetupWizard, Opportunities, LoginPage } from './pages';
+import logoHorizontal from './assets/logo-horizontal.png';
 
 /**
  * App Root Component
@@ -82,8 +83,8 @@ function App() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading ngaj...</p>
+          <img src={logoHorizontal} alt="ngaj" className="h-8 mx-auto mb-6 opacity-60" />
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>
     );

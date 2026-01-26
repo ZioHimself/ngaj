@@ -10,6 +10,7 @@
 
 import React, { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logoHorizontal from '../assets/logo-horizontal.png';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -63,8 +64,12 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElemen
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md text-center">
-        {/* Title */}
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">ngaj</h1>
+        {/* Logo */}
+        <img
+          src={logoHorizontal}
+          alt="ngaj"
+          className="h-10 mx-auto mb-8"
+        />
         <p className="text-slate-500 mb-8">
           Enter your access code to continue
         </p>

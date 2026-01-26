@@ -344,31 +344,115 @@ export function OpportunitiesDashboard({
   // Ensure opportunities is always an array
   const opportunities = state.opportunities || [];
 
+  // Get empty state content based on filter
+  const getEmptyStateContent = () => {
+    switch (state.filter) {
+      case 'pending':
+        return {
+          title: 'No pending opportunities',
+          description: 'New engagement opportunities from your Bluesky feed will appear here. They are discovered automatically based on your profile interests.',
+          icon: (
+            <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          ),
+        };
+      case 'draft':
+        return {
+          title: 'No drafts ready',
+          description: 'Generate responses for pending opportunities and they will appear here for your review before posting.',
+          icon: (
+            <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+          ),
+        };
+      case 'responded':
+        return {
+          title: 'No posted responses',
+          description: 'Responses you post to Bluesky will be tracked here so you can see your engagement history.',
+          icon: (
+            <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+        };
+      case 'dismissed':
+        return {
+          title: 'No dismissed opportunities',
+          description: 'Opportunities you dismiss will be listed here. You can revisit them later if needed.',
+          icon: (
+            <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+            </svg>
+          ),
+        };
+      default:
+        return {
+          title: 'No opportunities found',
+          description: 'Your feed is empty. Opportunities matching your profile interests will appear here as they are discovered.',
+          icon: (
+            <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121.75 7.5v6m-17.5 0v4.5a2.25 2.25 0 002.25 2.25h13.5a2.25 2.25 0 002.25-2.25v-4.5" />
+            </svg>
+          ),
+        };
+    }
+  };
+
   // Error state
   if (state.error && opportunities.length === 0) {
     return (
-      <div className="dashboard dashboard-error">
-        <p>{state.error}</p>
-        <button type="button" onClick={handleRetry}>
-          Retry
-        </button>
+      <div className="space-y-6">
+        <FilterBar
+          currentFilter={state.filter}
+          onFilterChange={handleFilterChange}
+          isLoading={state.isLoading}
+        />
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">Something went wrong</h3>
+          <p className="text-slate-500 text-center max-w-sm mb-6">{state.error}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="px-6 py-2.5 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   // Empty state
   if (!state.isLoading && opportunities.length === 0 && !state.error) {
+    const emptyContent = getEmptyStateContent();
     return (
-      <div className="dashboard dashboard-empty">
+      <div className="space-y-6">
         <FilterBar
           currentFilter={state.filter}
           onFilterChange={handleFilterChange}
           isLoading={state.isLoading}
         />
-        <p>No opportunities found.</p>
-        <button type="button" onClick={handleRetry}>
-          Refresh
-        </button>
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="mb-6">
+            {emptyContent.icon}
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">{emptyContent.title}</h3>
+          <p className="text-slate-500 text-center max-w-sm mb-6">{emptyContent.description}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
     );
   }

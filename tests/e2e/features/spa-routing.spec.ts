@@ -23,7 +23,7 @@ test.describe('SPA Route Direct Access', () => {
     expect(bodyText).not.toContain('"path":"/login"');
 
     // Should see actual login page content
-    await expect(page.getByText('ngaj')).toBeVisible();
+    await expect(page.getByAltText('ngaj')).toBeVisible();
     await expect(
       page.getByPlaceholder('XXXX-XXXX-XXXX-XXXX')
     ).toBeVisible();
@@ -65,7 +65,8 @@ test.describe('SPA Route Direct Access', () => {
     expect(bodyText).not.toContain('"error":"Not found"');
 
     // Should see setup wizard
-    await expect(page.getByText('ngaj Setup')).toBeVisible();
+    await expect(page.getByAltText('ngaj')).toBeVisible();
+    await expect(page.getByText('Setup')).toBeVisible();
   });
 
   test('should render opportunities page when navigating directly to /opportunities', async ({

@@ -32,13 +32,6 @@ export function ResponseEditor({
   const isNearLimit = charCount > maxLength - WARNING_THRESHOLD;
   const isOverLimit = charCount > maxLength;
 
-  // Determine character count styling
-  const getCharCountClass = (): string => {
-    if (isOverLimit) return 'error';
-    if (isNearLimit) return 'warning';
-    return '';
-  };
-
   // Show generating state
   if (isGenerating) {
     return (

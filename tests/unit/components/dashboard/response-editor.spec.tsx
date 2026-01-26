@@ -175,9 +175,9 @@ describe('ResponseEditor', () => {
       // Act
       render(<ResponseEditor {...defaultProps} text={text} />);
 
-      // Assert - count element should have warning class
+      // Assert - count element should have amber/warning color
       const countElement = screen.getByTestId('character-count');
-      expect(countElement).toHaveClass('warning');
+      expect(countElement).toHaveClass('text-amber-500');
     });
 
     it('should show error style when over limit', () => {
@@ -187,9 +187,9 @@ describe('ResponseEditor', () => {
       // Act
       render(<ResponseEditor {...defaultProps} text={text} />);
 
-      // Assert - count element should have error class
+      // Assert - count element should have red/error color
       const countElement = screen.getByTestId('character-count');
-      expect(countElement).toHaveClass('error');
+      expect(countElement).toHaveClass('text-red-500');
     });
   });
 

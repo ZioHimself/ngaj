@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SetupWizard, Opportunities, LoginPage } from './pages';
 
@@ -16,6 +16,27 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check if profile exists (called after auth and on login success)
+  const checkProfile = useCallback(async () => {
+    try {
+      const profileResponse = await fetch('/api/wizard/check');
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        setHasProfile(profileData.hasProfile);
+      } else {
+        setHasProfile(false);
+      }
+    } catch {
+      setHasProfile(false);
+    }
+  }, []);
+
+  // Handle login success: set authenticated and check profile
+  const handleLoginSuccess = useCallback(async () => {
+    setIsAuthenticated(true);
+    await checkProfile();
+  }, [checkProfile]);
 
   useEffect(() => {
     // Check authentication status and profile
@@ -41,14 +62,7 @@ function App() {
           }
 
           // If authenticated, check if setup is needed
-          const profileResponse = await fetch('/api/wizard/check');
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json();
-            setHasProfile(profileData.hasProfile);
-          } else {
-            // API error, assume no profile
-            setHasProfile(false);
-          }
+          await checkProfile();
         } else {
           // Auth check failed, assume not authenticated
           setIsAuthenticated(false);
@@ -62,7 +76,7 @@ function App() {
     };
 
     checkAuthAndProfile();
-  }, []);
+  }, [checkProfile]);
 
   if (isLoading) {
     return (
@@ -85,7 +99,7 @@ function App() {
             isAuthenticated ? (
               <Navigate to={hasProfile ? '/opportunities' : '/setup'} replace />
             ) : (
-              <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />
+              <LoginPage onLoginSuccess={handleLoginSuccess} />
             )
           }
         />

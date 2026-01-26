@@ -124,15 +124,18 @@ export class DiscoveryService implements IDiscoveryService {
       if (discoveryType === 'replies') {
         posts = await this.platformAdapter.fetchReplies({ since, limit: 100 });
       } else {
-        // Search type - use profile keywords
-        const keywords = profile.discovery.keywords;
+        // Search type - use profile keywords, fallback to interests
+        const keywords = profile.discovery.keywords.length > 0
+          ? profile.discovery.keywords
+          : profile.discovery.interests;
         if (keywords.length === 0) {
-          // Skip search if no keywords configured
-          log.info({ postCount: 0, keywords: [] }, 'No keywords configured, skipping search');
+          // Skip search if no keywords or interests configured
+          log.info({ postCount: 0, keywords: [] }, 'No keywords or interests configured, skipping search');
           await this.updateDiscoverySuccess(accountId, discoveryType);
           return [];
         }
-        log.debug({ keywords }, 'Searching with keywords');
+        const source = profile.discovery.keywords.length > 0 ? 'keywords' : 'interests';
+        log.debug({ keywords, source }, 'Searching with keywords');
         posts = await this.platformAdapter.searchPosts(keywords, { since, limit: 50 });
       }
 

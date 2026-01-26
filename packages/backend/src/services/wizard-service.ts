@@ -14,6 +14,7 @@ import type {
   TestConnectionInput,
   TestConnectionResult,
 } from '@ngaj/shared';
+import type { Document, Filter, OptionalUnlessRequiredId, UpdateFilter } from 'mongodb';
 import {
   ObjectId,
   type ProfileDocument,
@@ -24,8 +25,19 @@ import {
   presetToCron,
 } from '../utils/wizard-validation.js';
 
+/**
+ * Minimal MongoDB collection interface used by WizardService.
+ * Provides type-safe access to common collection operations.
+ */
+export interface WizardServiceCollection<T extends Document = Document> {
+  countDocuments(filter: Filter<T>): Promise<number>;
+  findOne(filter: Filter<T>): Promise<T | null>;
+  insertOne(doc: OptionalUnlessRequiredId<T>): Promise<{ insertedId: ObjectId }>;
+  updateOne(filter: Filter<T>, update: UpdateFilter<T>): Promise<{ modifiedCount: number }>;
+}
+
 export interface WizardServiceDb {
-  collection: (name: string) => any;
+  collection: <T extends Document = Document>(name: string) => WizardServiceCollection<T>;
 }
 
 /**
@@ -311,6 +323,6 @@ export class WizardService {
         ...account.discovery,
         schedules,
       },
-    };
+    } as AccountDocument;
   }
 }

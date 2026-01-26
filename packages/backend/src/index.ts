@@ -347,6 +347,103 @@ app.patch('/api/opportunities/:id', async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+// Discovery API Endpoints (ADR-008, Issue #34)
+// ============================================================================
+
+/**
+ * Manually trigger opportunity discovery
+ * 
+ * This endpoint allows users to trigger discovery on-demand without
+ * waiting for scheduled cron jobs. Useful for dashboard refresh button.
+ * 
+ * @see ADR-008: Opportunity Discovery Architecture
+ * @see GitHub Issue #34
+ */
+app.post('/api/discovery/run', async (_req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { ObjectId } = await import('mongodb');
+
+    // Get first account (MVP simplification - single account)
+    const accountsCollection = db.collection('accounts');
+    const account = await accountsCollection.findOne({});
+
+    if (!account) {
+      // No account configured - return empty result
+      res.json({
+        discoveredCount: 0,
+        repliesCount: 0,
+        searchCount: 0,
+        message: 'No account configured',
+      });
+      return;
+    }
+
+    // Get scheduler to access discovery service
+    const currentScheduler = getScheduler();
+    if (!currentScheduler) {
+      // Scheduler not available (credentials not configured)
+      res.status(500).json({
+        error: 'Discovery service not available',
+        message: 'Bluesky credentials not configured',
+      });
+      return;
+    }
+
+    // Run discovery for enabled schedule types
+    let repliesCount = 0;
+    let searchCount = 0;
+
+    // Check which schedules are enabled
+    const repliesSchedule = account.discovery?.schedules?.find(
+      (s: { type: string; enabled: boolean }) => s.type === 'replies' && s.enabled
+    );
+    const searchSchedule = account.discovery?.schedules?.find(
+      (s: { type: string; enabled: boolean }) => s.type === 'search' && s.enabled
+    );
+
+    // Run replies discovery if enabled
+    if (repliesSchedule) {
+      try {
+        const repliesOpportunities = await currentScheduler.triggerNow(
+          new ObjectId(account._id),
+          'replies'
+        );
+        repliesCount = repliesOpportunities.length;
+      } catch (error) {
+        console.error('Error running replies discovery:', error);
+        // Continue with search even if replies fails
+      }
+    }
+
+    // Run search discovery if enabled
+    if (searchSchedule) {
+      try {
+        const searchOpportunities = await currentScheduler.triggerNow(
+          new ObjectId(account._id),
+          'search'
+        );
+        searchCount = searchOpportunities.length;
+      } catch (error) {
+        console.error('Error running search discovery:', error);
+        // Continue even if search fails
+      }
+    }
+
+    const discoveredCount = repliesCount + searchCount;
+
+    res.json({
+      discoveredCount,
+      repliesCount,
+      searchCount,
+    });
+  } catch (error) {
+    console.error('Error running discovery:', error);
+    res.status(500).json({ error: 'Failed to run discovery' });
+  }
+});
+
+// ============================================================================
 // Placeholder routes for future implementation
 // ============================================================================
 

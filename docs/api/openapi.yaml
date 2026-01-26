@@ -156,43 +156,75 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /opportunities/discover:
+  /discovery/run:
     post:
       tags:
         - Opportunities
-      summary: Trigger discovery
-      description: Manually trigger the opportunity discovery job
-      operationId: triggerDiscovery
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                platform:
-                  type: string
-                  enum: [bluesky, linkedin, reddit]
-                  description: Optional platform filter
+      summary: Trigger manual discovery
+      description: |
+        Manually trigger opportunity discovery for the configured account.
+        Runs both 'replies' and 'search' discovery types if enabled.
+        Used by the dashboard refresh button for on-demand discovery.
+        
+        @see ADR-008: Opportunity Discovery Architecture
+        @see GitHub Issue #34
+      operationId: triggerDiscoveryRun
       responses:
         '200':
-          description: Discovery completed
+          description: Discovery completed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                success: true
-                data:
-                  discovered: 8
-                  inserted: 5
-                  duplicates: 3
-        '503':
-          description: Platform API unavailable
+                type: object
+                required:
+                  - discoveredCount
+                  - repliesCount
+                  - searchCount
+                properties:
+                  discoveredCount:
+                    type: integer
+                    description: Total opportunities discovered (replies + search)
+                    example: 5
+                  repliesCount:
+                    type: integer
+                    description: Opportunities discovered from replies
+                    example: 3
+                  searchCount:
+                    type: integer
+                    description: Opportunities discovered from search
+                    example: 2
+                  message:
+                    type: string
+                    description: Optional message (e.g., "No account configured")
+              examples:
+                success:
+                  summary: Successful discovery
+                  value:
+                    discoveredCount: 5
+                    repliesCount: 3
+                    searchCount: 2
+                noAccount:
+                  summary: No account configured
+                  value:
+                    discoveredCount: 0
+                    repliesCount: 0
+                    searchCount: 0
+                    message: "No account configured"
+        '401':
+          description: Not authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Discovery service error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                error: "Discovery service not available"
+                message: "Bluesky credentials not configured"
 
   /opportunities/{id}:
     get:

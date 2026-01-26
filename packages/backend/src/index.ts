@@ -392,6 +392,56 @@ app.post('/api/responses/generate', async (req: Request, res: Response) => {
   }
 });
 
+// Post a response (ADR-010)
+app.post('/api/responses/:id/post', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { id } = req.params;
+
+    // Check for Bluesky credentials
+    const handle = process.env.BLUESKY_HANDLE;
+    const appPassword = process.env.BLUESKY_APP_PASSWORD;
+
+    if (!handle || !appPassword) {
+      res.status(503).json({
+        error: 'Bluesky not configured',
+        message: 'BLUESKY_HANDLE and BLUESKY_APP_PASSWORD required',
+      });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const { ResponsePostingService } = await import('./services/response-posting-service.js');
+
+    // Create authenticated Bluesky agent
+    const agent = new BskyAgent({ service: 'https://bsky.social' });
+    const identifier = handle.startsWith('@') ? handle.slice(1) : handle;
+    await agent.login({ identifier, password: appPassword });
+
+    // Create platform adapter and posting service
+    const platformAdapter = new BlueskyAdapter(agent);
+    const postingService = new ResponsePostingService(db, platformAdapter);
+
+    // Post the response
+    const response = await postingService.postResponse(new ObjectId(id));
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error posting response:', error);
+    const message = error instanceof Error ? error.message : 'Failed to post response';
+    
+    // Determine appropriate status code based on error type
+    let status = 500;
+    if (message.includes('not found')) {
+      status = 404;
+    } else if (message.includes('not a draft') || message.includes('Invalid status')) {
+      status = 400;
+    }
+    
+    res.status(status).json({ error: message });
+  }
+});
+
 // Update opportunity status (dismiss, etc.)
 app.patch('/api/opportunities/:id', async (req: Request, res: Response) => {
   try {

@@ -32,7 +32,18 @@ export async function runSetupWizard(): Promise<SetupConfiguration> {
     completedAt: new Date(),
   };
   
-  await writeEnvFile(config);
+  const { loginSecret } = await writeEnvFile(config);
+  
+  // Display the login secret to the user
+  console.log('');
+  console.log('════════════════════════════════════════');
+  console.log('  Your login code:');
+  console.log('');
+  console.log(`    ${loginSecret}`);
+  console.log('');
+  console.log('  Use this code to log in from any device');
+  console.log('  on your WiFi network.');
+  console.log('════════════════════════════════════════');
   
   return config;
 }

@@ -93,8 +93,20 @@ echo ""
 echo "Pulling ngaj setup container..."
 docker pull ziohimself/ngaj-setup:stable
 
-# Ensure ngaj home directory exists with correct permissions
-mkdir -p "${NGAJ_HOME}"
+# Ensure ngaj home directory exists with correct ownership
+# If directory exists but is owned by root (from previous Docker runs), fix ownership
+if [ -d "${NGAJ_HOME}" ]; then
+    if [ "$(stat -f '%u' "${NGAJ_HOME}" 2>/dev/null || stat -c '%u' "${NGAJ_HOME}" 2>/dev/null)" != "$(id -u)" ]; then
+        echo "Fixing ownership of ${NGAJ_HOME}..."
+        sudo chown -R "$(id -u):$(id -g)" "${NGAJ_HOME}" 2>/dev/null || {
+            echo -e "${RED}❌ Cannot fix ownership of ${NGAJ_HOME}.${NC}"
+            echo "Please run: sudo chown -R \$(id -u):\$(id -g) ${NGAJ_HOME}"
+            exit 1
+        }
+    fi
+else
+    mkdir -p "${NGAJ_HOME}"
+fi
 
 # Run setup wizard with volume mount
 # Use host user's UID/GID to ensure write permissions to mounted volume

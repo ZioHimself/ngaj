@@ -8,8 +8,7 @@ $NgajHome = "$env:LOCALAPPDATA\ngaj"
 $InstallDir = "$env:ProgramFiles\ngaj"
 
 # Create user data directory structure
-New-Item -ItemType Directory -Force -Path "$NgajHome\data\mongodb" | Out-Null
-New-Item -ItemType Directory -Force -Path "$NgajHome\data\chromadb" | Out-Null
+# Note: MongoDB and ChromaDB use Docker named volumes, not host directories
 New-Item -ItemType Directory -Force -Path "$NgajHome\logs" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\scripts" | Out-Null
 

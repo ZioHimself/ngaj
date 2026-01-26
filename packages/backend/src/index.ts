@@ -1,10 +1,16 @@
 import express, { Express, Request, Response } from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { connectToDatabase, closeDatabaseConnection, getDatabase } from './config/database.js';
 import { WizardService } from './services/wizard-service.js';
 import { configureSession } from './middleware/session.js';
 import { authMiddleware } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -169,7 +175,30 @@ app.get('/api/accounts', async (_req: Request, res: Response) => {
   }
 });
 
-// 404 handler
+// ============================================================================
+// Static Files & SPA Fallback
+// ============================================================================
+
+// Serve frontend static files (production build)
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// SPA fallback: serve index.html for non-API routes
+app.use((req: Request, res: Response, next) => {
+  // Skip API routes - let them fall through to 404
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  // Serve index.html for all other routes (SPA client-side routing)
+  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+    if (err) {
+      // If index.html doesn't exist (dev mode), fall through to 404
+      next();
+    }
+  });
+});
+
+// 404 handler (API routes only, or if frontend not built)
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not found',

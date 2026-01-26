@@ -109,7 +109,7 @@ export function SetupWizard({ onSetupComplete }: SetupWizardProps) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <img src={logoHorizontal} alt="ngaj" className="h-8 mx-auto mb-6 opacity-60" />
+          <img src={logoHorizontal} alt="ngaj" className="h-10 mx-auto mb-6 opacity-60" />
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>
@@ -123,7 +123,7 @@ export function SetupWizard({ onSetupComplete }: SetupWizardProps) {
         <div className="max-w-xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logoHorizontal} alt="ngaj" className="h-7" />
+              <img src={logoHorizontal} alt="ngaj" className="h-9" />
               <span className="text-slate-400 font-medium">Setup</span>
             </div>
             <span className="text-sm text-slate-500">

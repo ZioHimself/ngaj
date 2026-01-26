@@ -19,7 +19,7 @@ export function Opportunities() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <img src={logoHorizontal} alt="ngaj" className="h-7" />
+          <img src={logoHorizontal} alt="ngaj" className="h-9" />
         </div>
       </header>
 

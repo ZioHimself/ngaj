@@ -68,7 +68,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElemen
         <img
           src={logoHorizontal}
           alt="ngaj"
-          className="h-10 mx-auto mb-8"
+          className="h-14 mx-auto mb-8"
         />
         <p className="text-slate-500 mb-8">
           Enter your access code to continue

@@ -83,7 +83,7 @@ function App() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <img src={logoHorizontal} alt="ngaj" className="h-8 mx-auto mb-6 opacity-60" />
+          <img src={logoHorizontal} alt="ngaj" className="h-10 mx-auto mb-6 opacity-60" />
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>

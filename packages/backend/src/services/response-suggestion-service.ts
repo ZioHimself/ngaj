@@ -3,9 +3,9 @@ import type {
   UpdateResponseInput,
   OpportunityAnalysis,
 } from '@ngaj/shared';
-import type { IPlatformAdapter } from '../adapters/platform-adapter';
-import { buildAnalysisPrompt, buildGenerationPrompt, KBChunk } from '../utils/prompt-builder';
-import { validateConstraints } from '../utils/constraint-validator';
+import type { IPlatformAdapter } from '../adapters/platform-adapter.js';
+import { buildAnalysisPrompt, buildGenerationPrompt, KBChunk } from '../utils/prompt-builder.js';
+import { validateConstraints } from '../utils/constraint-validator.js';
 import {
   ObjectId,
   type ResponseDocument,

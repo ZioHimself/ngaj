@@ -213,7 +213,7 @@ export function OpportunityCard({
             type="button"
             onClick={() => onGenerateResponse(opportunity._id)}
             disabled={isGenerating}
-            className="generate-btn px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+            className="generate-btn px-5 py-2.5 text-sm font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? 'Generating...' : 'Generate Response'}
           </button>

@@ -68,7 +68,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElemen
         <img
           src={logoHorizontal}
           alt="ngaj"
-          className="h-14 mx-auto mb-8"
+          className="h-18 mx-auto mb-8"
         />
         <p className="text-slate-500 mb-8">
           Enter your access code to continue
@@ -101,21 +101,19 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElemen
 
           {/* Error message */}
           {error && (
-            <p className="text-red-500 text-sm">{error}</p>
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-left">
+              <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           )}
 
           {/* Submit button */}
           <button
             type="submit"
             disabled={isLoading || !code.trim()}
-            className="
-              w-full h-12 
-              bg-blue-500 text-white font-medium rounded-xl
-              hover:bg-blue-600 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-colors
-            "
+            className="w-full px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Verifying...' : 'Login'}
           </button>

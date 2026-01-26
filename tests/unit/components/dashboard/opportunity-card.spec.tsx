@@ -408,21 +408,22 @@ describe('OpportunityCard', () => {
       expect(actionsContainer).toHaveClass('sm:flex-row');
     });
 
-    it('should have h-12 button height on mobile (48px touch target)', () => {
+    it('should have consistent button padding for touch targets', () => {
       // Arrange
       const opportunity = dashboardOpportunityFixtures.pending;
 
       // Act
       render(<OpportunityCard {...defaultProps} opportunity={opportunity} />);
 
-      // Assert
+      // Assert - buttons use padding-based sizing (px-5 py-2.5)
       const generateButton = screen.getByRole('button', {
         name: /generate response/i,
       });
-      expect(generateButton).toHaveClass('h-12');
+      expect(generateButton).toHaveClass('px-5');
+      expect(generateButton).toHaveClass('py-2.5');
     });
 
-    it('should have sm:h-10 for smaller desktop buttons', () => {
+    it('should have text-sm for consistent button text size', () => {
       // Arrange
       const opportunity = dashboardOpportunityFixtures.pending;
 
@@ -433,10 +434,10 @@ describe('OpportunityCard', () => {
       const generateButton = screen.getByRole('button', {
         name: /generate response/i,
       });
-      expect(generateButton).toHaveClass('sm:h-10');
+      expect(generateButton).toHaveClass('text-sm');
     });
 
-    it('should have w-full buttons on mobile', () => {
+    it('should have rounded-lg for button border radius', () => {
       // Arrange
       const opportunity = dashboardOpportunityFixtures.pending;
 
@@ -447,10 +448,10 @@ describe('OpportunityCard', () => {
       const generateButton = screen.getByRole('button', {
         name: /generate response/i,
       });
-      expect(generateButton).toHaveClass('w-full');
+      expect(generateButton).toHaveClass('rounded-lg');
     });
 
-    it('should have sm:w-auto for auto-width desktop buttons', () => {
+    it('should have font-medium for button text weight', () => {
       // Arrange
       const opportunity = dashboardOpportunityFixtures.pending;
 
@@ -461,7 +462,7 @@ describe('OpportunityCard', () => {
       const generateButton = screen.getByRole('button', {
         name: /generate response/i,
       });
-      expect(generateButton).toHaveClass('sm:w-auto');
+      expect(generateButton).toHaveClass('font-medium');
     });
 
     it('should render header in flex-col on mobile', () => {

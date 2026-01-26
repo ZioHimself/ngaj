@@ -8,6 +8,7 @@
  * @see ADR-015: Mobile-First Responsive Web Design
  */
 
+import { useState } from 'react';
 import type { OpportunityWithAuthor, Response } from '@ngaj/shared';
 import { ResponseEditor } from './ResponseEditor';
 
@@ -78,10 +79,14 @@ export function OpportunityCard({
   const isPosted = status === 'responded';
   const hasDraft = response && response.status === 'draft';
   const hasPostedResponse = response && response.status === 'posted';
-  const isExpanded = hasDraft || hasPostedResponse || isGenerating;
+  
+  // Text expansion state - auto-expand when has draft/response/generating
+  const [isTextExpanded, setIsTextExpanded] = useState(false);
+  const shouldShowFullText = isTextExpanded || hasDraft || hasPostedResponse || isGenerating;
+  const canToggleExpand = content.text.length > MAX_PREVIEW_LENGTH;
 
   // Determine text to display
-  const displayText = isExpanded
+  const displayText = shouldShowFullText
     ? content.text
     : truncateText(content.text, MAX_PREVIEW_LENGTH);
 
@@ -131,8 +136,39 @@ export function OpportunityCard({
       </header>
 
       {/* Content */}
-      <div className="text-slate-700 mb-4 leading-relaxed">
-        <p data-testid="opportunity-text">{displayText}</p>
+      <div className="mb-4">
+        {canToggleExpand ? (
+          <button
+            type="button"
+            onClick={() => setIsTextExpanded(!isTextExpanded)}
+            className="w-full text-left group"
+          >
+            <p data-testid="opportunity-text" className="text-slate-700 leading-relaxed">
+              {displayText}
+            </p>
+            <span className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-blue-500 group-hover:text-blue-600">
+              {shouldShowFullText ? (
+                <>
+                  Show less
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  Show more
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </span>
+          </button>
+        ) : (
+          <p data-testid="opportunity-text" className="text-slate-700 leading-relaxed">
+            {displayText}
+          </p>
+        )}
       </div>
 
       {/* Posted badge and link */}
@@ -171,20 +207,20 @@ export function OpportunityCard({
       {!hasPostedResponse && !hasDraft && !isGenerating && (
         <div
           data-testid="card-actions"
-          className="flex flex-col sm:flex-row gap-3 sm:justify-end"
+          className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 sm:justify-end"
         >
           <button
             type="button"
             onClick={() => onGenerateResponse(opportunity._id)}
             disabled={isGenerating}
-            className="generate-btn btn btn-primary h-12 sm:h-10 w-full sm:w-auto"
+            className="generate-btn px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
           >
             {isGenerating ? 'Generating...' : 'Generate Response'}
           </button>
           <button
             type="button"
             onClick={() => onDismiss(opportunity._id)}
-            className="dismiss-btn btn btn-secondary h-12 sm:h-10 w-full sm:w-auto"
+            className="dismiss-btn px-5 py-2.5 text-sm font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             Dismiss
           </button>
@@ -195,12 +231,12 @@ export function OpportunityCard({
       {hasDraft && !hasPostedResponse && (
         <div
           data-testid="card-actions"
-          className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-4"
+          className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 sm:justify-end"
         >
           <button
             type="button"
             onClick={() => onDismiss(opportunity._id)}
-            className="dismiss-btn btn btn-secondary h-12 sm:h-10 w-full sm:w-auto"
+            className="dismiss-btn px-5 py-2.5 text-sm font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             Dismiss
           </button>

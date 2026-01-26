@@ -99,9 +99,10 @@ export function StepAccount({ profileId, onBack, onNext }: StepAccountProps) {
             </p>
           </div>
           <button
+            type="button"
             onClick={testConnection}
             disabled={isTesting}
-            className="btn btn-outline"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isTesting ? 'Testing...' : 'Test Connection'}
           </button>
@@ -173,17 +174,20 @@ export function StepAccount({ profileId, onBack, onNext }: StepAccountProps) {
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+          <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {/* Navigation */}
-      <div className="flex gap-4 pt-4">
+      <div className="flex gap-3 pt-4">
         <button
           type="button"
           onClick={onBack}
-          className="btn btn-secondary flex-1"
+          className="flex-1 px-5 py-2.5 text-sm font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
         >
           Back
         </button>
@@ -191,11 +195,7 @@ export function StepAccount({ profileId, onBack, onNext }: StepAccountProps) {
           type="button"
           onClick={createAccount}
           disabled={!canProceed}
-          className={`btn flex-1 ${
-            canProceed
-              ? 'btn-primary'
-              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-          }`}
+          className="flex-1 px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isCreating ? 'Creating...' : 'Next'}
         </button>

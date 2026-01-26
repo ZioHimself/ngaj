@@ -169,7 +169,10 @@ export function StepProfile({ initialData, onNext }: StepProfileProps) {
 
       {/* Submit */}
       <div className="pt-4">
-        <button type="submit" className="btn btn-primary w-full">
+        <button
+          type="submit"
+          className="w-full px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+        >
           Next
         </button>
       </div>

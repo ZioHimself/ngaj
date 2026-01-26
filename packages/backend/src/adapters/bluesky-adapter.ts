@@ -27,18 +27,27 @@ interface BlueskyApiError {
  * Used for type-safe casting when the @atproto/api types don't match runtime behavior.
  */
 interface AgentPostingMethods {
-  getPost(params: { uri: string }): Promise<GetPostResponse>;
+  getPostThread(params: { uri: string; depth?: number }): Promise<GetPostThreadResponse>;
   post(params: { text: string; reply?: ReplyRef }): Promise<PostResponse>;
   session?: { handle: string };
 }
 
-interface GetPostResponse {
-  value: {
+interface ThreadViewPost {
+  post: {
     uri: string;
     cid: string;
-    reply?: {
-      root: { uri: string; cid: string };
+    record: {
+      reply?: {
+        root: { uri: string; cid: string };
+        parent: { uri: string; cid: string };
+      };
     };
+  };
+}
+
+interface GetPostThreadResponse {
+  data: {
+    thread: ThreadViewPost;
   };
 }
 
@@ -249,22 +258,25 @@ export class BlueskyAdapter implements IPlatformAdapter {
     const agentForPosting = this.agent as unknown as AgentPostingMethods;
 
     try {
-      // 1. Fetch parent post to get CID and reply.root (for threading)
-      const parentPost = await agentForPosting.getPost({ uri: parentPostId });
+      // 1. Fetch parent post thread to get CID and reply.root (for threading)
+      const threadResponse = await agentForPosting.getPostThread({ uri: parentPostId, depth: 0 });
 
-      if (!parentPost || !parentPost.value) {
+      if (!threadResponse?.data?.thread?.post) {
         throw new PostNotFoundError('bluesky', parentPostId);
       }
 
+      const parentPost = threadResponse.data.thread.post;
+
       // 2. Construct reply structure
+      // If parent has a reply.root, use it; otherwise parent is the root
       const reply: ReplyRef = {
         parent: {
-          uri: parentPost.value.uri,
-          cid: parentPost.value.cid,
+          uri: parentPost.uri,
+          cid: parentPost.cid,
         },
-        root: parentPost.value.reply?.root || {
-          uri: parentPost.value.uri,
-          cid: parentPost.value.cid,
+        root: parentPost.record?.reply?.root || {
+          uri: parentPost.uri,
+          cid: parentPost.cid,
         },
       };
 

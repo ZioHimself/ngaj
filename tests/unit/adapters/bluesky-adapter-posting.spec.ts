@@ -16,7 +16,7 @@ describe('BlueskyAdapter', () => {
     // Mock BskyAgent
     mockAgent = {
       post: vi.fn(),
-      getPost: vi.fn(),
+      getPostThread: vi.fn(),
       getProfile: vi.fn()
     };
 
@@ -30,12 +30,16 @@ describe('BlueskyAdapter', () => {
         const responseText = 'Great point! I agree with your analysis.';
         const handle = 'user.bsky.social';
 
-        // Mock getPost (fetch parent)
-        mockAgent.getPost.mockResolvedValue({
-          value: {
-            uri: parentPostId,
-            cid: 'parent-cid-123',
-            reply: undefined // Root post (no parent)
+        // Mock getPostThread (fetch parent)
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: {
+                uri: parentPostId,
+                cid: 'parent-cid-123',
+                record: {} // Root post (no reply in record)
+              }
+            }
           }
         });
 
@@ -79,10 +83,15 @@ describe('BlueskyAdapter', () => {
         const parentPostId = 'at://did:plc:parent.../post/123';
         const platformTimestamp = '2026-01-04T15:30:45.123Z';
 
-        mockAgent.getPost.mockResolvedValue({
-          value: {
-            uri: parentPostId,
-            cid: 'cid-123'
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: {
+                uri: parentPostId,
+                cid: 'cid-123',
+                record: {}
+              }
+            }
           }
         });
 
@@ -106,11 +115,15 @@ describe('BlueskyAdapter', () => {
         const parentPostId = 'at://did:plc:alice.../app.bsky.feed.post/root123';
         const responseText = 'Great post!';
 
-        mockAgent.getPost.mockResolvedValue({
-          value: {
-            uri: parentPostId,
-            cid: 'root-cid-123',
-            reply: undefined // This IS the root (no parent)
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: {
+                uri: parentPostId,
+                cid: 'root-cid-123',
+                record: {} // This IS the root (no reply in record)
+              }
+            }
           }
         });
 
@@ -146,18 +159,24 @@ describe('BlueskyAdapter', () => {
         const responseText = 'I agree with both of you!';
 
         // Parent post is itself a reply (part of existing thread)
-        mockAgent.getPost.mockResolvedValue({
-          value: {
-            uri: parentPostId,
-            cid: 'parent-cid-456',
-            reply: {
-              root: {
-                uri: rootPostId,
-                cid: 'root-cid-123'
-              },
-              parent: {
-                uri: 'at://did:plc:alice.../post/original',
-                cid: 'original-cid'
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: {
+                uri: parentPostId,
+                cid: 'parent-cid-456',
+                record: {
+                  reply: {
+                    root: {
+                      uri: rootPostId,
+                      cid: 'root-cid-123'
+                    },
+                    parent: {
+                      uri: 'at://did:plc:alice.../post/original',
+                      cid: 'original-cid'
+                    }
+                  }
+                }
               }
             }
           }
@@ -195,10 +214,15 @@ describe('BlueskyAdapter', () => {
         const handle = 'testuser.bsky.social';
         const postUri = 'at://did:plc:abc.../app.bsky.feed.post/3l2uuuyqkb22a';
 
-        mockAgent.getPost.mockResolvedValue({
-          value: {
-            uri: 'at://did:plc:parent.../post/123',
-            cid: 'cid-123'
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: {
+                uri: 'at://did:plc:parent.../post/123',
+                cid: 'cid-123',
+                record: {}
+              }
+            }
           }
         });
 
@@ -221,8 +245,12 @@ describe('BlueskyAdapter', () => {
         const handle = 'user-name.test.bsky.social'; // Hyphens, multiple dots
         const postUri = 'at://did:plc:abc.../app.bsky.feed.post/xyz789';
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         mockAgent.post.mockResolvedValue({
@@ -244,8 +272,12 @@ describe('BlueskyAdapter', () => {
       it('should handle Unicode and emoji in response text', async () => {
         const responseText = '🚀 Great point! 你好 Let\'s collaborate 💡';
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         mockAgent.post.mockResolvedValue({
@@ -272,7 +304,7 @@ describe('BlueskyAdapter', () => {
         const authError = new Error('Invalid token');
         (authError as any).status = 401;
 
-        mockAgent.getPost.mockRejectedValue(authError);
+        mockAgent.getPostThread.mockRejectedValue(authError);
 
         await expect(
           adapter.post('at://parent', 'Response')
@@ -297,8 +329,12 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockRejectedValue(rateLimitError);
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         await expect(
@@ -320,7 +356,7 @@ describe('BlueskyAdapter', () => {
         const notFoundError = new Error('Post not found');
         (notFoundError as any).status = 404;
 
-        mockAgent.getPost.mockRejectedValue(notFoundError);
+        mockAgent.getPostThread.mockRejectedValue(notFoundError);
 
         const parentPostId = 'at://did:plc:abc.../post/deleted';
 
@@ -345,8 +381,12 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockRejectedValue(timeoutError);
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         await expect(
@@ -370,8 +410,12 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockRejectedValue(connError);
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         await expect(
@@ -384,8 +428,12 @@ describe('BlueskyAdapter', () => {
 
         mockAgent.post.mockRejectedValue(unknownError);
 
-        mockAgent.getPost.mockResolvedValue({
-          value: { uri: 'at://parent', cid: 'cid-123' }
+        mockAgent.getPostThread.mockResolvedValue({
+          data: {
+            thread: {
+              post: { uri: 'at://parent', cid: 'cid-123', record: {} }
+            }
+          }
         });
 
         await expect(

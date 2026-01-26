@@ -15,6 +15,26 @@ import {
   type AccountDocument,
   type ProfileDocument,
 } from '../types/documents.js';
+import { createComponentLogger, sanitizeError } from '../utils/logger.js';
+import type pino from 'pino';
+
+// Lazy-initialized discovery component logger to support test injection
+let _discoveryLogger: pino.Logger | null = null;
+
+function getDiscoveryLogger(): pino.Logger {
+  if (!_discoveryLogger) {
+    _discoveryLogger = createComponentLogger('discovery');
+  }
+  return _discoveryLogger;
+}
+
+/**
+ * Reset the discovery logger (for testing)
+ * This allows tests to inject a new destination
+ */
+export function resetDiscoveryLogger(): void {
+  _discoveryLogger = null;
+}
 
 /**
  * Discovery service interface
@@ -66,6 +86,15 @@ export class DiscoveryService implements IDiscoveryService {
    * @throws DiscoveryError on failure
    */
   async discover(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]> {
+    const log = getDiscoveryLogger().child({
+      accountId: accountId.toString(),
+      discoveryType,
+      component: 'discovery',
+    });
+
+    const startTime = Date.now();
+    log.info('Discovery starting');
+
     try {
       // 1. Load account and profile
       const accountsCollection = this.db.collection<AccountDocument>('accounts');
@@ -88,6 +117,7 @@ export class DiscoveryService implements IDiscoveryService {
 
       // 3. Determine "since" parameter
       const since = schedule.lastRunAt || new Date(Date.now() - this.DEFAULT_LOOKBACK_HOURS * 60 * 60 * 1000);
+      log.debug({ since: since.toISOString() }, 'Fetching posts since');
 
       // 4. Fetch posts from platform
       let posts: RawPost[];
@@ -98,14 +128,21 @@ export class DiscoveryService implements IDiscoveryService {
         const keywords = profile.discovery.keywords;
         if (keywords.length === 0) {
           // Skip search if no keywords configured
+          log.info({ postCount: 0, keywords: [] }, 'No keywords configured, skipping search');
           await this.updateDiscoverySuccess(accountId, discoveryType);
           return [];
         }
+        log.debug({ keywords }, 'Searching with keywords');
         posts = await this.platformAdapter.searchPosts(keywords, { since, limit: 50 });
       }
 
+      log.info({ postCount: posts.length }, 'Posts fetched from platform');
+
       // 5. Process each post
       const opportunities: OpportunityDocument[] = [];
+      let skippedDuplicates = 0;
+      let skippedLowScore = 0;
+
       for (const post of posts) {
         // Check for duplicate
         const opportunitiesCollection = this.db.collection<OpportunityDocument>('opportunities');
@@ -114,6 +151,7 @@ export class DiscoveryService implements IDiscoveryService {
           postId: post.id
         });
         if (existing) {
+          skippedDuplicates++;
           continue; // Skip duplicate
         }
 
@@ -153,6 +191,7 @@ export class DiscoveryService implements IDiscoveryService {
 
         // Filter by threshold
         if (score.total < this.DEFAULT_SCORE_THRESHOLD) {
+          skippedLowScore++;
           continue; // Skip low-scoring opportunities
         }
 
@@ -193,8 +232,16 @@ export class DiscoveryService implements IDiscoveryService {
       // 6. Update account discovery status
       await this.updateDiscoverySuccess(accountId, discoveryType);
 
+      const durationMs = Date.now() - startTime;
+      log.debug({ skippedDuplicates, skippedLowScore }, 'Scoring complete');
+      log.info(
+        { created: opportunities.length, skippedDuplicates, skippedLowScore, durationMs },
+        'Discovery complete'
+      );
+
       return opportunities;
     } catch (error) {
+      log.error({ err: sanitizeError(error) }, 'Discovery failed');
       // Update error status
       await this.updateDiscoveryError(accountId, error as Error);
       throw error;

@@ -7,6 +7,35 @@ import {
   type OpportunityDocument,
   type AccountDocument,
 } from '../types/documents.js';
+import { createComponentLogger, sanitizeError } from '../utils/logger.js';
+import type pino from 'pino';
+
+// Lazy-initialized scheduler component logger to support test injection
+let _schedulerLogger: pino.Logger | null = null;
+
+function getSchedulerLogger(): pino.Logger {
+  if (!_schedulerLogger) {
+    _schedulerLogger = createComponentLogger('scheduler');
+  }
+  return _schedulerLogger;
+}
+
+/**
+ * Reset the scheduler logger (for testing)
+ * This allows tests to inject a new destination
+ */
+export function resetSchedulerLogger(): void {
+  _schedulerLogger = null;
+}
+
+// Getter for scheduler logger
+const schedulerLogger = {
+  get info() { return getSchedulerLogger().info.bind(getSchedulerLogger()); },
+  get debug() { return getSchedulerLogger().debug.bind(getSchedulerLogger()); },
+  get warn() { return getSchedulerLogger().warn.bind(getSchedulerLogger()); },
+  get error() { return getSchedulerLogger().error.bind(getSchedulerLogger()); },
+  child(bindings: object) { return getSchedulerLogger().child(bindings); },
+};
 
 /**
  * Cron scheduler interface
@@ -51,9 +80,17 @@ export class CronScheduler implements ICronScheduler {
    * Registers cron jobs for each enabled discovery type
    */
   async initialize(): Promise<void> {
+    schedulerLogger.info('Loading accounts from database');
+
     // Load all active accounts from database
     const accountsCollection = this.db.collection<AccountDocument>('accounts');
     const accounts = await accountsCollection.find().toArray();
+
+    // Filter to active accounts only for count
+    const activeAccounts = accounts.filter(a => a.status === 'active');
+    schedulerLogger.info({ accountCount: activeAccounts.length }, 'Accounts loaded');
+
+    let jobCount = 0;
 
     // Register jobs for each enabled schedule
     for (const account of accounts) {
@@ -65,6 +102,10 @@ export class CronScheduler implements ICronScheduler {
       // Register a job for each enabled schedule
       for (const schedule of account.discovery.schedules) {
         if (!schedule.enabled) {
+          schedulerLogger.debug(
+            { accountId: account._id.toString(), type: schedule.type },
+            'Schedule disabled, skipping'
+          );
           continue;
         }
 
@@ -82,14 +123,27 @@ export class CronScheduler implements ICronScheduler {
         );
 
         this.jobs.set(jobKey, job);
+        jobCount++;
+
+        schedulerLogger.info(
+          {
+            accountId: account._id.toString(),
+            type: schedule.type,
+            cron: schedule.cronExpression,
+          },
+          'Job registered'
+        );
       }
     }
+
+    schedulerLogger.info({ jobCount }, 'Scheduler initialized');
   }
 
   /**
    * Start all cron jobs
    */
   start(): void {
+    schedulerLogger.info('Scheduler started');
     this.running = true;
     for (const job of this.jobs.values()) {
       job.start();
@@ -100,6 +154,7 @@ export class CronScheduler implements ICronScheduler {
    * Stop all cron jobs
    */
   stop(): void {
+    schedulerLogger.info('Scheduler stopped');
     this.running = false;
     for (const job of this.jobs.values()) {
       job.stop();
@@ -132,7 +187,28 @@ export class CronScheduler implements ICronScheduler {
    * @returns Created opportunities
    */
   async triggerNow(accountId: ObjectId, discoveryType: DiscoveryType): Promise<OpportunityDocument[]> {
-    return await this.discoveryService.discover(accountId, discoveryType);
+    const jobLogger = schedulerLogger.child({
+      accountId: accountId.toString(),
+      discoveryType,
+    });
+
+    const startTime = Date.now();
+    jobLogger.info('Discovery job starting');
+
+    try {
+      const opportunities = await this.discoveryService.discover(accountId, discoveryType);
+      const durationMs = Date.now() - startTime;
+
+      jobLogger.info(
+        { opportunityCount: opportunities.length, durationMs },
+        'Discovery job completed'
+      );
+
+      return opportunities;
+    } catch (error) {
+      jobLogger.error({ err: sanitizeError(error) }, 'Discovery job failed');
+      throw error;
+    }
   }
 
   /**
@@ -155,11 +231,25 @@ export class CronScheduler implements ICronScheduler {
    * Handles errors gracefully to prevent crashing the scheduler
    */
   private async executeDiscovery(accountId: ObjectId, discoveryType: DiscoveryType): Promise<void> {
+    const jobLogger = schedulerLogger.child({
+      accountId: accountId.toString(),
+      discoveryType,
+    });
+
+    const startTime = Date.now();
+    jobLogger.info('Discovery job starting');
+
     try {
-      await this.discoveryService.discover(accountId, discoveryType);
+      const opportunities = await this.discoveryService.discover(accountId, discoveryType);
+      const durationMs = Date.now() - startTime;
+
+      jobLogger.info(
+        { opportunityCount: opportunities.length, durationMs },
+        'Discovery job completed'
+      );
     } catch (error) {
       // Log error but don't crash the scheduler
-      console.error(`Discovery failed for ${accountId}:${discoveryType}:`, error);
+      jobLogger.error({ err: sanitizeError(error) }, 'Discovery job failed');
     }
   }
 

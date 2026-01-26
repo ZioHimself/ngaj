@@ -99,7 +99,7 @@ function App() {
             ) : hasProfile ? (
               <Navigate to="/opportunities" replace />
             ) : (
-              <SetupWizard />
+              <SetupWizard onSetupComplete={() => setHasProfile(true)} />
             )
           }
         />

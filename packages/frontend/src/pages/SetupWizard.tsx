@@ -19,7 +19,11 @@ import {
 
 type WizardStep = 1 | 2 | 3;
 
-export function SetupWizard() {
+interface SetupWizardProps {
+  onSetupComplete: () => void;
+}
+
+export function SetupWizard({ onSetupComplete }: SetupWizardProps) {
   const navigate = useNavigate();
   const [state, setState] = useState<WizardState>({
     currentStep: 1,
@@ -95,7 +99,8 @@ export function SetupWizard() {
   };
 
   const handleWizardComplete = () => {
-    // Redirect to opportunities page
+    // Update profile state and redirect to opportunities page
+    onSetupComplete();
     navigate('/opportunities');
   };
 

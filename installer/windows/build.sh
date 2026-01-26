@@ -126,7 +126,10 @@ echo "Creating installer package..."
 cd "${PAYLOAD_DIR}"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
   # Windows: use PowerShell's Compress-Archive (built-in, no external deps)
-  powershell -Command "Compress-Archive -Path '${PAYLOAD_DIR}/*' -DestinationPath '${OUTPUT_ZIP}' -Force"
+  # Convert Unix paths to Windows paths for PowerShell
+  WIN_PAYLOAD_DIR=$(cygpath -w "${PAYLOAD_DIR}")
+  WIN_OUTPUT_ZIP=$(cygpath -w "${OUTPUT_ZIP}")
+  powershell -Command "Compress-Archive -Path '${WIN_PAYLOAD_DIR}\\*' -DestinationPath '${WIN_OUTPUT_ZIP}' -Force"
 else
   # macOS/Linux: use zip command
   zip -r "${OUTPUT_ZIP}" .

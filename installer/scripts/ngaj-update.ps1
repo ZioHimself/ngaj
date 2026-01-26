@@ -4,9 +4,13 @@
 # Features:
 # - Ensures Docker Desktop is running
 # - Pulls latest backend and setup images
+# - Generates new login secret
 # - Displays update status
 
 $ErrorActionPreference = "Stop"
+
+$NgajHome = "$env:LOCALAPPDATA\ngaj"
+$EnvFile = "$NgajHome\.env"
 
 # Header
 Clear-Host
@@ -83,11 +87,41 @@ try {
     exit 1
 }
 
+# Generate new login secret
+Write-Host ""
+Write-Host "Generating new login secret..." -ForegroundColor Cyan
+$bytes = New-Object byte[] 3
+[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$newSecret = [BitConverter]::ToString($bytes) -replace '-', ''
+
+if (-not (Test-Path $NgajHome)) {
+    New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
+}
+
+if (Test-Path $EnvFile) {
+    $envContent = Get-Content $EnvFile -Raw
+    if ($envContent -match "(?m)^LOGIN_SECRET=") {
+        # Update existing line
+        $envContent = $envContent -replace "(?m)^LOGIN_SECRET=.*", "LOGIN_SECRET=$newSecret"
+        Set-Content -Path $EnvFile -Value $envContent.TrimEnd() -NoNewline
+        Add-Content -Path $EnvFile -Value ""
+    } else {
+        # Add new line
+        Add-Content -Path $EnvFile -Value "LOGIN_SECRET=$newSecret"
+    }
+} else {
+    # Create .env file with LOGIN_SECRET
+    Set-Content -Path $EnvFile -Value "LOGIN_SECRET=$newSecret"
+}
+Write-Host "New login secret generated" -ForegroundColor Green
+
 # Display success message
 Write-Host ""
 Write-Host "=======================================" -ForegroundColor Green
-Write-Host "      ngaj images updated!            " -ForegroundColor Green
+Write-Host "      ngaj updated!                   " -ForegroundColor Green
 Write-Host "=======================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "  New login code: $newSecret" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "To apply the update, restart ngaj:"
 Write-Host "  1. Stop ngaj (close the terminal window)"

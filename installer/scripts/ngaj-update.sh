@@ -5,9 +5,13 @@
 # Features:
 # - Ensures Docker Desktop is running
 # - Pulls latest backend and setup images
+# - Generates new login secret
 # - Displays update status
 
 set -e
+
+NGAJ_HOME="${HOME}/.ngaj"
+ENV_FILE="${NGAJ_HOME}/.env"
 
 # Colors for terminal output
 RED='\033[0;31m'
@@ -78,11 +82,35 @@ else
     exit 1
 fi
 
+# Generate new login secret
+echo ""
+echo -e "${BLUE}Generating new login secret...${NC}"
+NEW_SECRET=$(openssl rand -hex 3 | tr '[:lower:]' '[:upper:]')
+
+if [ -f "${ENV_FILE}" ]; then
+    # Update existing LOGIN_SECRET or add it
+    if grep -q "^LOGIN_SECRET=" "${ENV_FILE}"; then
+        # Update existing line
+        sed -i.bak "s/^LOGIN_SECRET=.*/LOGIN_SECRET=${NEW_SECRET}/" "${ENV_FILE}"
+        rm -f "${ENV_FILE}.bak"
+    else
+        # Add new line
+        echo "LOGIN_SECRET=${NEW_SECRET}" >> "${ENV_FILE}"
+    fi
+else
+    # Create .env file with LOGIN_SECRET
+    mkdir -p "${NGAJ_HOME}"
+    echo "LOGIN_SECRET=${NEW_SECRET}" > "${ENV_FILE}"
+fi
+echo -e "${GREEN}✓ New login secret generated${NC}"
+
 # Display success message
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
-echo -e "${GREEN}      ✅ ngaj images updated!          ${NC}"
+echo -e "${GREEN}      ✅ ngaj updated!                 ${NC}"
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
+echo ""
+echo -e "  New login code: ${YELLOW}${NEW_SECRET}${NC}"
 echo ""
 echo "To apply the update, restart ngaj:"
 echo "  1. Stop ngaj (Ctrl+C or close the terminal)"

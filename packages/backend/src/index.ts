@@ -2,11 +2,17 @@ import express, { Express, Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import type { Db } from 'mongodb';
+import { BskyAgent } from '@atproto/api';
 import { connectToDatabase, closeDatabaseConnection, getDatabase } from './config/database.js';
 import { WizardService } from './services/wizard-service.js';
 import { configureSession } from './middleware/session.js';
 import { authMiddleware } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
+import { CronScheduler, type ICronScheduler } from './scheduler/cron-scheduler.js';
+import { DiscoveryService } from './services/discovery-service.js';
+import { ScoringService } from './services/scoring-service.js';
+import { BlueskyAdapter } from './adapters/bluesky-adapter.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +35,67 @@ app.use(authMiddleware);
 
 // Auth routes (login, logout, status)
 app.use('/api/auth', authRoutes);
+
+// ============================================================================
+// Scheduler Instance (Issue #35)
+// ============================================================================
+
+// Module-level scheduler instance
+let scheduler: ICronScheduler | null = null;
+
+/**
+ * Create and configure the CronScheduler with all dependencies.
+ * 
+ * This function:
+ * 1. Checks for Bluesky credentials in environment
+ * 2. Creates authenticated BskyAgent
+ * 3. Builds dependency chain: BlueskyAdapter -> ScoringService -> DiscoveryService -> CronScheduler
+ * 
+ * @param db - MongoDB database instance
+ * @returns CronScheduler instance, or null if credentials are missing
+ * 
+ * @see ADR-008: Opportunity Discovery Architecture
+ */
+export async function createScheduler(db: Db): Promise<ICronScheduler | null> {
+  const handle = process.env.BLUESKY_HANDLE;
+  const appPassword = process.env.BLUESKY_APP_PASSWORD;
+
+  // Skip scheduler creation if credentials are missing
+  if (!handle || !appPassword) {
+    console.log('⚠️ Bluesky credentials not configured - scheduler disabled');
+    return null;
+  }
+
+  try {
+    // 1. Create and authenticate BskyAgent
+    const agent = new BskyAgent({ service: 'https://bsky.social' });
+    const identifier = handle.startsWith('@') ? handle.slice(1) : handle;
+    await agent.login({ identifier, password: appPassword });
+    console.log('✅ Bluesky authentication successful');
+
+    // 2. Create dependencies
+    const platformAdapter = new BlueskyAdapter(agent);
+    const scoringService = new ScoringService();
+    const discoveryService = new DiscoveryService(db, platformAdapter, scoringService);
+
+    // 3. Create scheduler
+    const cronScheduler = new CronScheduler(db, discoveryService);
+
+    return cronScheduler;
+  } catch (error) {
+    console.error('❌ Failed to create scheduler:', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
+/**
+ * Get the running scheduler instance.
+ * 
+ * @returns Current scheduler instance, or null if not initialized
+ */
+export function getScheduler(): ICronScheduler | null {
+  return scheduler;
+}
 
 // Health check endpoint (public route - allowed by auth middleware)
 app.get('/health', (_req: Request, res: Response) => {
@@ -343,10 +410,25 @@ async function startServer() {
     await connectToDatabase();
     console.log('✅ Connected to MongoDB');
 
+    // Initialize scheduler (Issue #35)
+    const db = getDatabase();
+    scheduler = await createScheduler(db);
+    
+    if (scheduler) {
+      await scheduler.initialize();
+      console.log('✅ Scheduler initialized');
+    }
+
     // Start Express server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+
+      // Start scheduler after server is listening (Issue #35)
+      if (scheduler) {
+        scheduler.start();
+        console.log('✅ Scheduler started - discovery jobs active');
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -357,12 +439,26 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  
+  // Stop scheduler first (Issue #35)
+  if (scheduler) {
+    scheduler.stop();
+    console.log('✅ Scheduler stopped');
+  }
+  
   await closeDatabaseConnection();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
+  
+  // Stop scheduler first (Issue #35)
+  if (scheduler) {
+    scheduler.stop();
+    console.log('✅ Scheduler stopped');
+  }
+  
   await closeDatabaseConnection();
   process.exit(0);
 });

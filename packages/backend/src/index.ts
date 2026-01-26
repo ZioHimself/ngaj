@@ -150,6 +150,136 @@ app.patch('/api/accounts/:id', async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+// Opportunities API Endpoints (ADR-013)
+// ============================================================================
+
+// Get opportunities (paginated)
+app.get('/api/opportunities', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { status, limit = '20', offset = '0' } = req.query;
+
+    // Build query - get first account for now (MVP simplification)
+    const accountsCollection = db.collection('accounts');
+    const account = await accountsCollection.findOne({});
+    
+    if (!account) {
+      // No account configured - return empty list
+      res.json({
+        opportunities: [],
+        total: 0,
+        hasMore: false,
+      });
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = { accountId: account._id };
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const opportunitiesCollection = db.collection('opportunities');
+    const limitNum = Math.min(parseInt(limit as string, 10) || 20, 100);
+    const offsetNum = parseInt(offset as string, 10) || 0;
+
+    const opportunities = await opportunitiesCollection
+      .find(query)
+      .sort({ 'scoring.total': -1 })
+      .skip(offsetNum)
+      .limit(limitNum)
+      .toArray();
+
+    const total = await opportunitiesCollection.countDocuments(query);
+
+    // Populate authors
+    const authorsCollection = db.collection('authors');
+    const populatedOpportunities = await Promise.all(
+      opportunities.map(async (opp) => {
+        const author = await authorsCollection.findOne({ _id: opp.authorId });
+        return { ...opp, author };
+      })
+    );
+
+    res.json({
+      opportunities: populatedOpportunities,
+      total,
+      hasMore: offsetNum + opportunities.length < total,
+    });
+  } catch (error) {
+    console.error('Error fetching opportunities:', error);
+    res.status(500).json({ error: 'Failed to fetch opportunities' });
+  }
+});
+
+// ============================================================================
+// Responses API Endpoints (ADR-009, ADR-010)
+// ============================================================================
+
+// Get responses for opportunities
+app.get('/api/responses', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { opportunityIds } = req.query;
+
+    if (!opportunityIds) {
+      res.json({ responses: [] });
+      return;
+    }
+
+    const ids = (opportunityIds as string).split(',').filter(Boolean);
+    if (ids.length === 0) {
+      res.json({ responses: [] });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const responsesCollection = db.collection('responses');
+    
+    const responses = await responsesCollection
+      .find({ opportunityId: { $in: ids.map(id => new ObjectId(id)) } })
+      .toArray();
+
+    res.json({ responses });
+  } catch (error) {
+    console.error('Error fetching responses:', error);
+    res.status(500).json({ error: 'Failed to fetch responses' });
+  }
+});
+
+// Update opportunity status (dismiss, etc.)
+app.patch('/api/opportunities/:id', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      res.status(400).json({ error: 'Status is required' });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const opportunitiesCollection = db.collection('opportunities');
+    
+    const result = await opportunitiesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status, updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      res.status(404).json({ error: 'Opportunity not found' });
+      return;
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating opportunity:', error);
+    res.status(500).json({ error: 'Failed to update opportunity' });
+  }
+});
+
+// ============================================================================
 // Placeholder routes for future implementation
 // ============================================================================
 

@@ -47,7 +47,7 @@ describe('runSetupWizard', () => {
     // Default: successful prompts
     mockPromptBluesky.mockResolvedValue(validBlueskyCredentials);
     mockPromptAnthropic.mockResolvedValue(validAnthropicCredentials);
-    mockWriteEnvFile.mockResolvedValue(undefined);
+    mockWriteEnvFile.mockResolvedValue({ loginSecret: 'ABCD-EFGH-IJKL-MNOP' });
     
     // Suppress console output during tests
     vi.spyOn(console, 'log').mockImplementation(() => {});

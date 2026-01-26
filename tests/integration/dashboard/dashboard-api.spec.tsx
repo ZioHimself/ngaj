@@ -98,9 +98,9 @@ describe('Dashboard API Integration', () => {
       // Act
       render(<OpportunitiesDashboard accountId="acc-1" />);
 
-      // Assert - error message should be shown
+      // Assert - error message should be shown (use heading which is unique)
       await waitFor(() => {
-        expect(screen.getByText(/error|failed|try again/i)).toBeInTheDocument();
+        expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
       });
     });
 
@@ -640,9 +640,9 @@ describe('Dashboard API Integration', () => {
       // Act
       render(<OpportunitiesDashboard accountId="acc-1" />);
 
-      // Assert
+      // Assert - matches "No pending opportunities" or similar variants
       await waitFor(() => {
-        expect(screen.getByText(/no opportunities/i)).toBeInTheDocument();
+        expect(screen.getByText(/no.*opportunities/i)).toBeInTheDocument();
       });
     });
 

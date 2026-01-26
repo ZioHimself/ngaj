@@ -85,7 +85,7 @@ Write-Host "Docker is ready" -ForegroundColor Green
 # Pull setup container
 Write-Host ""
 Write-Host "Pulling ngaj setup container..."
-docker pull ziohimself/ngaj-setup:latest
+docker pull ziohimself/ngaj-setup:stable
 
 # Run setup wizard with volume mount
 Write-Host ""
@@ -93,7 +93,7 @@ Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host "       Credentials Setup              " -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host ""
-docker run --rm -it -v "${NgajHome}:/data" ziohimself/ngaj-setup:latest
+docker run --rm -it -v "${NgajHome}:/data" ziohimself/ngaj-setup:stable
 
 # Check if setup completed (.env exists)
 if (-not (Test-Path "$NgajHome\.env")) {

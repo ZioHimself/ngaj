@@ -14,7 +14,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 
 **Key Components**:
 - OS-specific installer scripts (macOS bash, Windows PowerShell)
-- Pre-built setup container (`ziohimself/ngaj-setup:latest`) with Node.js CLI wizard
+- Pre-built setup container (`ziohimself/ngaj-setup:stable`) with Node.js CLI wizard
 - Docker Compose configuration for production services
 - Volume-mounted credential storage
 
@@ -35,7 +35,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 - Launch setup container
 
 **Phase 2: Containerized Setup Wizard** (Platform-Agnostic)
-- Pull `ziohimself/ngaj-setup:latest` from Docker Hub
+- Pull `ziohimself/ngaj-setup:stable` from Docker Hub
 - Run interactive CLI wizard inside container
 - Collect and validate credentials
 - Write `.env` file to mounted volume (`~/.ngaj/.env` on host)
@@ -65,7 +65,7 @@ The installation and setup system provides a zero-prerequisites installation exp
 
 ### 2.1 Container Specification
 
-**Image**: `ziohimself/ngaj-setup:latest` (pre-built on Docker Hub)
+**Image**: `ziohimself/ngaj-setup:stable` (pre-built on Docker Hub)
 - Base: `node:20-alpine` (~50MB)
 - Dependencies: `inquirer.js`, `@atproto/api`, `@anthropic-ai/sdk`
 - Entrypoint: Interactive Node.js CLI script
@@ -131,7 +131,7 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 - Check for Docker (`command -v docker`)
 - Download Docker Desktop if missing (curl + dmg mount)
 - Wait for Docker daemon (`until docker info &> /dev/null; do sleep 1; done`)
-- Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
+- Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
 - Run setup container with volume mount
 - Start production services (`docker-compose up -d`)
 - Open browser (`open http://localhost:3000`)
@@ -147,7 +147,7 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 - Check for Docker (`Get-Command docker`)
 - Download Docker Desktop if missing (Invoke-WebRequest + silent install)
 - Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-- Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
+- Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
 - Run setup container with volume mount
 - Start production services (`docker-compose up -d`)
 - Open browser (`Start-Process "http://localhost:3000"`)

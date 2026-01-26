@@ -97,7 +97,7 @@ The release workflow will build Docker images for `linux/amd64` and `linux/arm64
 After release, verify both architectures:
 
 ```bash
-docker manifest inspect ziohimself/ngaj-backend:latest
+docker manifest inspect ziohimself/ngaj-backend:stable
 # Should show: linux/amd64, linux/arm64
 ```
 

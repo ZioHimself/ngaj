@@ -39,11 +39,18 @@ COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
 # Install production dependencies only for both workspaces
 RUN npm ci --workspace=@ngaj/shared --workspace=@ngaj/backend --omit=dev
 
+# Create non-root user for security (least privilege principle)
+# UID 1000 is the common default for first non-root user on Linux
+RUN adduser -D -u 1000 backend
+
 # Set environment
 ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
+
+# Switch to non-root user
+USER backend
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

@@ -2,11 +2,77 @@
  * File System Validator Utilities
  *
  * Utilities for validating file system structure after installation.
- * Validates app bundles, start scripts, and shortcuts.
+ * Validates app bundles, start scripts, shortcuts, and volume mounts.
  *
  * @see ADR-011: Installation and Setup Architecture (Section 7)
  * @see 012-application-launcher-handoff.md (Section 4)
  */
+
+import { writeFileSync, unlinkSync, statSync } from 'fs';
+
+// ==========================================================================
+// Volume Mount Validation
+// ==========================================================================
+
+/**
+ * Result from data volume mount validation
+ */
+export interface DataVolumeMountResult {
+  /** Whether the volume is properly mounted */
+  mounted: boolean;
+  /** Whether the volume is writable */
+  writable: boolean;
+  /** Error message if validation failed */
+  error?: string;
+}
+
+/**
+ * Validate that /data is a properly mounted volume and is writable.
+ *
+ * This check should run BEFORE collecting any user credentials to avoid
+ * wasting user time if the volume isn't properly configured.
+ *
+ * @returns Validation result with mount and write status
+ */
+export function validateDataVolumeMount(): DataVolumeMountResult {
+  const dataPath = '/data';
+  const testFile = `${dataPath}/.write-test-${Date.now()}`;
+
+  // Check if /data is a mount point (different device than root)
+  try {
+    const dataStats = statSync(dataPath);
+    const rootStats = statSync('/');
+
+    // If same device, /data is not a mounted volume
+    if (dataStats.dev === rootStats.dev) {
+      return {
+        mounted: false,
+        writable: false,
+        error: 'Volume not mounted. Run with: docker run -v ~/.ngaj:/data ...',
+      };
+    }
+  } catch {
+    return {
+      mounted: false,
+      writable: false,
+      error: '/data directory does not exist. Run with: docker run -v ~/.ngaj:/data ...',
+    };
+  }
+
+  // Test write permissions
+  try {
+    writeFileSync(testFile, 'test');
+    unlinkSync(testFile);
+    return { mounted: true, writable: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      mounted: true,
+      writable: false,
+      error: `Cannot write to /data: ${message}. Check host directory permissions.`,
+    };
+  }
+}
 
 /**
  * Validation result with details

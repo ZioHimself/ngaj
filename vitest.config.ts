@@ -34,7 +34,7 @@ export default defineConfig({
       }
     },
     include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx'],
-    exclude: ['node_modules', 'dist', '.agents/artifacts', 'packages/*/dist']
+    exclude: ['node_modules', 'dist', '.agents/artifacts', 'packages/*/dist', 'tests/e2e/**']
   },
   resolve: {
     alias: {

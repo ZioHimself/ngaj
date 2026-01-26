@@ -51,7 +51,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ziohimself/ngaj-backend:latest
+            ziohimself/ngaj-backend:stable
             ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
 
       - name: Build and push setup image
@@ -62,7 +62,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ziohimself/ngaj-setup:latest
+            ziohimself/ngaj-setup:stable
             ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
 
   # Build native installers

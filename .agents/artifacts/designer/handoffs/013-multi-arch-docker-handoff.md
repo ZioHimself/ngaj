@@ -57,12 +57,12 @@ These tests require a published release and should be documented for manual exec
 
 #### Scenario: Multi-arch manifest exists
 **Given**: A released Docker image on Docker Hub
-**When**: Running `docker manifest inspect ziohimself/ngaj-backend:latest`
+**When**: Running `docker manifest inspect ziohimself/ngaj-backend:stable`
 **Then**: Manifest shows both `linux/amd64` and `linux/arm64` platforms
 
 **Verification Command**:
 ```bash
-docker manifest inspect ziohimself/ngaj-backend:latest | grep -A2 '"architecture"'
+docker manifest inspect ziohimself/ngaj-backend:stable | grep -A2 '"architecture"'
 # Should show both: "amd64" and "arm64"
 ```
 
@@ -70,13 +70,13 @@ docker manifest inspect ziohimself/ngaj-backend:latest | grep -A2 '"architecture
 
 #### Scenario: Native pull on Apple Silicon
 **Given**: An Apple Silicon Mac with Docker Desktop
-**When**: Running `docker pull ziohimself/ngaj-backend:latest`
+**When**: Running `docker pull ziohimself/ngaj-backend:stable`
 **Then**: Pulled image has `arm64` architecture
 
 **Verification Command**:
 ```bash
-docker pull ziohimself/ngaj-backend:latest
-docker inspect ziohimself/ngaj-backend:latest --format '{{.Architecture}}'
+docker pull ziohimself/ngaj-backend:stable
+docker inspect ziohimself/ngaj-backend:stable --format '{{.Architecture}}'
 # Should output: arm64
 ```
 
@@ -84,13 +84,13 @@ docker inspect ziohimself/ngaj-backend:latest --format '{{.Architecture}}'
 
 #### Scenario: Native pull on Intel/AMD
 **Given**: An Intel/AMD machine with Docker
-**When**: Running `docker pull ziohimself/ngaj-backend:latest`
+**When**: Running `docker pull ziohimself/ngaj-backend:stable`
 **Then**: Pulled image has `amd64` architecture
 
 **Verification Command**:
 ```bash
-docker pull ziohimself/ngaj-backend:latest
-docker inspect ziohimself/ngaj-backend:latest --format '{{.Architecture}}'
+docker pull ziohimself/ngaj-backend:stable
+docker inspect ziohimself/ngaj-backend:stable --format '{{.Architecture}}'
 # Should output: amd64
 ```
 
@@ -98,7 +98,7 @@ docker inspect ziohimself/ngaj-backend:latest --format '{{.Architecture}}'
 
 #### Scenario: Container starts on arm64
 **Given**: Pulled arm64 image on Apple Silicon Mac
-**When**: Running `docker run --rm ziohimself/ngaj-backend:latest node --version`
+**When**: Running `docker run --rm ziohimself/ngaj-backend:stable node --version`
 **Then**: Container starts and outputs Node.js version
 
 **Acceptance Criteria**:

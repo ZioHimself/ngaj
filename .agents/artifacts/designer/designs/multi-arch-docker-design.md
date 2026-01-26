@@ -30,7 +30,7 @@ docker:
         file: packages/backend/Dockerfile
         push: true
         tags: |
-          ziohimself/ngaj-backend:latest
+          ziohimself/ngaj-backend:stable
           ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
 ```
 
@@ -88,7 +88,7 @@ docker:
         push: true
         platforms: linux/amd64,linux/arm64  # NEW
         tags: |
-          ziohimself/ngaj-backend:latest
+          ziohimself/ngaj-backend:stable
           ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
 
     - name: Build and push setup image
@@ -99,7 +99,7 @@ docker:
         push: true
         platforms: linux/amd64,linux/arm64  # NEW
         tags: |
-          ziohimself/ngaj-setup:latest
+          ziohimself/ngaj-setup:stable
           ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
 ```
 
@@ -140,7 +140,7 @@ docker:
 ┌─────────────────────────────────────────────────┐
 │ Docker Hub: Multi-Arch Manifest                 │
 │                                                 │
-│ ziohimself/ngaj-backend:latest                  │
+│ ziohimself/ngaj-backend:stable                  │
 │   ├── linux/amd64 → sha256:abc...               │
 │   └── linux/arm64 → sha256:def...               │
 └─────────────────────────────────────────────────┘
@@ -150,11 +150,11 @@ docker:
 
 ```bash
 # On Intel/AMD Mac or x64 Linux:
-docker pull ziohimself/ngaj-backend:latest
+docker pull ziohimself/ngaj-backend:stable
 # → Automatically pulls linux/amd64 image
 
 # On Apple Silicon Mac or ARM Linux:
-docker pull ziohimself/ngaj-backend:latest
+docker pull ziohimself/ngaj-backend:stable
 # → Automatically pulls linux/arm64 image
 ```
 
@@ -194,15 +194,15 @@ After deployment, verify multi-arch support:
 
 ```bash
 # Check manifest
-docker manifest inspect ziohimself/ngaj-backend:latest
+docker manifest inspect ziohimself/ngaj-backend:stable
 
 # Expected output includes both:
 # "platform": { "architecture": "amd64", "os": "linux" }
 # "platform": { "architecture": "arm64", "os": "linux" }
 
 # Test on Apple Silicon Mac (native pull)
-docker pull ziohimself/ngaj-backend:latest
-docker inspect ziohimself/ngaj-backend:latest | grep Architecture
+docker pull ziohimself/ngaj-backend:stable
+docker inspect ziohimself/ngaj-backend:stable | grep Architecture
 # → "Architecture": "arm64"
 ```
 

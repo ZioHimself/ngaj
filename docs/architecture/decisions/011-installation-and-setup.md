@@ -3,7 +3,8 @@
 ## Status
 
 **Accepted** - January 18, 2026  
-**Updated** - January 24, 2026 (Added: Application Launcher for day-2 restart experience)
+**Updated** - January 24, 2026 (Added: Application Launcher for day-2 restart experience)  
+**Updated** - January 26, 2026 (Changed: Named volumes for database storage, non-root backend user)
 
 ## Context
 
@@ -42,7 +43,7 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 - Uninstall instructions (manual for v0.1)
 
 **What's downloaded during installation:**
-- Setup container image (`ziohimself/ngaj-setup:latest`, ~50MB) - Pulled from Docker Hub
+- Setup container image (`ziohimself/ngaj-setup:stable`, ~50MB) - Pulled from Docker Hub
 - Production container images (~300MB) - Pulled by Docker Compose
 
 **What's NOT bundled:**
@@ -72,10 +73,10 @@ We will implement a **Docker-based self-contained installer** that downloads dep
                      ↓
 ┌─────────────────────────────────────────────────┐
 │ 4. Launch setup container                       │
-│    → docker pull ziohimself/ngaj-setup:latest (~50MB)     │
+│    → docker pull ziohimself/ngaj-setup:stable (~50MB)     │
 │    → docker run --rm -it \                      │
 │         -v ~/.ngaj:/data \                      │
-│         ziohimself/ngaj-setup:latest                       │
+│         ziohimself/ngaj-setup:stable                       │
 └─────────────────────────────────────────────────┘
                      ↓
 ┌─────────────────────────────────────────────────┐
@@ -141,10 +142,13 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 
 ~/.ngaj/                               # User data directory
   ├── .env                             # Secrets (Bluesky, Claude API)
-  ├── data/
-  │   ├── mongodb/                     # Persistent MongoDB data
-  │   └── chromadb/                    # Persistent ChromaDB data
   └── logs/                            # Application logs
+
+# Database storage: Docker named volumes (managed by Docker)
+# - ngaj-mongodb (MongoDB data)
+# - ngaj-chromadb (ChromaDB data)
+# Location: /var/lib/docker/volumes/ (Linux/macOS) or Docker Desktop VM (Windows/macOS)
+# Backup: docker run --rm -v ngaj-mongodb:/data -v $(pwd):/backup alpine tar cvf /backup/mongo.tar /data
 
 # Windows
 C:\Program Files\ngaj\                 # Application directory
@@ -154,9 +158,6 @@ C:\Program Files\ngaj\                 # Application directory
 
 C:\Users\<user>\AppData\Local\ngaj\   # User data directory
   ├── .env                             # Secrets
-  ├── data\
-  │   ├── mongodb\                     # Persistent MongoDB data
-  │   └── chromadb\                    # Persistent ChromaDB data
   └── logs\                            # Application logs
 ```
 
@@ -169,16 +170,22 @@ C:\Users\<user>\AppData\Local\ngaj\   # User data directory
 - `ngaj-frontend` (Served as static files by backend in production)
 
 **Setup Container (separate, not in docker-compose):**
-- `ziohimself/ngaj-setup:latest` (pre-built on Docker Hub)
+- `ziohimself/ngaj-setup:stable` (pre-built on Docker Hub)
   - Node.js runtime
   - inquirer.js for prompts
   - Bluesky/Claude API clients for validation
   - Runs temporarily during installation, then destroyed
 
 **Volume Mounts:**
-- `~/.ngaj/data/mongodb:/data/db` (MongoDB persistence)
-- `~/.ngaj/data/chromadb:/chroma/chroma` (ChromaDB persistence)
-- `~/.ngaj/.env` (environment variables, read by backend)
+- `ngaj-mongodb:/data/db` (MongoDB persistence, Docker named volume)
+- `ngaj-chromadb:/chroma/chroma` (ChromaDB persistence, Docker named volume)
+- `~/.ngaj/.env` (environment variables, injected by Docker at container start)
+
+**Why Named Volumes (not bind mounts):**
+- Better performance on macOS/Windows (avoids osxfs/grpcfuse overhead)
+- No UID permission mismatches between host and container
+- Docker handles permissions automatically
+- Cleaner for non-technical users (no visible data directories)
 
 **Network:**
 - Internal Docker network for service communication
@@ -428,12 +435,12 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
   - Check for Docker Desktop (`command -v docker`)
   - Download if missing (curl + dmg mount + copy to /Applications)
   - Wait for Docker daemon (`until docker info &> /dev/null; do sleep 1; done`)
-  - Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
+  - Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
   - Run setup container with volume mount:
     ```bash
     docker run --rm -it \
       -v ~/.ngaj:/data \
-      ziohimself/ngaj-setup:latest
+      ziohimself/ngaj-setup:stable
     ```
   - Start production services (`cd /Applications/ngaj && docker-compose up -d`)
   - Open browser (`open http://localhost:3000`)
@@ -445,12 +452,12 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
   - Check for Docker Desktop (`Get-Command docker`)
   - Download if missing (Invoke-WebRequest + silent install)
   - Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-  - Pull setup container (`docker pull ziohimself/ngaj-setup:latest`)
+  - Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
   - Run setup container with volume mount:
     ```powershell
     docker run --rm -it `
       -v "$env:USERPROFILE\.ngaj:/data" `
-      ziohimself/ngaj-setup:latest
+      ziohimself/ngaj-setup:stable
     ```
   - Start production services (`cd "C:\Program Files\ngaj"; docker-compose up -d`)
   - Open browser (`Start-Process "http://localhost:3000"`)
@@ -461,7 +468,7 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
 
 **Type Definitions:** `packages/shared/src/types/setup.ts` - Platform-abstracted credential types
 
-**Image:** Pre-built `ziohimself/ngaj-setup:latest` on Docker Hub
+**Image:** Pre-built `ziohimself/ngaj-setup:stable` on Docker Hub
 - Base: `node:20-alpine` (~50MB)
 - Dependencies: inquirer.js, @atproto/api, @anthropic-ai/sdk
 - Entrypoint: `/app/setup.js` (interactive wizard)

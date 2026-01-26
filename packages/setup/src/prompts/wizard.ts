@@ -15,6 +15,7 @@ export async function runSetupWizard(): Promise<SetupConfiguration> {
   // Step 1: Collect Bluesky credentials
   console.log('[1/2] Bluesky Credentials');
   console.log('────────────────────────────');
+  console.log('ℹ️  Create an app password at: https://bsky.app/settings/app-passwords\n');
   const blueskyCredentials = await promptBlueskyCredentials();
   
   console.log('');

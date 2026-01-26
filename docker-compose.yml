@@ -9,6 +9,11 @@
 # Prerequisites:
 # - ~/.ngaj/.env must exist with credentials (created by setup wizard)
 # - Docker Desktop running
+#
+# Data Storage:
+# - Uses named volumes (managed by Docker) for better security and performance
+# - To backup: docker run --rm -v ngaj-mongodb:/data -v $(pwd):/backup alpine tar cvf /backup/mongo.tar /data
+# - To use bind mounts instead, create docker-compose.override.yml
 
 services:
   mongodb:
@@ -16,7 +21,7 @@ services:
     container_name: ngaj-mongodb
     restart: unless-stopped
     volumes:
-      - ${HOME}/.ngaj/data/mongodb:/data/db
+      - ngaj-mongodb:/data/db
     networks:
       - ngaj-network
     healthcheck:
@@ -31,7 +36,7 @@ services:
     container_name: ngaj-chromadb
     restart: unless-stopped
     volumes:
-      - ${HOME}/.ngaj/data/chromadb:/chroma/chroma
+      - ngaj-chromadb:/chroma/chroma
     networks:
       - ngaj-network
     healthcheck:
@@ -42,7 +47,7 @@ services:
       start_period: 10s
 
   backend:
-    image: ziohimself/ngaj-backend:latest
+    image: ziohimself/ngaj-backend:stable
     container_name: ngaj-backend
     restart: unless-stopped
     ports:
@@ -70,3 +75,7 @@ services:
 networks:
   ngaj-network:
     driver: bridge
+
+volumes:
+  ngaj-mongodb:
+  ngaj-chromadb:

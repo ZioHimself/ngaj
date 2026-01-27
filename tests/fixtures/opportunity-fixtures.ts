@@ -18,7 +18,7 @@ export const createMockOpportunity = (
   overrides?: Partial<Opportunity>
 ): Opportunity => {
   const discoveredAt = new Date('2026-01-01T12:00:00Z');
-  const expiresAt = new Date(discoveredAt.getTime() + 48 * 60 * 60 * 1000); // 48 hours later
+  const expiresAt = new Date(discoveredAt.getTime() + 4 * 60 * 60 * 1000); // 4 hours later (ADR-018)
   
   // Generate unique postId by default (can be overridden)
   const uniqueId = new ObjectId().toString();
@@ -94,7 +94,7 @@ export const createMockOpportunityInput = (
   overrides?: Partial<CreateOpportunityInput>
 ): CreateOpportunityInput => {
   const discoveredAt = new Date('2026-01-01T12:00:00Z');
-  const expiresAt = new Date(discoveredAt.getTime() + 48 * 60 * 60 * 1000);
+  const expiresAt = new Date(discoveredAt.getTime() + 4 * 60 * 60 * 1000); // 4 hours (ADR-018)
   
   // Generate unique postId by default (can be overridden)
   const uniqueId = new ObjectId().toString();
@@ -238,7 +238,7 @@ export const createOpportunityFixtures = (accountId: ObjectId, authorId: ObjectI
   expired: createMockOpportunity(accountId, authorId, {
     status: 'expired',
     discoveredAt: new Date('2025-12-28T12:00:00Z'),
-    expiresAt: new Date('2025-12-30T12:00:00Z'), // 48 hours later, in the past
+    expiresAt: new Date('2025-12-28T16:00:00Z'), // 4 hours later, in the past (ADR-018)
     content: {
       text: 'Expired opportunity',
       createdAt: new Date('2025-12-28T11:00:00Z')

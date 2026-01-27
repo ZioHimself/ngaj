@@ -22,7 +22,7 @@
 
 3. ✅ **Comprehensive Test Coverage** - 93.8% statement coverage with 270 passing tests, including meaningful unit, integration, and workflow tests
 
-4. ✅ **Sophisticated Scoring Algorithm** - Properly implements exponential decay for recency (60% weight) and logarithmic scale for impact (40% weight) as specified in ADR-008
+4. ✅ **Sophisticated Scoring Algorithm** - Properly implements exponential decay for recency (70% weight) and logarithmic scale for impact (30% weight) as updated in ADR-018
 
 5. ✅ **Robust Error Handling** - Discovery errors update account status without crashing the scheduler; graceful degradation throughout
 
@@ -250,9 +250,9 @@ Overall (16 files)      |   93.8  |    84.56 |   96.93 |   93.93
 - ✅ **Matches ADR-008 Specification** - Multi-schedule design implemented exactly as specified
 - ✅ **Implements All Required Interfaces** - `IDiscoveryService`, `IPlatformAdapter`, `ICronScheduler` fully implemented
 - ✅ **Data Models Consistent** - `Opportunity`, `Author`, `RawPost`, `RawAuthor` match design doc schemas
-- ✅ **Scoring Formula Correct** - 60% recency (exponential decay), 40% impact (logarithmic scale)
+- ✅ **Scoring Formula Correct** - 70% recency (exponential decay), 30% impact (logarithmic scale) - updated in ADR-018
 - ✅ **Threshold Enforcement** - Default 30 enforced (env configurable via `DISCOVERY_MIN_SCORE`)
-- ✅ **TTL Management** - 48-hour expiration calculated and enforced
+- ✅ **TTL Management** - 4-hour expiration calculated and enforced (reduced from 48h in ADR-018)
 
 ### ADR Compliance
 

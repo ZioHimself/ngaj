@@ -113,7 +113,7 @@ export interface Opportunity<TId = string> {
 
   /**
    * When this opportunity will expire
-   * Calculated: discoveredAt + OPPORTUNITY_TTL_HOURS (default: 48h)
+   * Calculated: discoveredAt + OPPORTUNITY_TTL_HOURS (default: 4h, reduced from 48h in ADR-018)
    */
   expiresAt: Date;
 

@@ -183,19 +183,21 @@ We will implement **Option B: Multiple Schedules per Discovery Type**.
 
 ### Scoring Formula
 
-**Recency** (60% weight): Exponential decay based on post age
+> **Note:** Scoring weights updated by [ADR-018](./018-expiration-mechanics.md) to 70% recency / 30% impact.
+
+~~**Recency** (60% weight)~~ → **70% weight** (ADR-018): Exponential decay based on post age
 - Posts < 2 minutes: ~100 points
 - Posts @ 30 minutes: ~37 points  
 - Posts @ 2 hours: ~1 point
 - Formula: `e^(-ageInMinutes / 30) * 100`
 
-**Impact** (40% weight): Logarithmic scale of reach and engagement
+~~**Impact** (40% weight)~~ → **30% weight** (ADR-018): Logarithmic scale of reach and engagement
 - Author follower count: `log10(followers)`
 - Post likes: `log10(likes + 1)`
 - Post reposts: `log10(reposts + 1)`
 - Normalized to 0-100
 
-**Total Score**: `(0.6 * recency) + (0.4 * impact)`
+**Total Score**: ~~`(0.6 * recency) + (0.4 * impact)`~~ → `(0.7 * recency) + (0.3 * impact)` (ADR-018)
 
 **Threshold**: Configurable via `DISCOVERY_MIN_SCORE` env var (default: 30)
 
@@ -245,7 +247,7 @@ interface Opportunity {
   discoveryType: 'replies' | 'search';  // How it was found
   status: 'pending' | 'responded' | 'dismissed' | 'expired';
   discoveredAt: Date;
-  expiresAt: Date;  // Auto-calculated: discoveredAt + 48 hours
+  expiresAt: Date;  // Auto-calculated: discoveredAt + 4 hours (reduced from 48h in ADR-018)
   updatedAt: Date;
 }
 ```

@@ -364,7 +364,7 @@ describe('Opportunity Repository - Database Integration', () => {
       const futureOpp = createMockOpportunity(accountId, authorId, {
         status: 'pending',
         discoveredAt: new Date(),
-        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000) // Future
+        expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000) // 4 hours future (ADR-018)
       });
 
       await opportunities.insertMany([expiredOpp1, expiredOpp2, futureOpp]);
@@ -400,7 +400,7 @@ describe('Opportunity Repository - Database Integration', () => {
       const opportunities = db.collection('opportunities');
 
       const discoveredAt = new Date('2026-01-01T12:00:00Z');
-      const ttlHours = 48;
+      const ttlHours = 4; // Updated from 48 in ADR-018
       const expectedExpiresAt = new Date(discoveredAt.getTime() + ttlHours * 60 * 60 * 1000);
 
       const opportunity = createMockOpportunity(accountId, authorId, {

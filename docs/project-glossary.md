@@ -15,7 +15,7 @@
 - **Voice**: User's tone, style, and communication preferences used to guide AI response generation. Freeform text field in profile (e.g., "Friendly but professional. Technical but accessible.").
 - **Engagement**: The act of responding to or interacting with social media posts
 - **Platform**: Social media service (e.g., Bluesky, LinkedIn, Reddit) that ngaj integrates with. **Note for agents**: "Platform" is reserved for social networks in this project. Use "OS" or "Operating System" for macOS/Windows/Linux. Use "Native Installer" for OS-specific installer packages (.pkg, .msi).
-- **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 60% recency (exponential decay) + 40% impact (reach and engagement)
+- **Scoring**: Algorithm that ranks opportunities by relevance using weighted components: 70% recency (exponential decay) + 30% impact (reach and engagement). Updated from 60/40 in ADR-018 to prioritize fresh content.
 - **Recency Score**: Time-based score component (0-100) using exponential decay. Posts < 2 min = ~100, 30 min = ~37, 2 hours = ~1.
 - **Impact Score**: Reach/engagement score component (0-100) using logarithmic scale of author followers + post likes + reposts
 - **Dashboard**: Prioritized list of pending opportunities awaiting user review, sorted by total score descending
@@ -33,6 +33,9 @@
 - **Synchronous Processing**: Upload workflow where user waits for processing to complete (vs. background job queue)
 - **Atomic Operation**: Database operation that either fully succeeds or fully fails with rollback (e.g., upload creates MongoDB + ChromaDB + filesystem entries together)
 - **Hard Delete**: Permanent removal of data from all systems (MongoDB, ChromaDB, filesystem) with no recovery option
+- **Cleanup Service**: Scheduled background job (runs every 5 minutes) that marks expired opportunities and hard-deletes stale data. Handles cascade deletion of associated responses.
+- **Bulk Dismiss**: Feature to dismiss multiple opportunities at once via `POST /api/opportunities/bulk-dismiss`. Reduces manual effort when processing many items.
+- **Selection Mode**: UI mode for multi-selecting opportunities. Entered via long-press (mobile) or checkbox click (desktop). Enables bulk dismiss and "Select others" actions.
 - **Storage Limit**: Configurable maximum disk space per profile (default: 100MB total, 10MB per file)
 - **Cron Job**: Scheduled task that runs discovery at regular intervals. Multiple schedules supported per account (e.g., replies every 15 min, search every 2 hours).
 - **Cron Expression**: Time schedule format (e.g., '*/15 * * * *' = every 15 minutes, '0 */2 * * *' = every 2 hours)
@@ -43,7 +46,7 @@
 - **Platform Adapter**: Interface abstraction for platform-specific API calls, enabling multi-platform support. Implements fetchReplies, searchPosts, getAuthor methods.
 - **Upsert**: Database operation that updates a document if it exists, inserts if it doesn't. Used for author records to keep data fresh.
 - **Exponential Decay**: Mathematical function (e^(-age/factor)) used for recency scoring. Older posts decay rapidly, recent posts score high.
-- **Opportunity TTL**: Time-to-live for pending opportunities before automatic expiration (default: 48 hours from discovery)
+- **Opportunity TTL**: Time-to-live for pending opportunities before automatic expiration (default: 4 hours from discovery). Reduced from 48 hours in ADR-018 to minimize stale data.
 - **Platform Constraints**: Platform-specific rules for response generation (character limits, formatting support). Provided by Platform Adapters. v0.1: Only maxLength (Bluesky: 300 chars).
 - **Two-Stage Pipeline**: Response generation architecture using two AI calls: (1) Analysis stage extracts concepts/keywords from opportunity, (2) Generation stage creates response using KB chunks found via keywords.
 - **Prompt Protection**: Security mechanism using boundary markers to prevent prompt injection attacks. Untrusted opportunity text placed after `--- USER INPUT BEGINS ---` marker and treated as data, not instructions. **First-occurrence rule**: Only the first boundary marker is processed; subsequent occurrences in user content are treated as literal text, preventing "escape" attacks.

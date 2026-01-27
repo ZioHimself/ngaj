@@ -60,7 +60,7 @@ function createOpportunity(id: string, overrides?: Record<string, unknown>) {
     discoveryType: 'replies',
     status: 'pending',
     discoveredAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours (ADR-018)
     updatedAt: new Date().toISOString(),
     author,
     ...overrides,

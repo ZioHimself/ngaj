@@ -42,7 +42,7 @@ export const createDashboardOpportunity = (
 ): OpportunityWithAuthor<string> => {
   const author = createDashboardAuthor(overrides?.author);
   const discoveredAt = new Date('2026-01-01T12:00:00Z');
-  const expiresAt = new Date(discoveredAt.getTime() + 48 * 60 * 60 * 1000);
+  const expiresAt = new Date(discoveredAt.getTime() + 4 * 60 * 60 * 1000); // 4 hours (ADR-018)
 
   return {
     _id: 'opp-1',

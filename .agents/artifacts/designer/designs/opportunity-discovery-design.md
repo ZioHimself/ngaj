@@ -94,7 +94,7 @@ interface Opportunity {
     /** Impact score (0-100), based on reach and engagement */
     impact: number;
     
-    /** Total weighted score: (0.6 * recency) + (0.4 * impact) */
+    /** Total weighted score: (0.7 * recency) + (0.3 * impact) - updated in ADR-018 */
     total: number;
   };
 
@@ -121,7 +121,7 @@ interface Opportunity {
 
   /**
    * When this opportunity will expire
-   * Calculated: discoveredAt + OPPORTUNITY_TTL_HOURS (default: 48h)
+   * Calculated: discoveredAt + OPPORTUNITY_TTL_HOURS (default: 4h - reduced from 48h in ADR-018)
    */
   expiresAt: Date;
 
@@ -417,7 +417,7 @@ interface OpportunityScore {
 **Scoring Algorithm**:
 
 ```typescript
-// Recency Score (60% weight)
+// Recency Score (70% weight - updated in ADR-018)
 function calculateRecencyScore(postCreatedAt: Date): number {
   const ageInMinutes = (Date.now() - postCreatedAt.getTime()) / (1000 * 60);
   const decayFactor = 30;  // Minutes for ~37% decay (1/e)
@@ -448,9 +448,9 @@ function calculateImpactScore(
   return Math.max(0, Math.min(100, normalizedScore));
 }
 
-// Total Score
+// Total Score (weights updated in ADR-018: 70/30)
 function calculateTotalScore(recency: number, impact: number): number {
-  return (0.6 * recency) + (0.4 * impact);
+  return (0.7 * recency) + (0.3 * impact);
 }
 ```
 
@@ -1078,7 +1078,7 @@ db.authors.updateOne(
 ```bash
 # Discovery Configuration
 DISCOVERY_MIN_SCORE=30                    # Minimum score threshold (0-100)
-OPPORTUNITY_TTL_HOURS=48                  # Hours until opportunity expires
+OPPORTUNITY_TTL_HOURS=4                   # Hours until opportunity expires (reduced from 48h in ADR-018)
 DISCOVERY_FALLBACK_HOURS=2                # Lookback window if lastRunAt is undefined
 
 # Bluesky Configuration (per ADR-002)

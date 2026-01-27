@@ -287,7 +287,7 @@
 # Testing (optional, defaults provided)
 MONGO_URI=mongodb://localhost:27017
 DISCOVERY_MIN_SCORE=30
-OPPORTUNITY_TTL_HOURS=48
+OPPORTUNITY_TTL_HOURS=4  # Reduced from 48 in ADR-018
 DISCOVERY_FALLBACK_HOURS=2
 ```
 

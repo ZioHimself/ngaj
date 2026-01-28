@@ -35,6 +35,7 @@ jobs:
           file: packages/backend/Dockerfile
           push: true
           platforms: linux/amd64
+          provenance: false
           tags: |
             ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-amd64
 
@@ -45,6 +46,7 @@ jobs:
           file: packages/setup/Dockerfile
           push: true
           platforms: linux/amd64
+          provenance: false
           tags: |
             ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-amd64
 
@@ -76,6 +78,7 @@ jobs:
           file: packages/backend/Dockerfile
           push: true
           platforms: linux/arm64
+          provenance: false
           tags: |
             ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-arm64
 
@@ -86,6 +89,7 @@ jobs:
           file: packages/setup/Dockerfile
           push: true
           platforms: linux/arm64
+          provenance: false
           tags: |
             ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-arm64
 

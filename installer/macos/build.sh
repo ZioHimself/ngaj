@@ -70,17 +70,27 @@ cp -R "${APP_BUNDLE_DIR}" "${DMG_DIR}/"
 # Create Applications symlink for drag-to-install UX
 ln -s /Applications "${DMG_DIR}/Applications"
 
-# Create DMG using hdiutil
-# -volname: Volume name shown in Finder
-# -srcfolder: Source folder to package
-# -ov: Overwrite existing DMG
-# -format: UDZO = compressed, UDBZ = bzip2 compressed (smaller)
+# Create temporary read-write DMG first (needed to set volume icon)
+TEMP_DMG="${BUILD_DIR}/temp.dmg"
 hdiutil create \
     -volname "ngaj ${VERSION}" \
     -srcfolder "${DMG_DIR}" \
     -ov \
-    -format UDZO \
-    "${OUTPUT_DMG}"
+    -format UDRW \
+    "${TEMP_DMG}"
+
+# Mount the temporary DMG to set volume icon
+MOUNT_DIR=$(hdiutil attach "${TEMP_DMG}" -readwrite -noverify | grep "/Volumes/" | sed 's/.*\(\/Volumes\/.*\)/\1/')
+
+# Copy icon and set custom icon flag on volume
+cp "${SCRIPT_DIR}/resources/ngaj.icns" "${MOUNT_DIR}/.VolumeIcon.icns"
+SetFile -a C "${MOUNT_DIR}"
+
+# Unmount
+hdiutil detach "${MOUNT_DIR}"
+
+# Convert to compressed read-only DMG
+hdiutil convert "${TEMP_DMG}" -format UDZO -o "${OUTPUT_DMG}"
 
 # Clean up build directory
 rm -rf "${BUILD_DIR}"

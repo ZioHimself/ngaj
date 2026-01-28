@@ -448,6 +448,56 @@ app.post('/api/responses/:id/post', async (req: Request, res: Response) => {
   }
 });
 
+// Update response text (ADR-009)
+app.patch('/api/responses/:id', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { id } = req.params;
+    const { text } = req.body;
+
+    // Validate text is provided and non-empty
+    if (!text || typeof text !== 'string' || text.trim() === '') {
+      res.status(400).json({ error: 'text is required and must be non-empty' });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const responsesCollection = db.collection('responses');
+
+    // Load response to validate it exists and is a draft
+    const response = await responsesCollection.findOne({ _id: new ObjectId(id) });
+    
+    if (!response) {
+      res.status(404).json({ error: `Response with ID ${id} not found` });
+      return;
+    }
+
+    if (response.status !== 'draft') {
+      res.status(400).json({ error: `Cannot update response with status: ${response.status}` });
+      return;
+    }
+
+    // Update the response text
+    const result = await responsesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { text: text.trim(), updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      res.status(404).json({ error: `Response with ID ${id} not found` });
+      return;
+    }
+
+    // Return updated response
+    const updatedResponse = await responsesCollection.findOne({ _id: new ObjectId(id) });
+    res.json(updatedResponse);
+  } catch (error) {
+    console.error('Error updating response:', error);
+    const message = error instanceof Error ? error.message : 'Failed to update response';
+    res.status(500).json({ error: message });
+  }
+});
+
 // Update opportunity status (dismiss, etc.)
 app.patch('/api/opportunities/:id', async (req: Request, res: Response) => {
   try {

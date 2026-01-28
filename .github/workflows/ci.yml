@@ -158,7 +158,8 @@ jobs:
       - name: Verify installer scripts syntax
         run: |
           bash -n installer/macos/build.sh
-          bash -n installer/scripts/postinstall.sh
+          bash -n installer/macos/ngaj-launcher
+          bash -n installer/scripts/ngaj-setup.sh
           bash -n installer/scripts/ngaj-start.sh
 
       - name: Build macOS installer package

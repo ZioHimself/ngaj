@@ -106,6 +106,19 @@ describe('Bulk Dismiss API Integration Tests', () => {
         }
       }).filter((id): id is ObjectId => id !== null);
 
+      // Find pending opportunities BEFORE updating (to compute skipped list accurately)
+      const pendingDocs = await db
+        .collection('opportunities')
+        .find({
+          _id: { $in: objectIds },
+          accountId: account._id,
+          status: 'pending',
+        })
+        .project({ _id: 1 })
+        .toArray();
+
+      const pendingIdStrings = new Set(pendingDocs.map((o) => o._id.toString()));
+
       // Update only pending opportunities belonging to this account
       const result = await db.collection('opportunities').updateMany(
         {
@@ -118,18 +131,8 @@ describe('Bulk Dismiss API Integration Tests', () => {
         }
       );
 
-      // Find skipped IDs (not found or not pending)
-      const updatedIds = await db
-        .collection('opportunities')
-        .find({
-          _id: { $in: objectIds },
-          status: 'dismissed',
-        })
-        .project({ _id: 1 })
-        .toArray();
-
-      const updatedIdStrings = new Set(updatedIds.map((o) => o._id.toString()));
-      const skipped = opportunityIds.filter((id) => !updatedIdStrings.has(id));
+      // Skipped = input IDs that were NOT pending (or not found, or wrong account)
+      const skipped = opportunityIds.filter((id) => !pendingIdStrings.has(id));
 
       const response: BulkDismissResponse = {
         dismissed: result.modifiedCount,

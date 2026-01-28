@@ -225,6 +225,7 @@ app.patch('/api/accounts/:id', async (req: Request, res: Response) => {
 // ============================================================================
 
 // Get opportunities (paginated)
+// ADR-018: When querying 'pending' status, exclude opportunities that have expired (expiresAt < now)
 app.get('/api/opportunities', async (req: Request, res: Response) => {
   try {
     const db = getDatabase();
@@ -248,6 +249,11 @@ app.get('/api/opportunities', async (req: Request, res: Response) => {
     const query: any = { accountId: account._id };
     if (status && status !== 'all') {
       query.status = status;
+      // ADR-018: When querying 'pending', also exclude expired opportunities
+      // (those with expiresAt in the past that haven't been marked expired yet)
+      if (status === 'pending') {
+        query.expiresAt = { $gt: new Date() };
+      }
     }
 
     const opportunitiesCollection = db.collection('opportunities');
@@ -471,6 +477,87 @@ app.patch('/api/opportunities/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error updating opportunity:', error);
     res.status(500).json({ error: 'Failed to update opportunity' });
+  }
+});
+
+// ============================================================================
+// Bulk Dismiss API Endpoint (ADR-018)
+// ============================================================================
+
+/**
+ * Bulk dismiss multiple opportunities at once
+ *
+ * Only dismisses pending opportunities belonging to the current account.
+ * Non-pending or other-account opportunities are skipped (not errors).
+ *
+ * @see ADR-018: Expiration Mechanics
+ */
+app.post('/api/opportunities/bulk-dismiss', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const { opportunityIds } = req.body;
+
+    // Validate input
+    if (!opportunityIds || !Array.isArray(opportunityIds) || opportunityIds.length === 0) {
+      res.status(400).json({ error: 'opportunityIds array is required' });
+      return;
+    }
+
+    // Get the current user's account (MVP: single account)
+    const accountsCollection = db.collection('accounts');
+    const account = await accountsCollection.findOne({});
+    if (!account) {
+      res.status(401).json({ error: 'No account found' });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+
+    // Convert string IDs to ObjectIds (filter out invalid IDs)
+    const objectIds: InstanceType<typeof ObjectId>[] = [];
+    for (const id of opportunityIds) {
+      try {
+        objectIds.push(new ObjectId(id));
+      } catch {
+        // Invalid ObjectId format, skip
+      }
+    }
+
+    // Find pending opportunities BEFORE updating (to compute skipped list accurately)
+    const pendingDocs = await db
+      .collection('opportunities')
+      .find({
+        _id: { $in: objectIds },
+        accountId: account._id,
+        status: 'pending',
+      })
+      .project({ _id: 1 })
+      .toArray();
+
+    const pendingIdStrings = new Set(pendingDocs.map((o) => o._id.toString()));
+
+    // Update only pending opportunities belonging to this account
+    const result = await db.collection('opportunities').updateMany(
+      {
+        _id: { $in: objectIds },
+        accountId: account._id,
+        status: 'pending',
+      },
+      {
+        $set: { status: 'dismissed', updatedAt: new Date() },
+      }
+    );
+
+    // Skipped = input IDs that were NOT pending (or not found, or wrong account)
+    const skipped = opportunityIds.filter((id: string) => !pendingIdStrings.has(id));
+
+    res.json({
+      dismissed: result.modifiedCount,
+      skipped,
+    });
+  } catch (error) {
+    console.error('Error bulk dismissing opportunities:', error);
+    res.status(500).json({ error: 'Failed to bulk dismiss opportunities' });
   }
 });
 

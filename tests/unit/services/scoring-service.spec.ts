@@ -30,8 +30,9 @@ describe('ScoringService', () => {
       expect(score.recency).toBeLessThanOrEqual(95);
       expect(score.impact).toBeGreaterThanOrEqual(30);
       expect(score.impact).toBeLessThanOrEqual(36);
-      expect(score.total).toBeGreaterThanOrEqual(67);
-      expect(score.total).toBeLessThanOrEqual(71);
+      // ADR-018: 70/30 weights → 0.7*93.5 + 0.3*33 ≈ 75.4
+      expect(score.total).toBeGreaterThanOrEqual(72);
+      expect(score.total).toBeLessThanOrEqual(78);
     });
 
     it('should return low recency score for old post (6 hours old)', () => {
@@ -52,8 +53,9 @@ describe('ScoringService', () => {
       expect(score.recency).toBeLessThan(1);
       expect(score.impact).toBeGreaterThanOrEqual(75);
       expect(score.impact).toBeLessThanOrEqual(80);
-      expect(score.total).toBeGreaterThanOrEqual(29);
-      expect(score.total).toBeLessThanOrEqual(33);
+      // ADR-018: 70/30 weights → 0.7*0 + 0.3*78 ≈ 23.4
+      expect(score.total).toBeGreaterThanOrEqual(20);
+      expect(score.total).toBeLessThanOrEqual(26);
     });
 
     it('should calculate correct score for middle-aged post (30 minutes)', () => {
@@ -77,8 +79,9 @@ describe('ScoringService', () => {
       // Impact: log10(10000)*10 + log10(21)*3 + log10(11)*3 ≈ 47.1
       expect(score.impact).toBeGreaterThanOrEqual(43);
       expect(score.impact).toBeLessThanOrEqual(48);
-      expect(score.total).toBeGreaterThanOrEqual(38);
-      expect(score.total).toBeLessThanOrEqual(42);
+      // ADR-018: 70/30 weights → 0.7*37 + 0.3*45.5 ≈ 39.5
+      expect(score.total).toBeGreaterThanOrEqual(36);
+      expect(score.total).toBeLessThanOrEqual(43);
     });
 
     it('should return maximum recency score for brand new post (0 minutes)', () => {
@@ -99,8 +102,9 @@ describe('ScoringService', () => {
       expect(score.recency).toBe(100);
       expect(score.impact).toBeGreaterThanOrEqual(35);
       expect(score.impact).toBeLessThanOrEqual(40);
-      expect(score.total).toBeGreaterThanOrEqual(73);
-      expect(score.total).toBeLessThanOrEqual(77);
+      // ADR-018: 70/30 weights → 0.7*100 + 0.3*37 ≈ 81.1
+      expect(score.total).toBeGreaterThanOrEqual(78);
+      expect(score.total).toBeLessThanOrEqual(84);
     });
 
     it('should handle zero engagement post gracefully', () => {

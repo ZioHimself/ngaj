@@ -3,16 +3,20 @@ import type { OpportunityScore, RawPost, RawAuthor } from '@ngaj/shared';
 /**
  * Service responsible for calculating opportunity scores based on recency and impact.
  * 
- * Scoring Formula:
- * - Recency (60%): Exponential decay based on post age (e^(-age/30))
- * - Impact (40%): Logarithmic scale of reach and engagement
- * - Total: (0.6 * recency) + (0.4 * impact)
+ * Scoring Formula (ADR-018: updated from 60/40 to 70/30):
+ * - Recency (70%): Exponential decay based on post age (e^(-age/30))
+ * - Impact (30%): Logarithmic scale of reach and engagement
+ * - Total: (0.7 * recency) + (0.3 * impact)
+ * 
+ * The 70/30 weighting prioritizes fresh opportunities over high-follower stale posts,
+ * which is important given the reduced 4-hour TTL.
  * 
  * @see ADR-008: Opportunity Discovery Architecture
+ * @see ADR-018: Expiration Mechanics (scoring rebalance)
  */
 export class ScoringService {
-  private readonly RECENCY_WEIGHT = 0.6;
-  private readonly IMPACT_WEIGHT = 0.4;
+  private readonly RECENCY_WEIGHT = 0.7;
+  private readonly IMPACT_WEIGHT = 0.3;
   private readonly RECENCY_DECAY_FACTOR = 30; // minutes
 
   /**

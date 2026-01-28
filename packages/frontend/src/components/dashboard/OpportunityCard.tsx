@@ -6,11 +6,15 @@
  *
  * @see ADR-013: Opportunity Dashboard UI
  * @see ADR-015: Mobile-First Responsive Web Design
+ * @see ADR-018: Expiration Mechanics (selection mode)
  */
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import type { OpportunityWithAuthor, Response } from '@ngaj/shared';
 import { ResponseEditor } from './ResponseEditor';
+
+/** Long-press duration for entering selection mode on mobile (ms) */
+const LONG_PRESS_MS = 500;
 
 export interface OpportunityCardProps {
   opportunity: OpportunityWithAuthor<string>;
@@ -21,6 +25,12 @@ export interface OpportunityCardProps {
   onEditResponse: (responseId: string, text: string) => void;
   isGenerating: boolean;
   isPosting: boolean;
+  // Selection mode props (ADR-018)
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (opportunityId: string) => void;
+  onEnterSelectionMode?: () => void;
+  onExpand?: () => void;
 }
 
 /** Maximum character length for truncated text preview */
@@ -74,6 +84,11 @@ export function OpportunityCard({
   onEditResponse,
   isGenerating,
   isPosting,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
+  onEnterSelectionMode,
+  onExpand,
 }: OpportunityCardProps): JSX.Element {
   const { author, content, scoring, status } = opportunity;
   const isPosted = status === 'responded';
@@ -89,6 +104,9 @@ export function OpportunityCard({
   const displayText = shouldShowFullText
     ? content.text
     : truncateText(content.text, MAX_PREVIEW_LENGTH);
+
+  // Long-press timer ref for mobile selection mode
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle response text change
   const handleTextChange = (newText: string) => {
@@ -109,11 +127,68 @@ export function OpportunityCard({
     }
   };
 
+  // Handle checkbox toggle
+  const handleCheckboxChange = useCallback(() => {
+    onToggleSelect?.(opportunity._id);
+  }, [onToggleSelect, opportunity._id]);
+
+  // Handle card click (for selection mode)
+  const handleCardClick = useCallback(() => {
+    if (isSelectionMode) {
+      // In selection mode, clicking toggles selection
+      onToggleSelect?.(opportunity._id);
+    } else {
+      // Not in selection mode, trigger expand if handler provided
+      onExpand?.();
+    }
+  }, [isSelectionMode, onToggleSelect, onExpand, opportunity._id]);
+
+  // Mobile long-press handlers
+  const handleTouchStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      onEnterSelectionMode?.();
+      onToggleSelect?.(opportunity._id);
+    }, LONG_PRESS_MS);
+  }, [onEnterSelectionMode, onToggleSelect, opportunity._id]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  // Compute card classes
+  const cardClasses = [
+    'bg-white border border-slate-200 rounded-xl p-4 sm:p-6 group relative',
+    isPosted ? 'dimmed opacity-60' : '',
+    isSelected ? 'ring-2 ring-blue-500' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <article
       data-testid="opportunity-card"
-      className={`bg-white border border-slate-200 rounded-xl p-4 sm:p-6 ${isPosted ? 'dimmed opacity-60' : ''}`}
+      data-selected={isSelected ? 'true' : undefined}
+      className={cardClasses}
+      onClick={isSelectionMode ? handleCardClick : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
+      {/* Selection checkbox (ADR-018) */}
+      <div
+        className={`absolute top-3 left-3 transition-opacity ${
+          isSelectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={handleCheckboxChange}
+          onClick={(e) => e.stopPropagation()}
+          className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          aria-label={`Select opportunity from ${author.handle}`}
+        />
+      </div>
       {/* Header: Author info and score */}
       <header
         data-testid="card-header"

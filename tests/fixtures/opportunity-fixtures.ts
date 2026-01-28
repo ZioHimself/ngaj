@@ -451,6 +451,10 @@ export const createMockAuthors = (count: number, platform: Platform = 'bluesky')
 /**
  * Sample scoring scenarios for testing
  */
+/**
+ * Scoring test scenarios with expected results
+ * ADR-018: Updated from 60/40 to 70/30 weights (recency/impact)
+ */
 export const scoringScenarios = {
   /**
    * Recent post from small account (high recency, low impact)
@@ -467,7 +471,7 @@ export const scoringScenarios = {
     expectedScore: {
       recency: 93.5, // e^(-2/30) * 100 ≈ 93.5
       impact: 33, // ~33
-      total: 69 // 0.6*93.5 + 0.4*33 ≈ 69.3
+      total: 75 // 0.7*93.5 + 0.3*33 ≈ 75.4 (ADR-018: was 69 with 60/40)
     }
   },
 
@@ -486,7 +490,7 @@ export const scoringScenarios = {
     expectedScore: {
       recency: 0, // ~0
       impact: 78, // ~78
-      total: 31 // 0.6*0 + 0.4*78
+      total: 23 // 0.7*0 + 0.3*78 ≈ 23.4 (ADR-018: was 31 with 60/40)
     }
   },
 
@@ -505,7 +509,7 @@ export const scoringScenarios = {
     expectedScore: {
       recency: 37, // ~37
       impact: 45, // ~45
-      total: 40 // 0.6*37 + 0.4*45
+      total: 39 // 0.7*37 + 0.3*45 ≈ 39.4 (ADR-018: was 40 with 60/40)
     }
   },
 
@@ -524,7 +528,7 @@ export const scoringScenarios = {
     expectedScore: {
       recency: 100, // 100
       impact: 37, // ~37
-      total: 75 // 0.6*100 + 0.4*37
+      total: 81 // 0.7*100 + 0.3*37 ≈ 81.1 (ADR-018: was 75 with 60/40)
     }
   },
 
@@ -543,7 +547,7 @@ export const scoringScenarios = {
     expectedScore: {
       recency: 84, // ~84
       impact: 20, // ~20
-      total: 58 // 0.6*84 + 0.4*20
+      total: 65 // 0.7*84 + 0.3*20 ≈ 64.8 (ADR-018: was 58 with 60/40)
     }
   }
 };

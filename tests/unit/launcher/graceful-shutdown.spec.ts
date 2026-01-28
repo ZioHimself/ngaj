@@ -73,7 +73,7 @@ describe('Graceful Shutdown', () => {
         onShutdown: async () => {
           await handleShutdown({
             exec: mockExec,
-            installDir: '/Applications/ngaj',
+            installDir: '/home/testuser/.ngaj',
             log: mockLog,
           });
         },
@@ -98,7 +98,7 @@ describe('Graceful Shutdown', () => {
         onShutdown: async () => {
           await handleShutdown({
             exec: mockExec,
-            installDir: '/Applications/ngaj',
+            installDir: '/home/testuser/.ngaj',
             log: vi.fn(),
           });
         },
@@ -124,7 +124,7 @@ describe('Graceful Shutdown', () => {
         onShutdown: async () => {
           const result = await handleShutdown({
             exec: mockExec,
-            installDir: '/Applications/ngaj',
+            installDir: '/home/testuser/.ngaj',
             log: vi.fn(),
           });
           if (result.success) {
@@ -155,7 +155,7 @@ describe('Graceful Shutdown', () => {
         onShutdown: async () => {
           await handleShutdown({
             exec: mockExec,
-            installDir: '/Applications/ngaj',
+            installDir: '/home/testuser/.ngaj',
             log: mockLog,
           });
         },
@@ -176,7 +176,7 @@ describe('Graceful Shutdown', () => {
 
       const result = handleShutdown({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         log: vi.fn(),
         timeoutMs: 30000,
       });
@@ -204,7 +204,7 @@ describe('Graceful Shutdown', () => {
 
       const result = await handleShutdown({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         log: mockLog,
       });
 
@@ -307,7 +307,7 @@ describe('Graceful Shutdown', () => {
 
       const result = await handleShutdown({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         log: vi.fn(),
       });
 
@@ -323,7 +323,7 @@ describe('Graceful Shutdown', () => {
 
       const result = await handleShutdown({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         log: vi.fn(),
       });
 
@@ -336,12 +336,12 @@ describe('Graceful Shutdown', () => {
 
       await handleShutdown({
         exec: mockExec,
-        installDir: '/custom/path/ngaj',
+        installDir: '/custom/home/.ngaj',
         log: vi.fn(),
       });
 
       expect(mockExec).toHaveBeenCalledWith(
-        expect.stringContaining('/custom/path/ngaj')
+        expect.stringContaining('/custom/home/.ngaj')
       );
     });
   });
@@ -363,7 +363,7 @@ describe('Graceful Shutdown', () => {
           shutdownCount++;
           await handleShutdown({
             exec: mockExec,
-            installDir: '/Applications/ngaj',
+            installDir: '/home/testuser/.ngaj',
             log: vi.fn(),
           });
         },
@@ -388,7 +388,7 @@ describe('Graceful Shutdown', () => {
 
       const result = await handleShutdown({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         log: vi.fn(),
       });
 

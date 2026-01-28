@@ -1,16 +1,15 @@
 #!/bin/bash
 # ngaj macOS Installer Build Script
-# Creates a .pkg installer for distribution
+# Creates a .dmg installer for distribution
 #
 # Prerequisites:
 # - macOS with Xcode command line tools installed
-# - Docker images built (npm run docker:build)
 #
 # Usage:
 #   ./installer/macos/build.sh
 #
 # Output:
-#   dist/ngaj-installer-{version}.pkg
+#   dist/ngaj-{version}.dmg
 
 set -e
 
@@ -18,44 +17,29 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 VERSION=$(node -p "require('${PROJECT_ROOT}/package.json').version")
-IDENTIFIER="com.ngaj.installer"
-INSTALL_LOCATION="/Applications/ngaj"
 
 # Build directories
 BUILD_DIR="${PROJECT_ROOT}/dist/installer-build"
-PAYLOAD_DIR="${BUILD_DIR}/payload"
-SCRIPTS_DIR="${BUILD_DIR}/scripts"
 APP_BUNDLE_DIR="${BUILD_DIR}/ngaj.app"
+DMG_DIR="${BUILD_DIR}/dmg"
 OUTPUT_DIR="${PROJECT_ROOT}/dist"
-OUTPUT_PKG="${OUTPUT_DIR}/ngaj-installer-${VERSION}.pkg"
+OUTPUT_DMG="${OUTPUT_DIR}/ngaj-${VERSION}.dmg"
 
-echo "🔨 Building ngaj macOS Installer v${VERSION}"
+echo "Building ngaj macOS Installer v${VERSION}"
 echo "==========================================="
 
 # Clean previous build
 echo "Cleaning previous build..."
 rm -rf "${BUILD_DIR}"
-mkdir -p "${PAYLOAD_DIR}"
-mkdir -p "${SCRIPTS_DIR}"
+rm -f "${OUTPUT_DMG}"
+mkdir -p "${BUILD_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
-# --- PAYLOAD: Files installed to /Applications/ngaj ---
-
-echo "Assembling payload..."
-
-# Copy docker-compose.yml
-cp "${PROJECT_ROOT}/docker-compose.yml" "${PAYLOAD_DIR}/"
-
-# Copy scripts directory structure
-mkdir -p "${PAYLOAD_DIR}/scripts"
-cp "${PROJECT_ROOT}/installer/scripts/postinstall.sh" "${SCRIPTS_DIR}/postinstall"
-chmod +x "${SCRIPTS_DIR}/postinstall"
-
-# --- APP BUNDLE: ngaj.app for day-2 launcher ---
+# --- APP BUNDLE: Self-contained ngaj.app ---
 
 echo "Creating app bundle..."
 mkdir -p "${APP_BUNDLE_DIR}/Contents/MacOS"
-mkdir -p "${APP_BUNDLE_DIR}/Contents/Resources"
+mkdir -p "${APP_BUNDLE_DIR}/Contents/Resources/scripts"
 
 # Copy Info.plist
 cp "${SCRIPT_DIR}/Info.plist" "${APP_BUNDLE_DIR}/Contents/"
@@ -67,57 +51,50 @@ chmod +x "${APP_BUNDLE_DIR}/Contents/MacOS/ngaj"
 # Copy icon
 cp "${SCRIPT_DIR}/resources/ngaj.icns" "${APP_BUNDLE_DIR}/Contents/Resources/"
 
-# Copy scripts to payload (will be installed to ~/.ngaj/scripts/ by postinstall)
-cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.sh" "${PAYLOAD_DIR}/scripts/"
-cp "${PROJECT_ROOT}/installer/scripts/ngaj-setup.sh" "${PAYLOAD_DIR}/scripts/"
+# Copy docker-compose.yml (bundled in app)
+cp "${PROJECT_ROOT}/docker-compose.yml" "${APP_BUNDLE_DIR}/Contents/Resources/"
 
-# Move app bundle to payload
-mv "${APP_BUNDLE_DIR}" "${PAYLOAD_DIR}/"
+# Copy scripts (bundled in app)
+cp "${PROJECT_ROOT}/installer/scripts/ngaj-setup.sh" "${APP_BUNDLE_DIR}/Contents/Resources/scripts/"
+cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.sh" "${APP_BUNDLE_DIR}/Contents/Resources/scripts/"
+chmod +x "${APP_BUNDLE_DIR}/Contents/Resources/scripts/"*.sh
 
-# --- BUILD PACKAGE ---
+# --- CREATE DMG ---
 
-echo "Building package with pkgbuild..."
+echo "Creating DMG..."
 
-# Create component plist to prevent pkgbuild from relocating the app bundle
-COMPONENT_PLIST="${BUILD_DIR}/component.plist"
-cat > "${COMPONENT_PLIST}" << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<array>
-    <dict>
-        <key>BundleHasStrictIdentifier</key>
-        <false/>
-        <key>BundleIsRelocatable</key>
-        <false/>
-        <key>BundleIsVersionChecked</key>
-        <false/>
-        <key>BundleOverwriteAction</key>
-        <string>upgrade</string>
-        <key>RootRelativeBundlePath</key>
-        <string>ngaj.app</string>
-    </dict>
-</array>
-</plist>
-PLIST
+# Create DMG staging directory
+mkdir -p "${DMG_DIR}"
+cp -R "${APP_BUNDLE_DIR}" "${DMG_DIR}/"
 
-pkgbuild \
-    --root "${PAYLOAD_DIR}" \
-    --scripts "${SCRIPTS_DIR}" \
-    --identifier "${IDENTIFIER}" \
-    --version "${VERSION}" \
-    --install-location "${INSTALL_LOCATION}" \
-    --component-plist "${COMPONENT_PLIST}" \
-    "${OUTPUT_PKG}"
+# Create Applications symlink for drag-to-install UX
+ln -s /Applications "${DMG_DIR}/Applications"
+
+# Create DMG using hdiutil
+# -volname: Volume name shown in Finder
+# -srcfolder: Source folder to package
+# -ov: Overwrite existing DMG
+# -format: UDZO = compressed, UDBZ = bzip2 compressed (smaller)
+hdiutil create \
+    -volname "ngaj ${VERSION}" \
+    -srcfolder "${DMG_DIR}" \
+    -ov \
+    -format UDZO \
+    "${OUTPUT_DMG}"
+
+# Clean up build directory
+rm -rf "${BUILD_DIR}"
 
 echo ""
-echo "✅ Installer built successfully!"
-echo "   Output: ${OUTPUT_PKG}"
-echo "   Size: $(du -h "${OUTPUT_PKG}" | cut -f1)"
+echo "Installer built successfully!"
+echo "   Output: ${OUTPUT_DMG}"
+echo "   Size: $(du -h "${OUTPUT_DMG}" | cut -f1)"
 echo ""
 echo "To test the installer:"
-echo "   sudo installer -pkg ${OUTPUT_PKG} -target /"
+echo "   1. Open ${OUTPUT_DMG}"
+echo "   2. Drag ngaj.app to Applications"
+echo "   3. Right-click ngaj.app -> Open (to bypass Gatekeeper)"
 echo ""
 echo "To clean up after testing:"
-echo "   sudo rm -rf /Applications/ngaj"
+echo "   rm -rf /Applications/ngaj.app"
 echo "   rm -rf ~/.ngaj"

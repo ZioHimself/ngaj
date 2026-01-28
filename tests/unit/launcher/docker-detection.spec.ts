@@ -179,7 +179,7 @@ describe('Docker Detection', () => {
           output: dockerComposeMocks.upSuccess.output,
         });
 
-        await startServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+        await startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
         expect(mockExec).toHaveBeenCalledWith(
           expect.stringContaining('docker compose up -d')
@@ -192,10 +192,10 @@ describe('Docker Detection', () => {
           output: '',
         });
 
-        await startServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+        await startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
         expect(mockExec).toHaveBeenCalledWith(
-          expect.stringMatching(/cd.*\/Applications\/ngaj|--project-directory/i)
+          expect.stringMatching(/cd.*\.ngaj|--project-directory/i)
         );
       });
     });
@@ -207,7 +207,7 @@ describe('Docker Detection', () => {
           output: dockerComposeMocks.alreadyRunning.output,
         });
 
-        const result = await startServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+        const result = await startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
         expect(result.success).toBe(true);
       });
@@ -219,7 +219,7 @@ describe('Docker Detection', () => {
           output: dockerComposeMocks.alreadyRunning.output,
         });
 
-        await startServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+        await startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
         const elapsed = Date.now() - startTime;
         expect(elapsed).toBeLessThan(3000); // Less than 3 seconds
@@ -233,7 +233,7 @@ describe('Docker Detection', () => {
           output: 'Container ngaj-backend-1  Started\nContainer ngaj-mongodb-1  Running',
         });
 
-        const result = await startServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+        const result = await startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
         expect(result.success).toBe(true);
       });
@@ -247,7 +247,7 @@ describe('Docker Detection', () => {
         });
 
         await expect(
-          startServices({ exec: mockExec, installDir: '/Applications/ngaj' })
+          startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' })
         ).rejects.toThrow(PortConflictError);
       });
 
@@ -258,7 +258,7 @@ describe('Docker Detection', () => {
         });
 
         await expect(
-          startServices({ exec: mockExec, installDir: '/Applications/ngaj' })
+          startServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' })
         ).rejects.toThrow(/port.*in use|already allocated/i);
       });
     });
@@ -276,7 +276,7 @@ describe('Docker Detection', () => {
         output: dockerComposeMocks.downSuccess.output,
       });
 
-      await stopServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+      await stopServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
       expect(mockExec).toHaveBeenCalledWith(
         expect.stringContaining('docker compose down')
@@ -290,7 +290,7 @@ describe('Docker Detection', () => {
         output: dockerComposeMocks.downSuccess.output,
       });
 
-      const result = await stopServices({ exec: mockExec, installDir: '/Applications/ngaj' });
+      const result = await stopServices({ exec: mockExec, installDir: '/home/testuser/.ngaj' });
 
       expect(result.success).toBe(true);
     });
@@ -303,7 +303,7 @@ describe('Docker Detection', () => {
       // Create promise and immediately attach rejection handler to prevent unhandled rejection
       const promise = stopServices({
         exec: mockExec,
-        installDir: '/Applications/ngaj',
+        installDir: '/home/testuser/.ngaj',
         timeoutMs: 30000,
       }).catch((e) => e); // Catch and return error
 

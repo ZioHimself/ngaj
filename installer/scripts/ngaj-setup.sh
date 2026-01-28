@@ -6,7 +6,6 @@
 set -e
 
 NGAJ_HOME="${HOME}/.ngaj"
-INSTALL_DIR="/Applications/ngaj"
 
 # Colors for terminal output
 RED='\033[0;31m'
@@ -135,7 +134,7 @@ fi
 # Pull production images
 echo ""
 echo "Pulling production containers..."
-cd "${INSTALL_DIR}"
+cd "${NGAJ_HOME}"
 docker compose pull
 
 # Start services

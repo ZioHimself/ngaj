@@ -1,21 +1,60 @@
 #!/bin/bash
 # ngaj Application Launcher
 # This script is the CFBundleExecutable for ngaj.app
-# It opens Terminal and runs the ngaj-start.sh script
+#
+# On first run, it bootstraps ~/.ngaj/ by copying resources from the app bundle.
+# Then it opens Terminal to run either setup (if not configured) or start.
+
+set -e
 
 NGAJ_HOME="${HOME}/.ngaj"
-START_SCRIPT="${NGAJ_HOME}/scripts/ngaj-start.sh"
 
-# Check if start script exists
-if [ ! -f "${START_SCRIPT}" ]; then
-    osascript -e 'display dialog "ngaj is not properly installed.\n\nMissing: ~/.ngaj/scripts/ngaj-start.sh\n\nPlease reinstall ngaj." buttons {"OK"} default button "OK" with icon stop with title "ngaj Error"'
+# Resolve app bundle location from script path
+# $0 is something like /Applications/ngaj.app/Contents/MacOS/ngaj
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)"
+APP_RESOURCES="$(cd "${SCRIPT_PATH}/../Resources" && pwd)"
+
+# Bootstrap: copy resources to ~/.ngaj/ if not present
+bootstrap_ngaj() {
+    mkdir -p "${NGAJ_HOME}/scripts"
+    mkdir -p "${NGAJ_HOME}/logs"
+    
+    # Copy docker-compose.yml
+    if [ ! -f "${NGAJ_HOME}/docker-compose.yml" ]; then
+        cp "${APP_RESOURCES}/docker-compose.yml" "${NGAJ_HOME}/"
+    fi
+    
+    # Copy scripts (always update to latest version from app bundle)
+    cp "${APP_RESOURCES}/scripts/ngaj-setup.sh" "${NGAJ_HOME}/scripts/"
+    cp "${APP_RESOURCES}/scripts/ngaj-start.sh" "${NGAJ_HOME}/scripts/"
+    chmod +x "${NGAJ_HOME}/scripts/"*.sh
+}
+
+# Check if resources exist in app bundle
+if [ ! -f "${APP_RESOURCES}/docker-compose.yml" ]; then
+    osascript -e 'display dialog "ngaj.app is corrupted.\n\nMissing: docker-compose.yml\n\nPlease re-download ngaj." buttons {"OK"} default button "OK" with icon stop with title "ngaj Error"'
     exit 1
 fi
 
-# Open Terminal and run the start script
+if [ ! -d "${APP_RESOURCES}/scripts" ]; then
+    osascript -e 'display dialog "ngaj.app is corrupted.\n\nMissing: scripts directory\n\nPlease re-download ngaj." buttons {"OK"} default button "OK" with icon stop with title "ngaj Error"'
+    exit 1
+fi
+
+# Bootstrap on every launch (ensures scripts are up-to-date after app updates)
+bootstrap_ngaj
+
+# Determine which script to run based on whether setup is complete
+if [ -f "${NGAJ_HOME}/.env" ]; then
+    SCRIPT="${NGAJ_HOME}/scripts/ngaj-start.sh"
+else
+    SCRIPT="${NGAJ_HOME}/scripts/ngaj-setup.sh"
+fi
+
+# Open Terminal and run the appropriate script
 osascript <<EOF
 tell application "Terminal"
     activate
-    do script "${START_SCRIPT}"
+    do script "${SCRIPT}"
 end tell
 EOF

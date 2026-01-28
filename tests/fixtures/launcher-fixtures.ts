@@ -342,15 +342,24 @@ Press Ctrl+C to stop ngaj`,
 
 /**
  * macOS app bundle paths
+ * Note: The app bundle lives in /Applications, but docker-compose.yml
+ * and scripts are bootstrapped to ~/.ngaj/ on first launch
  */
 export const macOSPaths = {
   appBundle: '/Applications/ngaj.app',
-  launcher: '/Applications/ngaj.app/Contents/MacOS/ngaj-launcher',
+  launcher: '/Applications/ngaj.app/Contents/MacOS/ngaj',
   infoPlist: '/Applications/ngaj.app/Contents/Info.plist',
-  iconFile: '/Applications/ngaj.app/Contents/Resources/icon.icns',
+  iconFile: '/Applications/ngaj.app/Contents/Resources/ngaj.icns',
+  // Resources bundled inside app (copied to ngajHome on first launch)
+  bundledDockerCompose: '/Applications/ngaj.app/Contents/Resources/docker-compose.yml',
+  bundledScripts: '/Applications/ngaj.app/Contents/Resources/scripts/',
+  // User data directory (bootstrapped from app bundle)
+  ngajHome: '~/.ngaj',
+  dockerCompose: '~/.ngaj/docker-compose.yml',
   startScript: '~/.ngaj/scripts/ngaj-start.sh',
+  setupScript: '~/.ngaj/scripts/ngaj-setup.sh',
   envFile: '~/.ngaj/.env',
-  dataDir: '~/.ngaj/data',
+  logsDir: '~/.ngaj/logs',
 };
 
 /**
@@ -368,9 +377,9 @@ export const windowsPaths = {
  * Info.plist expected values
  */
 export const infoPlistExpected = {
-  CFBundleExecutable: 'ngaj-launcher',
-  CFBundleIconFile: 'icon',
-  CFBundleIdentifier: 'com.ngaj.launcher',
+  CFBundleExecutable: 'ngaj',
+  CFBundleIconFile: 'ngaj',
+  CFBundleIdentifier: 'com.ngaj.app',
   CFBundleName: 'ngaj',
   CFBundleDisplayName: 'ngaj',
   CFBundlePackageType: 'APPL',

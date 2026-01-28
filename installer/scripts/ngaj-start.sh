@@ -13,7 +13,6 @@
 set -e
 
 NGAJ_HOME="${HOME}/.ngaj"
-INSTALL_DIR="/Applications/ngaj"
 ENV_FILE="${NGAJ_HOME}/.env"
 
 # Colors for terminal output
@@ -27,7 +26,7 @@ NC='\033[0m' # No Color
 cleanup() {
     echo ""
     echo -e "${YELLOW}Stopping ngaj services...${NC}"
-    cd "${INSTALL_DIR}" && docker compose down
+    cd "${NGAJ_HOME}" && docker compose down
     echo -e "${GREEN}ngaj stopped.${NC}"
     exit 0
 }
@@ -88,7 +87,7 @@ echo -e "${GREEN}✓ Docker is ready${NC}"
 # Start services
 echo ""
 echo "Starting ngaj services..."
-cd "${INSTALL_DIR}"
+cd "${NGAJ_HOME}"
 docker compose up -d
 
 # Wait for backend health check (max 30 seconds)

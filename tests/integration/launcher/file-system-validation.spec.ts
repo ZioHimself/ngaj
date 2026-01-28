@@ -32,7 +32,7 @@ describe('File System Validation', () => {
     describe('App Bundle Structure', () => {
       it('should verify ngaj-launcher exists in MacOS directory', async () => {
         const mockFileExists = vi.fn().mockImplementation((path: string) => {
-          return path === '/Applications/ngaj.app/Contents/MacOS/ngaj-launcher';
+          return path === '/Applications/ngaj.app/Contents/MacOS/ngaj';
         });
 
         const result = await validateMacOSAppBundle({
@@ -122,7 +122,7 @@ describe('File System Validation', () => {
         });
 
         expect(result.valid).toBe(false);
-        expect(result.errors).toContain('ngaj-launcher not found');
+        expect(result.errors).toContain('ngaj launcher not found');
       });
 
       it('should fail if ngaj-launcher is not executable', async () => {
@@ -133,7 +133,7 @@ describe('File System Validation', () => {
         });
 
         expect(result.valid).toBe(false);
-        expect(result.errors).toContain('ngaj-launcher not executable');
+        expect(result.errors).toContain('ngaj launcher not executable');
       });
 
       it('should fail if Info.plist is invalid XML', async () => {
@@ -347,7 +347,7 @@ docker compose up -d`;
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>ngaj-launcher</string>
+    <string>ngaj</string>
 </dict>
 </plist>`;
 
@@ -375,7 +375,7 @@ docker compose up -d`;
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.ngaj.launcher</string>
+    <string>com.ngaj.app</string>
 </dict>
 </plist>`;
 

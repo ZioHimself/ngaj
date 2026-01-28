@@ -5,6 +5,7 @@
 **Accepted** - January 18, 2026  
 **Updated** - January 24, 2026 (Added: Application Launcher for day-2 restart experience)  
 **Updated** - January 26, 2026 (Changed: Named volumes for database storage, non-root backend user)
+**Updated** - January 28, 2026 (Changed: DMG distribution with self-contained app bundle, Gatekeeper-friendly)
 
 ## Context
 
@@ -34,13 +35,18 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 
 ### 1. Installation Package Format
 
-**macOS**: `.pkg` installer (Apple Installer format)
+**macOS**: `.dmg` disk image with self-contained `.app` bundle
+- User drags `ngaj.app` to Applications folder
+- Right-click → Open bypasses Gatekeeper (no code signing required for v0.1)
+- App bundle contains all resources (docker-compose.yml, scripts)
+
 **Windows**: `.msi` installer (Windows Installer format)
 
-**Package Contents (~10MB):**
-- Docker Compose configuration files
-- Installation scripts (pre/post-install hooks, OS-specific)
-- Uninstall instructions (manual for v0.1)
+**macOS App Bundle Contents:**
+- `Contents/MacOS/ngaj` - Launcher script
+- `Contents/Resources/docker-compose.yml` - Service orchestration
+- `Contents/Resources/scripts/` - Setup and start scripts
+- `Contents/Resources/ngaj.icns` - App icon
 
 **What's downloaded during installation:**
 - Setup container image (`ziohimself/ngaj-setup:stable`, ~50MB) - Pulled from Docker Hub
@@ -55,17 +61,22 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ 1. User downloads ngaj-installer.pkg (~50MB)   │
+│ 1. User downloads ngaj-{version}.dmg (~1MB)    │
 └─────────────────────────────────────────────────┘
                      ↓
 ┌─────────────────────────────────────────────────┐
-│ 2. User double-clicks installer                │
-│    → Installs to /Applications/ngaj (macOS)    │
-│    → Installs to C:\Program Files\ngaj (Win)   │
+│ 2. User opens DMG, drags ngaj.app to /Apps     │
+│    → Right-click → Open (bypass Gatekeeper)    │
 └─────────────────────────────────────────────────┘
                      ↓
 ┌─────────────────────────────────────────────────┐
-│ 3. Post-install script runs                    │
+│ 3. First launch: app bootstraps ~/.ngaj/       │
+│    → Copies docker-compose.yml, scripts        │
+│    → Opens Terminal for setup wizard           │
+└─────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────┐
+│ 4. Setup script runs                           │
 │    → Checks for Docker Desktop                  │
 │    → If missing: Downloads & installs (~500MB) │
 │    → Waits for Docker daemon to start          │
@@ -135,14 +146,24 @@ We will implement a **Docker-based self-contained installer** that downloads dep
 
 ```
 # macOS
-/Applications/ngaj/                    # Application bundle
-  ├── docker-compose.yml               # Service orchestration
-  └── scripts/
-      └── postinstall.sh               # Post-install script (Docker check, setup launch)
+/Applications/ngaj.app/                # Self-contained app bundle
+  Contents/
+    MacOS/ngaj                         # Launcher script (bootstraps ~/.ngaj/)
+    Info.plist                         # App metadata
+    Resources/
+      ngaj.icns                        # App icon
+      docker-compose.yml               # Bundled, copied to ~/.ngaj/ on first launch
+      scripts/
+        ngaj-setup.sh                  # Bundled, copied to ~/.ngaj/scripts/
+        ngaj-start.sh                  # Bundled, copied to ~/.ngaj/scripts/
 
-~/.ngaj/                               # User data directory
+~/.ngaj/                               # User data directory (bootstrapped from app bundle)
+  ├── docker-compose.yml               # Service orchestration (copied from app)
   ├── .env                             # Secrets (Bluesky, Claude API)
-  └── logs/                            # Application logs
+  ├── logs/                            # Application logs
+  └── scripts/
+      ├── ngaj-setup.sh                # Setup script (copied from app)
+      └── ngaj-start.sh                # Start script (copied from app)
 
 # Database storage: Docker named volumes (managed by Docker)
 # - ngaj-mongodb (MongoDB data)
@@ -428,22 +449,21 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
 
 ## Implementation Notes
 
-### macOS .pkg Structure
+### macOS .dmg Structure
 
-- Use `pkgbuild` to create installer
-- Post-install script: `scripts/postinstall.sh` (bash, ~30 lines)
-  - Check for Docker Desktop (`command -v docker`)
-  - Download if missing (curl + dmg mount + copy to /Applications)
-  - Wait for Docker daemon (`until docker info &> /dev/null; do sleep 1; done`)
-  - Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
-  - Run setup container with volume mount:
-    ```bash
-    docker run --rm -it \
-      -v ~/.ngaj:/data \
-      ziohimself/ngaj-setup:stable
-    ```
-  - Start production services (`cd /Applications/ngaj && docker-compose up -d`)
-  - Open browser (`open http://localhost:3000`)
+- Use `hdiutil` to create DMG with app bundle + Applications alias
+- Self-contained `ngaj.app` bundle includes all resources
+- No post-install script needed - app bootstraps on first launch
+
+**App Launcher Behavior (Contents/MacOS/ngaj):**
+1. Resolve app bundle location from `$0`
+2. Bootstrap `~/.ngaj/` by copying from `Contents/Resources/`
+3. Determine script: setup (if no `.env`) or start (if `.env` exists)
+4. Open Terminal and run the appropriate script
+
+**Gatekeeper Bypass:**
+- Users right-click → Open to bypass unsigned app warning
+- No code signing required for v0.1 (optional enhancement for v0.2)
 
 ### Windows .msi Structure
 
@@ -551,18 +571,27 @@ Press Ctrl+C to stop ngaj
 - Opens PowerShell window with status display
 - Script: `%LOCALAPPDATA%\ngaj\scripts\ngaj-start.ps1`
 
-### Files Created by Installer
+### Files Created by Installation
 
 ```
-# macOS
-/Applications/ngaj.app/           # Clickable app bundle
+# macOS (user drags from DMG)
+/Applications/ngaj.app/           # Self-contained clickable app bundle
   Contents/
-    MacOS/ngaj-launcher           # Opens Terminal + runs start script
+    MacOS/ngaj                    # Launcher (bootstraps ~/.ngaj/, runs scripts)
     Info.plist                    # App metadata
-    Resources/icon.icns           # App icon
+    Resources/
+      ngaj.icns                   # App icon
+      docker-compose.yml          # Bundled, copied to ~/.ngaj/
+      scripts/                    # Bundled, copied to ~/.ngaj/scripts/
+        ngaj-setup.sh
+        ngaj-start.sh
 
-~/.ngaj/scripts/
-  ngaj-start.sh                   # Actual start logic
+# Bootstrapped on first launch
+~/.ngaj/
+  docker-compose.yml              # Copied from app bundle
+  scripts/
+    ngaj-setup.sh                 # Copied from app bundle
+    ngaj-start.sh                 # Copied from app bundle
 
 # Windows
 %LOCALAPPDATA%\ngaj\scripts\

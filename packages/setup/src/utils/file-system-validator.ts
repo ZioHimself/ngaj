@@ -206,9 +206,9 @@ export interface ValidateWindowsStartScriptOptions {
 // ==========================================================================
 
 const MACOS_PATHS = {
-  launcher: '/Applications/ngaj.app/Contents/MacOS/ngaj-launcher',
+  launcher: '/Applications/ngaj.app/Contents/MacOS/ngaj',
   infoPlist: '/Applications/ngaj.app/Contents/Info.plist',
-  iconFile: '/Applications/ngaj.app/Contents/Resources/icon.icns',
+  iconFile: '/Applications/ngaj.app/Contents/Resources/ngaj.icns',
 };
 
 // ==========================================================================
@@ -240,7 +240,7 @@ export async function validateMacOSAppBundle(
     launcherExists = false;
   }
   if (!launcherExists) {
-    errors.push('ngaj-launcher not found');
+    errors.push('ngaj launcher not found');
   }
 
   // Check launcher is executable
@@ -251,7 +251,7 @@ export async function validateMacOSAppBundle(
     launcherExecutable = false;
   }
   if (launcherExists && !launcherExecutable) {
-    errors.push('ngaj-launcher not executable');
+    errors.push('ngaj launcher not executable');
   }
 
   // Check Info.plist

@@ -6,29 +6,14 @@ on:
       - 'v*'
 
 jobs:
-  # Build and push Docker images
-  docker:
-    name: Docker Images
+  # Build Docker images on native runners for each architecture
+  docker-amd64:
+    name: Docker Images (AMD64)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build all packages
-        run: npm run build
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -43,33 +28,117 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Build and push backend image
+      - name: Build and push backend image (AMD64)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: packages/backend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
-            ziohimself/ngaj-backend:stable
-            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-amd64
 
-      - name: Build and push setup image
+      - name: Build and push setup image (AMD64)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: packages/setup/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
-            ziohimself/ngaj-setup:stable
-            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-amd64
+
+  docker-arm64:
+    name: Docker Images (ARM64)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image (ARM64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/backend/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-arm64
+
+      - name: Build and push setup image (ARM64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/setup/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-arm64
+
+  # Create multi-arch manifests after both builds complete
+  docker-manifest:
+    name: Docker Manifests
+    runs-on: ubuntu-latest
+    needs: [docker-amd64, docker-arm64]
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create and push backend manifests
+        run: |
+          # Create versioned manifest
+          docker manifest create ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }} \
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-amd64 \
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-arm64
+          docker manifest push ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}
+          
+          # Create stable manifest
+          docker manifest create ziohimself/ngaj-backend:stable \
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-amd64 \
+            ziohimself/ngaj-backend:${{ steps.version.outputs.VERSION }}-arm64
+          docker manifest push ziohimself/ngaj-backend:stable
+
+      - name: Create and push setup manifests
+        run: |
+          # Create versioned manifest
+          docker manifest create ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }} \
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-amd64 \
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-arm64
+          docker manifest push ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}
+          
+          # Create stable manifest
+          docker manifest create ziohimself/ngaj-setup:stable \
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-amd64 \
+            ziohimself/ngaj-setup:${{ steps.version.outputs.VERSION }}-arm64
+          docker manifest push ziohimself/ngaj-setup:stable
 
   # Build native installers
   installer-macos:
     name: macOS Installer
     runs-on: macos-latest
-    needs: docker
+    needs: docker-manifest
 
     steps:
       - name: Checkout code
@@ -101,7 +170,7 @@ jobs:
   installer-windows:
     name: Windows Installer
     runs-on: windows-latest
-    needs: docker
+    needs: docker-manifest
 
     steps:
       - name: Checkout code
@@ -137,7 +206,7 @@ jobs:
   release:
     name: GitHub Release
     runs-on: ubuntu-latest
-    needs: [docker, installer-macos, installer-windows]
+    needs: [docker-manifest, installer-macos, installer-windows]
     permissions:
       contents: write
 

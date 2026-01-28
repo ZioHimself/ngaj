@@ -284,21 +284,14 @@ export function OpportunitiesDashboard({
 
   /**
    * Edit response text (locally - not saved until post)
+   * 
+   * Only updates editedResponses map, NOT response.text.
+   * This preserves the original text for comparison when posting.
    */
   const handleEditResponse = (responseId: string, text: string) => {
     setState((prev) => {
       const newEdited = new Map(prev.editedResponses);
       newEdited.set(responseId, text);
-
-      // Also update the response in state for display
-      const response = [...prev.responses.values()].find(
-        (r) => r._id === responseId
-      );
-      if (response) {
-        const newResponses = new Map(prev.responses);
-        newResponses.set(response.opportunityId, { ...response, text });
-        return { ...prev, responses: newResponses, editedResponses: newEdited };
-      }
       return { ...prev, editedResponses: newEdited };
     });
   };
@@ -486,11 +479,13 @@ export function OpportunitiesDashboard({
       <div className="divide-y divide-slate-200">
         {opportunities.map((opportunity) => {
           const response = getResponseForOpportunity(opportunity._id);
+          const editedText = response ? state.editedResponses.get(response._id) : undefined;
           return (
             <OpportunityCard
               key={opportunity._id}
               opportunity={opportunity}
               response={response}
+              editedText={editedText}
               onGenerateResponse={handleGenerateResponse}
               onDismiss={handleDismiss}
               onPost={handlePost}

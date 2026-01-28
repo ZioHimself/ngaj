@@ -19,6 +19,8 @@ const LONG_PRESS_MS = 500;
 export interface OpportunityCardProps {
   opportunity: OpportunityWithAuthor<string>;
   response?: Response<string>;
+  /** Edited text (if user modified the response) - takes precedence over response.text */
+  editedText?: string;
   onGenerateResponse: (opportunityId: string) => void;
   onDismiss: (opportunityId: string) => void;
   onPost: (responseId: string) => void;
@@ -78,6 +80,7 @@ function truncateText(text: string, maxLength: number): string {
 export function OpportunityCard({
   opportunity,
   response,
+  editedText,
   onGenerateResponse,
   onDismiss,
   onPost,
@@ -268,7 +271,7 @@ export function OpportunityCard({
       {/* Response Editor (when generating or has draft) */}
       {(isGenerating || hasDraft) && !hasPostedResponse && (
         <ResponseEditor
-          text={response?.text ?? ''}
+          text={editedText ?? response?.text ?? ''}
           onChange={handleTextChange}
           onPost={handlePost}
           onRegenerate={handleRegenerate}

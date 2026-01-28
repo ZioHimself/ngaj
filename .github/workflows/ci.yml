@@ -152,6 +152,9 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Verify installer scripts syntax
         run: |
           bash -n installer/macos/build.sh
@@ -164,13 +167,13 @@ jobs:
       - name: Verify installer was created
         run: |
           ls -la dist/
-          test -f dist/ngaj-installer-*.pkg
+          test -f dist/ngaj-*.dmg
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-installer-test
-          path: dist/ngaj-installer-*.pkg
+          path: dist/ngaj-*.dmg
           retention-days: 7
 
   installer-windows:

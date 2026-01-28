@@ -150,6 +150,9 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -159,13 +162,13 @@ jobs:
 
       - name: Rename installer with version
         run: |
-          mv dist/ngaj-installer-*.pkg dist/ngaj-${{ steps.version.outputs.VERSION }}-macos.pkg
+          mv dist/ngaj-*.dmg dist/ngaj-${{ steps.version.outputs.VERSION }}-macos.dmg
 
       - name: Upload macOS installer
         uses: actions/upload-artifact@v4
         with:
           name: installer-macos
-          path: dist/ngaj-*.pkg
+          path: dist/ngaj-*.dmg
 
   installer-windows:
     name: Windows Installer
@@ -243,7 +246,7 @@ jobs:
             
             ### Installation
             
-            **macOS**: Download `ngaj-${{ steps.version.outputs.VERSION }}-macos.pkg` and double-click to install.
+            **macOS**: Download `ngaj-${{ steps.version.outputs.VERSION }}-macos.dmg`, open it, and drag ngaj to Applications.
             
             **Windows**: Download `ngaj-${{ steps.version.outputs.VERSION }}-windows.zip`, extract, and run the installer.
             

@@ -51,6 +51,12 @@ describe('QRCodePage', () => {
   describe('Back navigation with history', () => {
     it('should navigate back when user came from another page', async () => {
       const user = userEvent.setup();
+      // Simulate browser history with multiple entries so QRCodePage uses navigate(-1)
+      const originalHistory = window.history;
+      Object.defineProperty(window, 'history', {
+        value: { ...originalHistory, length: 2 },
+        writable: true,
+      });
       render(
         <MemoryRouter initialEntries={['/opportunities', '/qr']}>
           <Routes>
@@ -62,6 +68,7 @@ describe('QRCodePage', () => {
       const backButton = screen.getByRole('button', { name: /back/i });
       await user.click(backButton);
       expect(mockNavigate).toHaveBeenCalledWith(-1);
+      Object.defineProperty(window, 'history', { value: originalHistory, writable: true });
     });
   });
 

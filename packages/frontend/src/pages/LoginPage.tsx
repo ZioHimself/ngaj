@@ -6,11 +6,13 @@
  *
  * @see ADR-014: Simple Token Authentication
  * @see ADR-015: Mobile-First Responsive Web Design
+ * @see ADR-019: QR Mobile Navigation (desktop-only QR on login)
  */
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoHorizontal from '../assets/logo-horizontal.png';
+import { QRCode } from '../components/QRCode';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -28,11 +30,23 @@ interface LoginPageProps {
  * - 48px touch targets for mobile
  * - Prevents iOS auto-zoom with text-base (16px) font
  */
+const SM_BREAKPOINT = 640;
+
 export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElement {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= SM_BREAKPOINT
+  );
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const check = (): void => setIsDesktop(window.innerWidth >= SM_BREAKPOINT);
+    window.addEventListener('resize', check);
+    check();
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -118,6 +132,16 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps): React.ReactElemen
             {isLoading ? 'Verifying...' : 'Login'}
           </button>
         </form>
+
+        {/* QR Code - desktop only (ADR-019); wrapper keeps hidden sm:block for responsive layout */}
+        <div className="hidden sm:block mt-8 pt-8 border-t border-slate-200">
+          {isDesktop && (
+            <>
+              <p className="text-sm text-slate-500 mb-4">Or scan to open on mobile</p>
+              <QRCode size={160} />
+            </>
+          )}
+        </div>
 
         {/* Hint */}
         <p className="mt-8 text-sm text-slate-400 leading-relaxed">

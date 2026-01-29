@@ -8,9 +8,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     environmentMatchGlobs: [
-      ['tests/unit/components/**/*.tsx', 'jsdom'],
-      ['tests/integration/dashboard/**/*.tsx', 'jsdom'],
-      ['tests/integration/**/*.tsx', 'jsdom'],
+      ['tests/unit/**/*.tsx', 'jsdom'],
+      ['tests/integration/**/*.tsx', 'jsdom']
     ],
     setupFiles: ['./tests/setup.ts'],
     coverage: {

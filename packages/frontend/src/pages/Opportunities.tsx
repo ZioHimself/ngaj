@@ -2,24 +2,33 @@
  * Opportunities Page
  *
  * Main page showing discovered opportunities dashboard.
- * 
+ *
  * @see ADR-013: Opportunity Dashboard UI
  * @see ADR-015: Mobile-First Responsive Web Design
+ * @see ADR-019: QR Mobile Navigation (overflow menu → Mobile Access)
  */
 
+import { useNavigate } from 'react-router-dom';
 import { OpportunitiesDashboard } from './OpportunitiesDashboard';
+import { OverflowMenu } from '../components/OverflowMenu';
 import logoHorizontal from '../assets/logo-horizontal.png';
 
 export function Opportunities() {
+  const navigate = useNavigate();
   // TODO: Get accountId from auth context in production
   const accountId = 'default-account';
+
+  const overflowItems = [
+    { label: 'Mobile Access', onClick: () => navigate('/qr') },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <img src={logoHorizontal} alt="ngaj" className="h-9" />
+          <OverflowMenu items={overflowItems} />
         </div>
       </header>
 

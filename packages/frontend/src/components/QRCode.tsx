@@ -1,12 +1,13 @@
 /**
- * QRCode component - stub for TDD.
- * Renders minimal placeholder; tests expect SVG and URL text.
+ * QRCode component - renders QR code encoding a URL.
+ * Uses qrcode.react for SVG output (crisp at any size).
  *
  * @see ADR-019: QR Mobile Navigation
  * @see .agents/artifacts/designer/designs/qr-mobile-navigation-design.md
  */
 
 import type React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export interface QRCodeProps {
   /** URL to encode. Defaults to window.location.origin */
@@ -17,13 +18,24 @@ export interface QRCodeProps {
   showUrl?: boolean;
 }
 
+const defaultUrl =
+  typeof window !== 'undefined' ? window.location.origin : '';
+
 export function QRCode({
-  url = typeof window !== 'undefined' ? window.location.origin : '',
+  url = defaultUrl,
   size = 200,
   showUrl = true,
 }: QRCodeProps): React.ReactElement {
-  // Stub: no real QR; implementer will use qrcode.react
   return (
-    <div data-testid="qrcode-stub" data-url={url} data-size={size} data-show-url={String(showUrl)} />
+    <div className="flex flex-col items-center gap-2">
+      <div className="bg-white p-2 rounded-lg">
+        <QRCodeSVG value={url} size={size} level="M" />
+      </div>
+      {showUrl && (
+        <p className="text-sm font-mono text-slate-600 max-w-full truncate px-2">
+          {url}
+        </p>
+      )}
+    </div>
   );
 }

@@ -40,6 +40,9 @@ interface DashboardState {
   generatingIds: Set<string>;
   postingIds: Set<string>;
   editedResponses: Map<string, string>;
+  // Selection state (ADR-018)
+  isSelectionMode: boolean;
+  selectedIds: Set<string>;
 }
 
 export function OpportunitiesDashboard({
@@ -57,6 +60,9 @@ export function OpportunitiesDashboard({
     generatingIds: new Set(),
     postingIds: new Set(),
     editedResponses: new Map(),
+    // Selection state (ADR-018)
+    isSelectionMode: false,
+    selectedIds: new Set(),
   });
 
   /**
@@ -297,6 +303,54 @@ export function OpportunitiesDashboard({
   };
 
   /**
+   * Toggle selection for an opportunity (ADR-018)
+   */
+  const handleToggleSelect = (opportunityId: string) => {
+    setState((prev) => {
+      const newSelected = new Set(prev.selectedIds);
+      if (newSelected.has(opportunityId)) {
+        newSelected.delete(opportunityId);
+      } else {
+        newSelected.add(opportunityId);
+      }
+      // Exit selection mode if no items selected
+      const isSelectionMode = newSelected.size > 0;
+      return { ...prev, selectedIds: newSelected, isSelectionMode };
+    });
+  };
+
+  /**
+   * Enter selection mode (ADR-018 - triggered by long-press on mobile)
+   */
+  const handleEnterSelectionMode = () => {
+    setState((prev) => ({ ...prev, isSelectionMode: true }));
+  };
+
+  /**
+   * Exit selection mode and clear selections
+   */
+  const handleExitSelectionMode = () => {
+    setState((prev) => ({
+      ...prev,
+      isSelectionMode: false,
+      selectedIds: new Set(),
+    }));
+  };
+
+  /**
+   * Dismiss all selected opportunities (ADR-018)
+   */
+  const handleDismissSelected = async () => {
+    const idsToDismmiss = [...state.selectedIds];
+    // Dismiss each selected opportunity
+    for (const opportunityId of idsToDismmiss) {
+      await handleDismiss(opportunityId);
+    }
+    // Exit selection mode
+    handleExitSelectionMode();
+  };
+
+  /**
    * Handle filter change
    */
   const handleFilterChange = (filter: DashboardFilterValue) => {
@@ -516,6 +570,32 @@ export function OpportunitiesDashboard({
         </div>
       )}
 
+      {/* Selection action bar (ADR-018) */}
+      {state.isSelectionMode && (
+        <div className="flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <span className="text-sm text-blue-700 font-medium">
+            {state.selectedIds.size} selected
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleDismissSelected}
+              disabled={state.selectedIds.size === 0}
+              className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Dismiss selected ({state.selectedIds.size})
+            </button>
+            <button
+              type="button"
+              onClick={handleExitSelectionMode}
+              className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="divide-y divide-slate-200">
         {opportunities.map((opportunity) => {
           const response = getResponseForOpportunity(opportunity._id);
@@ -534,6 +614,11 @@ export function OpportunitiesDashboard({
               isPosting={
                 response ? state.postingIds.has(response._id) : false
               }
+              // Selection mode props (ADR-018)
+              isSelectionMode={state.isSelectionMode}
+              isSelected={state.selectedIds.has(opportunity._id)}
+              onToggleSelect={handleToggleSelect}
+              onEnterSelectionMode={handleEnterSelectionMode}
             />
           );
         })}

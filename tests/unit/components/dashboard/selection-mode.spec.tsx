@@ -409,6 +409,281 @@ describe('Selection Mode UI', () => {
   });
 });
 
+describe('Clickable Elements Should Not Trigger Selection', () => {
+  /**
+   * Tests that interactive elements (buttons, links, textarea) don't accidentally
+   * trigger card selection when clicked. This is achieved via stopPropagation.
+   */
+
+  const defaultProps = {
+    opportunity: dashboardOpportunityFixtures.pending,
+    response: undefined,
+    onGenerateResponse: vi.fn(),
+    onDismiss: vi.fn(),
+    onPost: vi.fn(),
+    onEditResponse: vi.fn(),
+    isGenerating: false,
+    isPosting: false,
+    isSelectionMode: true,
+    isSelected: false,
+    onToggleSelect: vi.fn(),
+  };
+
+  it('should NOT trigger selection when "Generate Response" button clicked', () => {
+    // Arrange
+    const onToggleSelect = vi.fn();
+    const onGenerateResponse = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        onToggleSelect={onToggleSelect}
+        onGenerateResponse={onGenerateResponse}
+      />
+    );
+
+    // Act
+    const generateButton = screen.getByRole('button', { name: /generate response/i });
+    fireEvent.click(generateButton);
+
+    // Assert - generate should be called, but NOT selection toggle
+    expect(onGenerateResponse).toHaveBeenCalledOnce();
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Dismiss" button clicked', () => {
+    // Arrange
+    const onToggleSelect = vi.fn();
+    const onDismiss = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        onToggleSelect={onToggleSelect}
+        onDismiss={onDismiss}
+      />
+    );
+
+    // Act
+    const dismissButton = screen.getByRole('button', { name: /dismiss/i });
+    fireEvent.click(dismissButton);
+
+    // Assert - dismiss should be called, but NOT selection toggle
+    expect(onDismiss).toHaveBeenCalledOnce();
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Show more" button clicked', () => {
+    // Arrange - use long text fixture that has expandable content
+    const onToggleSelect = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.longText}
+        onToggleSelect={onToggleSelect}
+      />
+    );
+
+    // Act - find and click the "Show more" button
+    const showMoreButton = screen.getByRole('button', { name: /show more/i });
+    fireEvent.click(showMoreButton);
+
+    // Assert - selection should NOT be triggered
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Show less" button clicked after expansion', () => {
+    // Arrange - use long text fixture
+    const onToggleSelect = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.longText}
+        onToggleSelect={onToggleSelect}
+      />
+    );
+
+    // Act - expand first, then collapse
+    const showMoreButton = screen.getByRole('button', { name: /show more/i });
+    fireEvent.click(showMoreButton);
+    onToggleSelect.mockClear(); // Clear any calls from first click
+
+    const showLessButton = screen.getByRole('button', { name: /show less/i });
+    fireEvent.click(showLessButton);
+
+    // Assert - selection should NOT be triggered
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Dismiss" button clicked on draft card', () => {
+    // Arrange - card with draft response has a separate dismiss button
+    const onToggleSelect = vi.fn();
+    const onDismiss = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.withDraft}
+        response={{
+          _id: 'response-1',
+          opportunityId: dashboardOpportunityFixtures.withDraft._id,
+          accountId: 'account-1',
+          text: 'Draft response text',
+          status: 'draft',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
+        onToggleSelect={onToggleSelect}
+        onDismiss={onDismiss}
+      />
+    );
+
+    // Act
+    const dismissButton = screen.getByRole('button', { name: /dismiss/i });
+    fireEvent.click(dismissButton);
+
+    // Assert
+    expect(onDismiss).toHaveBeenCalledOnce();
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "View on Bluesky" link clicked', () => {
+    // Arrange - posted response has a link to the platform post
+    const onToggleSelect = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.responded}
+        response={{
+          _id: 'response-1',
+          opportunityId: dashboardOpportunityFixtures.responded._id,
+          accountId: 'account-1',
+          text: 'Posted response',
+          status: 'posted',
+          platformPostUrl: 'https://bsky.app/profile/test/post/123',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
+        onToggleSelect={onToggleSelect}
+      />
+    );
+
+    // Act
+    const link = screen.getByRole('link', { name: /view on bluesky/i });
+    fireEvent.click(link);
+
+    // Assert - selection should NOT be triggered
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when editing response textarea', () => {
+    // Arrange - card with draft response has editable textarea
+    const onToggleSelect = vi.fn();
+    const onEditResponse = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.withDraft}
+        response={{
+          _id: 'response-1',
+          opportunityId: dashboardOpportunityFixtures.withDraft._id,
+          accountId: 'account-1',
+          text: 'Draft response text',
+          status: 'draft',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
+        onToggleSelect={onToggleSelect}
+        onEditResponse={onEditResponse}
+      />
+    );
+
+    // Act - click on textarea
+    const textarea = screen.getByRole('textbox');
+    fireEvent.click(textarea);
+
+    // Assert - selection should NOT be triggered
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Regenerate" button clicked in ResponseEditor', () => {
+    // Arrange - card with draft response has regenerate button
+    const onToggleSelect = vi.fn();
+    const onGenerateResponse = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.withDraft}
+        response={{
+          _id: 'response-1',
+          opportunityId: dashboardOpportunityFixtures.withDraft._id,
+          accountId: 'account-1',
+          text: 'Draft response text',
+          status: 'draft',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
+        onToggleSelect={onToggleSelect}
+        onGenerateResponse={onGenerateResponse}
+      />
+    );
+
+    // Act
+    const regenerateButton = screen.getByRole('button', { name: /regenerate/i });
+    fireEvent.click(regenerateButton);
+
+    // Assert - regenerate should be called (via onGenerateResponse), but NOT selection toggle
+    expect(onGenerateResponse).toHaveBeenCalledOnce();
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when "Post Response" button clicked in ResponseEditor', () => {
+    // Arrange - card with draft response has post button
+    const onToggleSelect = vi.fn();
+    const onPost = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        opportunity={dashboardOpportunityFixtures.withDraft}
+        response={{
+          _id: 'response-1',
+          opportunityId: dashboardOpportunityFixtures.withDraft._id,
+          accountId: 'account-1',
+          text: 'Draft response text',
+          status: 'draft',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
+        onToggleSelect={onToggleSelect}
+        onPost={onPost}
+      />
+    );
+
+    // Act
+    const postButton = screen.getByRole('button', { name: /post response/i });
+    fireEvent.click(postButton);
+
+    // Assert - post should be called, but NOT selection toggle
+    expect(onPost).toHaveBeenCalledOnce();
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('should NOT trigger selection when checkbox itself is clicked', () => {
+    // Arrange - clicking checkbox should toggle selection via onChange, not card click
+    const onToggleSelect = vi.fn();
+    render(
+      <OpportunityCard
+        {...defaultProps}
+        onToggleSelect={onToggleSelect}
+      />
+    );
+
+    // Act - click the checkbox directly
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
+    // Assert - should be called exactly once (from checkbox onChange, not from card click)
+    expect(onToggleSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('SelectionToolbar Component', () => {
   // These tests would be for the standalone SelectionToolbar component
   // Placeholder for implementation

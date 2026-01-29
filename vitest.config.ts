@@ -10,6 +10,7 @@ export default defineConfig({
     environmentMatchGlobs: [
       ['tests/unit/components/**/*.tsx', 'jsdom'],
       ['tests/integration/dashboard/**/*.tsx', 'jsdom'],
+      ['tests/integration/**/*.tsx', 'jsdom'],
     ],
     setupFiles: ['./tests/setup.ts'],
     coverage: {

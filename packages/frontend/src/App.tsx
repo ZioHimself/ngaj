@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SetupWizard, Opportunities, LoginPage } from './pages';
+import { SetupWizard, Opportunities, LoginPage, QRCodePage } from './pages';
 import logoHorizontal from './assets/logo-horizontal.png';
 
 /**
@@ -115,6 +115,18 @@ function App() {
               <Navigate to="/opportunities" replace />
             ) : (
               <SetupWizard onSetupComplete={() => setHasProfile(true)} />
+            )
+          }
+        />
+
+        {/* QR code page for mobile access (requires auth) */}
+        <Route
+          path="/qr"
+          element={
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <QRCodePage />
             )
           }
         />

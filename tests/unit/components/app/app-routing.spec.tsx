@@ -318,6 +318,20 @@ describe('App Routing', () => {
       });
     });
 
+    it('should redirect /qr to /login when not authenticated', async () => {
+      // Arrange - ADR-019: QR page requires auth
+      window.history.pushState({}, '', '/qr');
+      mockFetch.mockResolvedValueOnce(createUnauthorizedResponse());
+
+      // Act
+      render(<App />);
+
+      // Assert - should be on login page
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX')).toBeInTheDocument();
+      });
+    });
+
     it('should redirect /setup to /opportunities when profile already exists', async () => {
       // Arrange
       window.history.pushState({}, '', '/setup');

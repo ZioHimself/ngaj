@@ -663,6 +663,164 @@ describe('Dashboard API Integration', () => {
         ).toBeInTheDocument();
       });
     });
+
+    it('should POST to /api/opportunities/refresh when Refresh button clicked', async () => {
+      // Arrange - initial load returns empty
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.emptyOpportunities,
+        })
+        // Refresh endpoint response
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            opportunities: [dashboardOpportunityFixtures.pending],
+            total: 1,
+            hasMore: false,
+            discovery: {
+              newOpportunities: 1,
+              replies: { found: 1 },
+              search: { found: 0 },
+            },
+          }),
+        })
+        // Responses fetch after refresh
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      const user = userEvent.setup();
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /refresh/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /refresh/i }));
+
+      // Assert - should POST to refresh endpoint
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/opportunities/refresh'),
+          expect.objectContaining({
+            method: 'POST',
+          })
+        );
+      });
+    });
+
+    it('should display newly discovered opportunities after Refresh', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.emptyOpportunities,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            opportunities: [dashboardOpportunityFixtures.pending],
+            total: 1,
+            hasMore: false,
+            discovery: {
+              newOpportunities: 1,
+              replies: { found: 1 },
+              search: { found: 0 },
+            },
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ responses: [] }),
+        });
+
+      const user = userEvent.setup();
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /refresh/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /refresh/i }));
+
+      // Assert - new opportunity should appear
+      await waitFor(() => {
+        expect(
+          screen.getByText(dashboardOpportunityFixtures.pending.content.text)
+        ).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Refresh Discovery', () => {
+    it('should use GET for initial page load', async () => {
+      // Arrange
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponses.opportunitiesList,
+      });
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      // Assert - initial load uses GET
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/opportunities'),
+          expect.objectContaining({
+            method: 'GET',
+          })
+        );
+      });
+
+      // Should NOT call refresh endpoint on initial load
+      const refreshCalls = mockFetch.mock.calls.filter((call) =>
+        (call[0] as string).includes('/refresh')
+      );
+      expect(refreshCalls).toHaveLength(0);
+    });
+
+    it('should handle refresh error gracefully', async () => {
+      // Arrange
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponses.emptyOpportunities,
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          json: async () => ({ error: 'Discovery service not available' }),
+        });
+
+      const user = userEvent.setup();
+
+      // Act
+      render(<OpportunitiesDashboard accountId="acc-1" />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /refresh/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /refresh/i }));
+
+      // Assert - error should be shown
+      await waitFor(() => {
+        expect(screen.getByText(/failed|error|unavailable/i)).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Load More (ADR-015)', () => {

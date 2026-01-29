@@ -316,10 +316,50 @@ export function OpportunitiesDashboard({
   };
 
   /**
-   * Retry loading
+   * Retry loading (uses GET - for page load/browser refresh)
    */
   const handleRetry = () => {
     fetchOpportunities(state.filter, false);
+  };
+
+  /**
+   * Refresh opportunities by triggering discovery (uses POST)
+   * Calls the refresh endpoint which triggers platform discovery
+   * and returns updated opportunities.
+   */
+  const handleRefresh = async () => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    const statusParam = state.filter === 'all' ? '' : state.filter === 'draft' ? 'pending' : state.filter;
+    const url = `/api/opportunities/refresh?status=${statusParam}&limit=${PAGE_SIZE}&offset=0`;
+
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('Failed to refresh opportunities');
+      }
+      const data = await res.json();
+      const newOpportunities = data.opportunities || [];
+
+      setState((prev) => ({
+        ...prev,
+        opportunities: newOpportunities,
+        total: data.total || 0,
+        hasMore: data.hasMore || false,
+        isLoading: false,
+      }));
+
+      // Fetch responses for these opportunities
+      if (newOpportunities.length > 0) {
+        await fetchResponses(newOpportunities.map((o: { _id: string }) => o._id));
+      }
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: 'Failed to refresh opportunities. Please try again.',
+      }));
+    }
   };
 
   // Initial load - only run once on mount
@@ -440,7 +480,7 @@ export function OpportunitiesDashboard({
           <p className="text-slate-500 text-center max-w-sm mb-6">{emptyContent.description}</p>
           <button
             type="button"
-            onClick={handleRetry}
+            onClick={handleRefresh}
             className="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition-colors"
           >
             Refresh

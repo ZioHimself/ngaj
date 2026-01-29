@@ -44,8 +44,9 @@ app.use('/api/auth', authRoutes);
 // Scheduler Instance (Issue #35)
 // ============================================================================
 
-// Module-level scheduler instance
+// Module-level scheduler and discovery service instances
 let scheduler: ICronScheduler | null = null;
+let discoveryService: DiscoveryService | null = null;
 
 /**
  * Create and configure the CronScheduler with all dependencies.
@@ -80,7 +81,7 @@ export async function createScheduler(db: Db): Promise<ICronScheduler | null> {
     // 2. Create dependencies
     const platformAdapter = new BlueskyAdapter(agent);
     const scoringService = new ScoringService();
-    const discoveryService = new DiscoveryService(db, platformAdapter, scoringService);
+    discoveryService = new DiscoveryService(db, platformAdapter, scoringService);
 
     // 3. Create scheduler
     const cronScheduler = new CronScheduler(db, discoveryService);
@@ -99,6 +100,15 @@ export async function createScheduler(db: Db): Promise<ICronScheduler | null> {
  */
 export function getScheduler(): ICronScheduler | null {
   return scheduler;
+}
+
+/**
+ * Get the discovery service instance.
+ * 
+ * @returns Current discovery service instance, or null if not initialized
+ */
+export function getDiscoveryService(): DiscoveryService | null {
+  return discoveryService;
 }
 
 // Health check endpoint (public route - allowed by auth middleware)
@@ -286,6 +296,108 @@ app.get('/api/opportunities', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching opportunities:', error);
     res.status(500).json({ error: 'Failed to fetch opportunities' });
+  }
+});
+
+/**
+ * Refresh opportunities - trigger discovery and return updated list
+ * 
+ * This endpoint:
+ * 1. Triggers discovery for both 'replies' and 'search' types
+ * 2. Returns the updated opportunities list (same format as GET)
+ * 
+ * Use this instead of GET when you want to fetch fresh opportunities from the platform.
+ */
+app.post('/api/opportunities/refresh', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const discovery = getDiscoveryService();
+    
+    if (!discovery) {
+      res.status(503).json({ 
+        error: 'Discovery service not available',
+        message: 'Bluesky credentials may not be configured'
+      });
+      return;
+    }
+
+    // Get account (MVP: first account)
+    const accountsCollection = db.collection('accounts');
+    const account = await accountsCollection.findOne({});
+    
+    if (!account) {
+      res.status(404).json({ error: 'No account configured' });
+      return;
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const accountId = account._id instanceof ObjectId ? account._id : new ObjectId(account._id);
+
+    // Trigger discovery for both types (run in parallel)
+    const [repliesResult, searchResult] = await Promise.allSettled([
+      discovery.discover(accountId, 'replies'),
+      discovery.discover(accountId, 'search'),
+    ]);
+
+    // Log any errors but continue
+    if (repliesResult.status === 'rejected') {
+      console.error('Replies discovery failed:', repliesResult.reason);
+    }
+    if (searchResult.status === 'rejected') {
+      console.error('Search discovery failed:', searchResult.reason);
+    }
+
+    // Parse query params for filtering (same as GET)
+    const { status, limit = '20', offset = '0' } = req.query;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = { accountId: account._id };
+    if (status && status !== 'all') {
+      query.status = status;
+      if (status === 'pending') {
+        query.expiresAt = { $gt: new Date() };
+      }
+    }
+
+    const opportunitiesCollection = db.collection('opportunities');
+    const limitNum = Math.min(parseInt(limit as string, 10) || 20, 100);
+    const offsetNum = parseInt(offset as string, 10) || 0;
+
+    const opportunities = await opportunitiesCollection
+      .find(query)
+      .sort({ 'scoring.total': -1 })
+      .skip(offsetNum)
+      .limit(limitNum)
+      .toArray();
+
+    const total = await opportunitiesCollection.countDocuments(query);
+
+    // Populate authors
+    const authorsCollection = db.collection('authors');
+    const populatedOpportunities = await Promise.all(
+      opportunities.map(async (opp) => {
+        const author = await authorsCollection.findOne({ _id: opp.authorId });
+        return { ...opp, author };
+      })
+    );
+
+    // Include discovery stats in response
+    const newReplies = repliesResult.status === 'fulfilled' ? repliesResult.value.length : 0;
+    const newSearch = searchResult.status === 'fulfilled' ? searchResult.value.length : 0;
+
+    res.json({
+      opportunities: populatedOpportunities,
+      total,
+      hasMore: offsetNum + opportunities.length < total,
+      discovery: {
+        newOpportunities: newReplies + newSearch,
+        replies: repliesResult.status === 'fulfilled' ? { found: newReplies } : { error: 'failed' },
+        search: searchResult.status === 'fulfilled' ? { found: newSearch } : { error: 'failed' },
+      },
+    });
+  } catch (error) {
+    console.error('Error refreshing opportunities:', error);
+    res.status(500).json({ error: 'Failed to refresh opportunities' });
   }
 });
 

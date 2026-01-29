@@ -62,7 +62,6 @@ export function ResponseEditor({
 
   return (
     // Stop propagation to prevent selection mode triggers when interacting with editor
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
       <textarea
         value={text}

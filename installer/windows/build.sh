@@ -48,6 +48,11 @@ cp "${PROJECT_ROOT}/docker-compose.yml" "${PAYLOAD_DIR}/"
 cp "${PROJECT_ROOT}/installer/scripts/postinstall.ps1" "${PAYLOAD_DIR}/scripts/"
 cp "${PROJECT_ROOT}/installer/scripts/ngaj-start.ps1" "${PAYLOAD_DIR}/scripts/"
 cp "${PROJECT_ROOT}/installer/scripts/ngaj-setup.ps1" "${PAYLOAD_DIR}/scripts/"
+cp "${PROJECT_ROOT}/installer/scripts/ngaj-update.ps1" "${PAYLOAD_DIR}/scripts/"
+
+# Copy resources (icon)
+mkdir -p "${PAYLOAD_DIR}/resources"
+cp "${SCRIPT_DIR}/resources/icon.ico" "${PAYLOAD_DIR}/resources/"
 
 # Create install.bat
 cat > "${PAYLOAD_DIR}/install.bat" << 'INSTALL_EOF'
@@ -66,10 +71,12 @@ if %errorlevel% neq 0 (
 REM Create installation directory
 if not exist "%ProgramFiles%\ngaj" mkdir "%ProgramFiles%\ngaj"
 if not exist "%ProgramFiles%\ngaj\scripts" mkdir "%ProgramFiles%\ngaj\scripts"
+if not exist "%ProgramFiles%\ngaj\resources" mkdir "%ProgramFiles%\ngaj\resources"
 
 REM Copy files
 copy /Y docker-compose.yml "%ProgramFiles%\ngaj\"
 copy /Y scripts\*.ps1 "%ProgramFiles%\ngaj\scripts\"
+copy /Y resources\icon.ico "%ProgramFiles%\ngaj\resources\"
 
 REM Run post-install script
 powershell -ExecutionPolicy Bypass -File "%ProgramFiles%\ngaj\scripts\postinstall.ps1"

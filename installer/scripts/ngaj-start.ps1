@@ -21,15 +21,13 @@ Write-Host "           Starting ngaj              " -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if .env exists
+# Check if .env exists - if not, redirect to setup (matching macOS behavior)
 if (-not (Test-Path $EnvFile)) {
-    Write-Host "Configuration not found!" -ForegroundColor Red
+    Write-Host "Configuration not found. Starting setup wizard..." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "ngaj has not been set up yet."
-    Write-Host "Please run the installer again to complete setup."
-    Write-Host ""
-    Read-Host "Press Enter to exit"
-    exit 1
+    # Run setup script in current window
+    & "$NgajHome\scripts\ngaj-setup.ps1"
+    exit $LASTEXITCODE
 }
 
 # Check if Docker is installed

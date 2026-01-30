@@ -49,6 +49,11 @@ New-Item -ItemType Directory -Force -Path "$PayloadDir\scripts" | Out-Null
 Copy-Item "$ProjectRoot\installer\scripts\postinstall.ps1" "$PayloadDir\scripts\"
 Copy-Item "$ProjectRoot\installer\scripts\ngaj-start.ps1" "$PayloadDir\scripts\"
 Copy-Item "$ProjectRoot\installer\scripts\ngaj-setup.ps1" "$PayloadDir\scripts\"
+Copy-Item "$ProjectRoot\installer\scripts\ngaj-update.ps1" "$PayloadDir\scripts\"
+
+# Copy resources (icon)
+New-Item -ItemType Directory -Force -Path "$PayloadDir\resources" | Out-Null
+Copy-Item "$ScriptDir\resources\icon.ico" "$PayloadDir\resources\"
 
 # Create install.bat for easy installation
 $installBat = @"
@@ -67,10 +72,12 @@ if %errorlevel% neq 0 (
 REM Create installation directory
 if not exist "%ProgramFiles%\ngaj" mkdir "%ProgramFiles%\ngaj"
 if not exist "%ProgramFiles%\ngaj\scripts" mkdir "%ProgramFiles%\ngaj\scripts"
+if not exist "%ProgramFiles%\ngaj\resources" mkdir "%ProgramFiles%\ngaj\resources"
 
 REM Copy files
 copy /Y docker-compose.yml "%ProgramFiles%\ngaj\"
 copy /Y scripts\*.ps1 "%ProgramFiles%\ngaj\scripts\"
+copy /Y resources\icon.ico "%ProgramFiles%\ngaj\resources\"
 
 REM Run post-install script
 powershell -ExecutionPolicy Bypass -File "%ProgramFiles%\ngaj\scripts\postinstall.ps1"
@@ -120,21 +127,6 @@ echo Uninstallation complete!
 pause
 "@
 $uninstallBat | Out-File -FilePath "$PayloadDir\uninstall.bat" -Encoding ASCII
-
-# Create Start Menu shortcut script
-$createShortcut = @"
-# Create Start Menu shortcut for ngaj
-`$WshShell = New-Object -ComObject WScript.Shell
-`$StartMenu = [Environment]::GetFolderPath('StartMenu')
-`$Shortcut = `$WshShell.CreateShortcut("`$StartMenu\Programs\ngaj.lnk")
-`$Shortcut.TargetPath = "powershell.exe"
-`$Shortcut.Arguments = "-ExecutionPolicy Bypass -File `"`$env:LOCALAPPDATA\ngaj\scripts\ngaj-start.ps1`""
-`$Shortcut.WorkingDirectory = "`$env:LOCALAPPDATA\ngaj"
-`$Shortcut.Description = "Start ngaj - Social Media Engagement Companion"
-`$Shortcut.Save()
-Write-Host "Start Menu shortcut created" -ForegroundColor Green
-"@
-$createShortcut | Out-File -FilePath "$PayloadDir\scripts\create-shortcut.ps1" -Encoding UTF8
 
 # --- BUILD PACKAGE ---
 

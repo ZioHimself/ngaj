@@ -11,10 +11,15 @@ $InstallDir = "$env:ProgramFiles\ngaj"
 # Note: MongoDB and ChromaDB use Docker named volumes, not host directories
 New-Item -ItemType Directory -Force -Path "$NgajHome\logs" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\scripts" | Out-Null
+New-Item -ItemType Directory -Force -Path "$NgajHome\resources" | Out-Null
 
 # Copy scripts to user directory
 Copy-Item "$InstallDir\scripts\ngaj-start.ps1" "$NgajHome\scripts\" -Force
 Copy-Item "$InstallDir\scripts\ngaj-setup.ps1" "$NgajHome\scripts\" -Force
+Copy-Item "$InstallDir\scripts\ngaj-update.ps1" "$NgajHome\scripts\" -Force
+
+# Copy resources (icon) to user directory
+Copy-Item "$InstallDir\resources\icon.ico" "$NgajHome\resources\" -Force
 
 # Create Start Menu shortcut for ngaj (day-2 launcher)
 $WshShell = New-Object -ComObject WScript.Shell
@@ -24,6 +29,7 @@ $Shortcut.TargetPath = "powershell.exe"
 $Shortcut.Arguments = "-ExecutionPolicy Bypass -NoExit -File `"$NgajHome\scripts\ngaj-start.ps1`""
 $Shortcut.WorkingDirectory = $NgajHome
 $Shortcut.Description = "Start ngaj - Social Media Engagement Companion"
+$Shortcut.IconLocation = "$NgajHome\resources\icon.ico"
 $Shortcut.Save()
 
 # Open PowerShell to run the interactive setup wizard

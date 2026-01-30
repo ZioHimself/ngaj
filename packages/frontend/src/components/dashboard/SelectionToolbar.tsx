@@ -38,6 +38,48 @@ export interface SelectionToolbarProps {
  * - "Dismiss selected (N)": Bulk dismisses all selected opportunities
  * - "Cancel": Exits selection mode and clears selection
  */
-export function SelectionToolbar(_props: SelectionToolbarProps): React.ReactElement {
-  throw new Error('Not implemented');
+export function SelectionToolbar({
+  selectedCount,
+  onSelectAll,
+  onSelectOthers,
+  onDismissSelected,
+  onCancel,
+}: SelectionToolbarProps): React.ReactElement {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+      <div className="flex justify-between items-center max-w-4xl mx-auto">
+        <span className="text-sm text-gray-600">{selectedCount} selected</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onSelectAll}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            onClick={onSelectOthers}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Select others
+          </button>
+          <button
+            type="button"
+            onClick={onDismissSelected}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+          >
+            Dismiss selected ({selectedCount})
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

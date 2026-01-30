@@ -308,6 +308,7 @@ interface SelectionToolbarProps {
   selectedCount: number;
   totalCount: number;
   onDismissSelected: () => void;
+  onSelectAll: () => void;
   onSelectOthers: () => void;
   onCancel: () => void;
 }
@@ -316,6 +317,7 @@ interface SelectionToolbarProps {
   <div className="flex justify-between items-center">
     <span>{selectedCount} selected</span>
     <div className="flex gap-2">
+      <button onClick={onSelectAll}>Select all</button>
       <button onClick={onSelectOthers}>Select others</button>
       <button onClick={onDismissSelected}>
         Dismiss selected ({selectedCount})
@@ -326,7 +328,20 @@ interface SelectionToolbarProps {
 </div>
 ```
 
-### 6.5 "Select Others" Logic
+### 6.5 Select All Logic
+
+Selects all visible opportunities in the current filter view.
+
+```typescript
+const handleSelectAll = () => {
+  const visibleIds = new Set(opportunities.map(o => o._id));
+  setSelectedIds(visibleIds);
+};
+```
+
+### 6.6 Select Others Logic
+
+Selects all visible opportunities NOT currently selected, deselecting the current selection. Enables "dismiss everything except these" workflow.
 
 ```typescript
 const handleSelectOthers = () => {
@@ -390,6 +405,9 @@ sequenceDiagram
 | Bulk dismiss with invalid IDs | Skip invalid, dismiss valid, return skipped list |
 | Selection mode + new opportunities load | New items appear unselected |
 | Long-press triggers card expand | Prevent expand during long-press; only selection |
+| "Select all" with pagination | Only selects visible/loaded items, not across pages |
+| "Select all" then "Select others" | Results in empty selection (inverts all-selected to none) |
+| "Select others" with none selected | Selects all visible items |
 
 ---
 

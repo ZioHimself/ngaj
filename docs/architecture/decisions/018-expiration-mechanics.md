@@ -48,7 +48,10 @@ We will implement **application-level expiration mechanics** with aggressive cle
 ### 5. Bulk Dismiss UX
 - Mobile: Long-press to enter selection mode, tap to toggle
 - Desktop: Checkbox appears on hover
-- Actions: "Dismiss selected (N)", "Select others"
+- Actions:
+  - **"Dismiss selected (N)"**: Bulk dismiss all selected opportunities
+  - **"Select all"**: Select all visible opportunities in current filter view
+  - **"Select others"**: Select all visible opportunities NOT currently selected (deselects current). Enables "dismiss everything except these" workflow.
 
 ## Rationale
 

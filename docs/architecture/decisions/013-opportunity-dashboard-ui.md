@@ -327,7 +327,7 @@ pending → [Generate] → draft → [Edit] → [Post] → posted
 - ~~❌ **Desktop-only optimized**~~ → ✅ **Addressed by [ADR-015](./015-responsive-web-design.md)** (mobile-first design)
 - ❌ **Manual refresh**: User must click to see new opportunities
 - ❌ **Limited sorting/filtering**: Only basic options in v0.1
-- ❌ **No bulk actions**: Must process opportunities one at a time
+- ~~❌ **No bulk actions**~~ → ✅ **Addressed by [ADR-018](./018-expiration-mechanics.md)** (bulk dismiss, invert selection)
 - ~~❌ **Pagination friction**~~ → ✅ **Addressed** ("Load More" button replaces numbered pages)
 
 ### Mitigation
@@ -402,10 +402,14 @@ v0.1 Opportunity Dashboard succeeds if:
 - Filter by discovery source (replies, search)
 - Save filter presets
 
-### v0.3: Bulk Actions
-- Select multiple opportunities
-- Dismiss all selected
-- Generate responses for all selected (batch)
+### ~~v0.3: Bulk Actions~~ → Implemented in v0.1
+> **See [ADR-018: Expiration Mechanics](./018-expiration-mechanics.md)** for bulk selection UX
+
+- ✅ Select multiple opportunities (long-press mobile, checkbox desktop)
+- ✅ Dismiss all selected
+- ✅ Select all (visible in current filter)
+- ✅ Select others (invert selection)
+- ❌ Generate responses for all selected (deferred)
 
 ### v0.4: Real-Time Updates
 - WebSocket connection for live updates

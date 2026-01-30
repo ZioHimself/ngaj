@@ -17,6 +17,7 @@ Test coverage for opportunity expiration, cleanup service, bulk dismiss API, and
 - ✅ Query filtering (exclude expired from pending)
 - ✅ Bulk dismiss API endpoint
 - ✅ Selection mode UI (desktop checkbox, mobile long-press)
+- ✅ "Select all" functionality
 - ✅ "Select others" functionality
 
 ### Out of Scope
@@ -207,6 +208,19 @@ Test coverage for opportunity expiration, cleanup service, bulk dismiss API, and
 
 ---
 
+### Scenario: "Select all" selects all visible opportunities
+**Given**: 10 opportunities visible, 3 already selected
+**When**: User clicks "Select all"
+**Then**: All 10 opportunities become selected
+
+**Acceptance Criteria**:
+- [ ] All visible opportunities added to selection
+- [ ] Count updates to total visible (10)
+- [ ] Works regardless of prior selection state
+- [ ] Only selects opportunities in current filter view (not across pagination)
+
+---
+
 ### Scenario: "Select others" inverts selection
 **Given**: 10 opportunities visible, 3 selected
 **When**: User clicks "Select others"
@@ -216,6 +230,18 @@ Test coverage for opportunity expiration, cleanup service, bulk dismiss API, and
 - [ ] Selection inverted for all visible items
 - [ ] Count updates to 7
 - [ ] Original 3 no longer selected
+
+---
+
+### Scenario: "Select all" then "Select others" clears selection
+**Given**: User clicked "Select all" (10 selected)
+**When**: User clicks "Select others"
+**Then**: 0 opportunities selected
+
+**Acceptance Criteria**:
+- [ ] When all are selected, "Select others" results in empty selection
+- [ ] Selection count updates to 0
+- [ ] Selection mode remains active (user can select again)
 
 ---
 
@@ -322,12 +348,13 @@ export const createDismissedOpportunity = (minutesAgo: number, overrides = {}) =
 7. Scoring weights updated to 70/30
 8. Selection mode desktop checkbox hover
 9. Selection mode mobile long-press
-10. "Select others" inverts selection
+10. "Select all" selects all visible
+11. "Select others" inverts selection
 
 ### Nice to Have (May Defer)
-11. E2E full cleanup cycle
-12. Selection mode visual polish
-13. Edge case: concurrent cleanup runs
+12. E2E full cleanup cycle
+13. Selection mode visual polish
+14. Edge case: concurrent cleanup runs
 
 ---
 

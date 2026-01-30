@@ -23,3 +23,7 @@ export type { LoadMoreProps } from './LoadMore';
 
 export { ResponseModal } from './ResponseModal';
 export type { ResponseModalProps } from './ResponseModal';
+
+// ADR-018: Selection Mode Components
+export { SelectionToolbar } from './SelectionToolbar';
+export type { SelectionToolbarProps } from './SelectionToolbar';

@@ -11,11 +11,11 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Tests** | 88 |
+| **Total Tests** | 113 |
 | **Unit Tests** | 31 |
 | **Integration Tests** | 29 |
-| **Component Tests** | 28 |
-| **Red Phase Status** | ❌ All tests failing |
+| **Component Tests** | 53 |
+| **Red Phase Status** | ❌ Tests failing (10 component tests require implementation) |
 
 ---
 
@@ -28,17 +28,19 @@
 | `tests/unit/services/scoring-service-weights.spec.ts` | 12 | 70/30 scoring weights |
 | `tests/integration/api/bulk-dismiss-api.spec.ts` | 18 | Bulk dismiss endpoint |
 | `tests/integration/database/query-filtering.spec.ts` | 11 | Expired filtering queries |
-| `tests/unit/components/dashboard/selection-mode.spec.tsx` | 28 | Selection mode UI |
+| `tests/unit/components/dashboard/selection-mode.spec.tsx` | 53 | Selection mode UI (incl. Select all/Select others) |
 
 ### Fixtures
 | File | Purpose |
 |------|---------|
 | `tests/fixtures/cleanup-fixtures.ts` | Factory functions for expiration testing |
+| `tests/fixtures/dashboard-fixtures.ts` | SelectionToolbar fixtures (added) |
 
 ### Implementation Stubs
 | File | Purpose |
 |------|---------|
 | `packages/backend/src/services/cleanup-service.ts` | CleanupService stub |
+| `packages/frontend/src/components/dashboard/SelectionToolbar.tsx` | SelectionToolbar stub |
 
 ---
 
@@ -70,11 +72,13 @@
    - Add selection state props
    - Add long-press handler for mobile
 
-6. **SelectionToolbar** - New component
-   - Selected count display
-   - "Select others" button
-   - "Dismiss selected" button
-   - "Cancel" button
+6. **SelectionToolbar** - `packages/frontend/src/components/dashboard/SelectionToolbar.tsx`
+   - Selected count display (e.g., "3 selected")
+   - "Select all" button - calls `onSelectAll()` handler
+   - "Select others" button - calls `onSelectOthers()` handler
+   - "Dismiss selected (N)" button - calls `onDismissSelected()` handler
+   - "Cancel" button - calls `onCancel()` handler
+   - Run: `npm test -- selection-mode.spec.tsx -t "SelectionToolbar"`
 
 7. **Selection State** - Dashboard state management
    - `isSelectionMode` state
@@ -100,6 +104,13 @@ npm test -- -t "should skip opportunities from other accounts"
 
 # Query filtering
 npm test -- -t "should exclude pending opportunities with expiresAt in past"
+
+# Selection mode - Select all / Select others (Important)
+npm test -- -t "should call onSelectAll when"
+npm test -- -t "should select all visible opportunities"
+npm test -- -t "should call onSelectOthers when"
+npm test -- -t "should invert selection when"
+npm test -- -t "should result in empty selection when all selected"
 ```
 
 ---
@@ -206,6 +217,65 @@ app.post('/api/opportunities/bulk-dismiss', async (req, res) => {
 });
 ```
 
+### SelectionToolbar State Management (Dashboard)
+
+```typescript
+// State in Dashboard component
+const [isSelectionMode, setIsSelectionMode] = useState(false);
+const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+// Handler for "Select all"
+const handleSelectAll = () => {
+  const visibleIds = new Set(opportunities.map(o => o._id));
+  setSelectedIds(visibleIds);
+};
+
+// Handler for "Select others" (invert selection)
+const handleSelectOthers = () => {
+  const visibleIds = opportunities.map(o => o._id);
+  const othersIds = new Set(
+    visibleIds.filter(id => !selectedIds.has(id))
+  );
+  setSelectedIds(othersIds);
+};
+
+// Handler for "Cancel"
+const handleCancel = () => {
+  setIsSelectionMode(false);
+  setSelectedIds(new Set());
+};
+```
+
+### SelectionToolbar Component
+
+```tsx
+// packages/frontend/src/components/dashboard/SelectionToolbar.tsx
+export function SelectionToolbar({
+  selectedCount,
+  totalCount,
+  onSelectAll,
+  onSelectOthers,
+  onDismissSelected,
+  onCancel,
+}: SelectionToolbarProps): React.ReactElement {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg">
+      <div className="flex justify-between items-center max-w-4xl mx-auto">
+        <span className="text-sm text-gray-600">{selectedCount} selected</span>
+        <div className="flex gap-2">
+          <button onClick={onSelectAll}>Select all</button>
+          <button onClick={onSelectOthers}>Select others</button>
+          <button onClick={onDismissSelected}>
+            Dismiss selected ({selectedCount})
+          </button>
+          <button onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
 ---
 
 ## 6. Constants
@@ -281,10 +351,20 @@ npm test -- --coverage cleanup-service
   ✓ Desktop - Checkbox Behavior (7 tests)
   ✓ Mobile - Long-Press Behavior (5 tests)
   ✓ Mobile - Tap in Selection Mode (4 tests)
-  ✓ SelectionToolbar Component (9 tests)
+  ✓ Selection Toolbar (4 tests)
+  ✓ Clickable Elements Should Not Trigger Selection (10 tests)
+
+✓ SelectionToolbar Component
+  ✓ "Select all" functionality (7 tests)
+  ✓ "Select others" functionality (5 tests)
+  ✓ "Select all" then "Select others" clears selection (4 tests)
+  ✓ "Select others" with none selected (1 test)
+  ✓ Cancel functionality (5 tests)
+  ✓ Dismiss Selected (3 tests)
+  ✓ Toolbar Visibility (1 test)
 
 Test Suites: 5 passed, 5 total
-Tests:       88 passed, 88 total
+Tests:       113 passed, 113 total
 ```
 
 ---
@@ -293,12 +373,15 @@ Tests:       88 passed, 88 total
 
 Implementation is complete when:
 
-- [ ] All 88 tests pass
+- [ ] All 113 tests pass
 - [ ] `npm run lint` has no errors
 - [ ] `npm run build` compiles successfully
 - [ ] CleanupService scheduled job starts on app launch
 - [ ] Bulk dismiss API returns correct response format
 - [ ] Selection mode works on both desktop and mobile
+- [ ] SelectionToolbar renders with Select all/Select others buttons
+- [ ] "Select all" selects all visible opportunities
+- [ ] "Select others" inverts selection correctly
 - [ ] Existing tests in `scoring-service.spec.ts` updated for 70/30 weights
 
 ---

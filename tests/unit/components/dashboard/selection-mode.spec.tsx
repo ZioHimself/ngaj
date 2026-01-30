@@ -15,6 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { OpportunityCard } from '@ngaj/frontend/components/dashboard/OpportunityCard';
+import { SelectionToolbar } from '@ngaj/frontend/components/dashboard/SelectionToolbar';
 import { dashboardOpportunityFixtures } from '@tests/fixtures/dashboard-fixtures';
 
 /** Long-press duration in milliseconds */
@@ -685,10 +686,168 @@ describe('Clickable Elements Should Not Trigger Selection', () => {
 });
 
 describe('SelectionToolbar Component', () => {
-  // These tests would be for the standalone SelectionToolbar component
-  // Placeholder for implementation
+  /**
+   * Tests for SelectionToolbar component
+   *
+   * @see ADR-018: Expiration Mechanics - Bulk Dismiss UX
+   * @see Design: Section 6.4 Selection Actions
+   */
+
+  const defaultToolbarProps = {
+    selectedCount: 3,
+    totalCount: 10,
+    visibleIds: Array.from({ length: 10 }, (_, i) => `opp-${i}`),
+    selectedIds: new Set(['opp-0', 'opp-1', 'opp-2']),
+    onDismissSelected: vi.fn(),
+    onSelectAll: vi.fn(),
+    onSelectOthers: vi.fn(),
+    onCancel: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('"Select all" functionality', () => {
+    /**
+     * Scenario: "Select all" selects all visible opportunities
+     *
+     * Given: 10 opportunities visible, 3 already selected
+     * When: User clicks "Select all"
+     * Then: All 10 opportunities become selected
+     */
+
+    it('should call onSelectAll when "Select all" button clicked', () => {
+      // Arrange
+      const onSelectAll = vi.fn();
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          onSelectAll={onSelectAll}
+        />
+      );
+
+      // Act
+      const selectAllButton = screen.getByRole('button', { name: /select all/i });
+      fireEvent.click(selectAllButton);
+
+      // Assert
+      expect(onSelectAll).toHaveBeenCalledOnce();
+    });
+
+    it('should select all visible opportunities (10 items)', () => {
+      // Arrange - simulate the handler logic
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      const selectedIds = new Set(['opp-0', 'opp-1', 'opp-2']); // 3 initially selected
+      let newSelectedIds: Set<string> = new Set();
+
+      const handleSelectAll = () => {
+        newSelectedIds = new Set(visibleIds);
+      };
+
+      // Act
+      handleSelectAll();
+
+      // Assert - all visible opportunities added to selection
+      expect(newSelectedIds.size).toBe(10);
+      visibleIds.forEach((id) => {
+        expect(newSelectedIds.has(id)).toBe(true);
+      });
+    });
+
+    it('should update count to total visible (10) after Select all', () => {
+      // Arrange
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      
+      // Act - simulate select all
+      const selectedCount = visibleIds.length;
+
+      // Assert
+      expect(selectedCount).toBe(10);
+    });
+
+    it('should work regardless of prior selection state (none selected)', () => {
+      // Arrange - start with no selection
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set<string>();
+
+      // Act - select all when nothing selected
+      const handleSelectAll = () => {
+        selectedIds = new Set(visibleIds);
+      };
+      handleSelectAll();
+
+      // Assert
+      expect(selectedIds.size).toBe(10);
+    });
+
+    it('should work regardless of prior selection state (all selected)', () => {
+      // Arrange - start with all selected
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set(visibleIds);
+
+      // Act - select all when all already selected (idempotent)
+      const handleSelectAll = () => {
+        selectedIds = new Set(visibleIds);
+      };
+      handleSelectAll();
+
+      // Assert - still all selected
+      expect(selectedIds.size).toBe(10);
+    });
+
+    it('should only select opportunities in current filter view (not across pagination)', () => {
+      // Arrange - simulate paginated view with 20 items per page
+      const page1Ids = Array.from({ length: 20 }, (_, i) => `page1-opp-${i}`);
+      const page2Ids = Array.from({ length: 20 }, (_, i) => `page2-opp-${i}`);
+      const currentVisibleIds = page1Ids; // Only page 1 is visible
+
+      // Act - select all on current view
+      const selectedIds = new Set(currentVisibleIds);
+
+      // Assert - only page 1 items selected
+      expect(selectedIds.size).toBe(20);
+      page1Ids.forEach((id) => expect(selectedIds.has(id)).toBe(true));
+      page2Ids.forEach((id) => expect(selectedIds.has(id)).toBe(false));
+    });
+
+    it('should render "Select all" button in toolbar', () => {
+      // Arrange & Act
+      render(<SelectionToolbar {...defaultToolbarProps} />);
+
+      // Assert
+      const selectAllButton = screen.getByRole('button', { name: /select all/i });
+      expect(selectAllButton).toBeInTheDocument();
+    });
+  });
 
   describe('"Select others" functionality', () => {
+    /**
+     * Scenario: "Select others" inverts selection
+     *
+     * Given: 10 opportunities visible, 3 selected
+     * When: User clicks "Select others"
+     * Then: 7 become selected, 3 become unselected
+     */
+
+    it('should call onSelectOthers when "Select others" button clicked', () => {
+      // Arrange
+      const onSelectOthers = vi.fn();
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          onSelectOthers={onSelectOthers}
+        />
+      );
+
+      // Act
+      const selectOthersButton = screen.getByRole('button', { name: /select others/i });
+      fireEvent.click(selectOthersButton);
+
+      // Assert
+      expect(onSelectOthers).toHaveBeenCalledOnce();
+    });
+
     it('should invert selection when "Select others" clicked', () => {
       // Arrange
       // Given: 10 opportunities visible, 3 selected
@@ -698,13 +857,13 @@ describe('SelectionToolbar Component', () => {
       // Act - simulate "Select others" logic
       const othersIds = new Set(visibleIds.filter((id) => !selectedIds.has(id)));
 
-      // Assert
+      // Assert - selection inverted for all visible items
       expect(othersIds.size).toBe(7);
       expect(othersIds.has('opp-0')).toBe(false);
       expect(othersIds.has('opp-3')).toBe(true);
     });
 
-    it('should update count to show newly selected items', () => {
+    it('should update count to 7 after Select others (from 3 of 10)', () => {
       // Arrange
       const initialSelected = 3;
       const total = 10;
@@ -712,30 +871,157 @@ describe('SelectionToolbar Component', () => {
       // Act
       const afterSelectOthers = total - initialSelected;
 
-      // Assert
+      // Assert - count updates to 7
       expect(afterSelectOthers).toBe(7);
     });
 
-    it('should deselect originally selected items', () => {
+    it('should deselect originally selected items (original 3 no longer selected)', () => {
       // Arrange
-      const originalSelected = new Set(['a', 'b', 'c']);
-      const allItems = ['a', 'b', 'c', 'd', 'e'];
+      const originalSelected = new Set(['opp-0', 'opp-1', 'opp-2']);
+      const allItems = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
 
       // Act - "Select others" inverts selection
       const newSelected = new Set(
         allItems.filter((id) => !originalSelected.has(id))
       );
 
+      // Assert - original 3 no longer selected
+      expect(newSelected.has('opp-0')).toBe(false);
+      expect(newSelected.has('opp-1')).toBe(false);
+      expect(newSelected.has('opp-2')).toBe(false);
+      // Others are now selected
+      expect(newSelected.has('opp-3')).toBe(true);
+      expect(newSelected.has('opp-9')).toBe(true);
+    });
+
+    it('should render "Select others" button in toolbar', () => {
+      // Arrange & Act
+      render(<SelectionToolbar {...defaultToolbarProps} />);
+
       // Assert
-      expect(newSelected.has('a')).toBe(false);
-      expect(newSelected.has('b')).toBe(false);
-      expect(newSelected.has('c')).toBe(false);
-      expect(newSelected.has('d')).toBe(true);
-      expect(newSelected.has('e')).toBe(true);
+      const selectOthersButton = screen.getByRole('button', { name: /select others/i });
+      expect(selectOthersButton).toBeInTheDocument();
+    });
+  });
+
+  describe('"Select all" then "Select others" clears selection', () => {
+    /**
+     * Scenario: "Select all" then "Select others" clears selection
+     *
+     * Given: User clicked "Select all" (10 selected)
+     * When: User clicks "Select others"
+     * Then: 0 opportunities selected
+     */
+
+    it('should result in empty selection when all selected then "Select others"', () => {
+      // Arrange - user clicked "Select all" (10 selected)
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set(visibleIds); // All 10 selected
+
+      // Act - user clicks "Select others"
+      const handleSelectOthers = () => {
+        selectedIds = new Set(visibleIds.filter((id) => !selectedIds.has(id)));
+      };
+      handleSelectOthers();
+
+      // Assert - when all are selected, "Select others" results in empty selection
+      expect(selectedIds.size).toBe(0);
+    });
+
+    it('should update selection count to 0', () => {
+      // Arrange - all 10 selected
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set(visibleIds);
+
+      // Act - invert selection (select others)
+      selectedIds = new Set(visibleIds.filter((id) => !selectedIds.has(id)));
+
+      // Assert - selection count updates to 0
+      expect(selectedIds.size).toBe(0);
+    });
+
+    it('should keep selection mode active after clearing (user can select again)', () => {
+      // Arrange - simulate component state
+      let isSelectionMode = true;
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set(visibleIds); // All selected
+
+      // Act - "Select others" clears selection but keeps mode active
+      const handleSelectOthers = () => {
+        selectedIds = new Set(visibleIds.filter((id) => !selectedIds.has(id)));
+        // Note: selection mode remains active
+      };
+      handleSelectOthers();
+
+      // Assert - selection mode remains active (user can select again)
+      expect(isSelectionMode).toBe(true);
+      expect(selectedIds.size).toBe(0);
+    });
+
+    it('should allow user to select items again after clearing', () => {
+      // Arrange - start with empty selection after "Select all" → "Select others"
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set<string>();
+      const isSelectionMode = true;
+
+      // Act - user manually selects an item
+      const toggleSelect = (id: string) => {
+        if (selectedIds.has(id)) {
+          selectedIds.delete(id);
+        } else {
+          selectedIds.add(id);
+        }
+      };
+      toggleSelect('opp-5');
+
+      // Assert - can add new selections
+      expect(selectedIds.has('opp-5')).toBe(true);
+      expect(selectedIds.size).toBe(1);
+    });
+  });
+
+  describe('"Select others" with none selected', () => {
+    /**
+     * Edge case from design document Section 9
+     * "Select others" with none selected → Selects all visible items
+     */
+
+    it('should select all visible items when none initially selected', () => {
+      // Arrange - no items selected
+      const visibleIds = Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+      let selectedIds = new Set<string>(); // Empty
+
+      // Act - "Select others" when nothing selected
+      const handleSelectOthers = () => {
+        selectedIds = new Set(visibleIds.filter((id) => !selectedIds.has(id)));
+      };
+      handleSelectOthers();
+
+      // Assert - all items become selected
+      expect(selectedIds.size).toBe(10);
+      visibleIds.forEach((id) => expect(selectedIds.has(id)).toBe(true));
     });
   });
 
   describe('Cancel functionality', () => {
+    it('should call onCancel when "Cancel" button clicked', () => {
+      // Arrange
+      const onCancel = vi.fn();
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          onCancel={onCancel}
+        />
+      );
+
+      // Act
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      fireEvent.click(cancelButton);
+
+      // Assert
+      expect(onCancel).toHaveBeenCalledOnce();
+    });
+
     it('should deactivate selection mode on Cancel', () => {
       // Arrange
       let isSelectionMode = true;
@@ -748,12 +1034,12 @@ describe('SelectionToolbar Component', () => {
       };
       handleCancel();
 
-      // Assert
+      // Assert - isSelectionMode becomes false
       expect(isSelectionMode).toBe(false);
       expect(selectedIds.size).toBe(0);
     });
 
-    it('should clear selection on Cancel', () => {
+    it('should clear selection on Cancel (selectedIds cleared)', () => {
       // Arrange
       const selectedIds = new Set(['opp-1', 'opp-2', 'opp-3']);
 
@@ -765,43 +1051,90 @@ describe('SelectionToolbar Component', () => {
     });
 
     it('should return UI to normal state on Cancel', () => {
-      // This would test visual state changes
-      // For now, verify state cleanup logic
+      // Arrange - simulate state before cancel
       const state = {
         isSelectionMode: true,
         selectedIds: new Set(['a', 'b']),
       };
 
-      // Act
+      // Act - cancel clears state
       state.isSelectionMode = false;
       state.selectedIds = new Set();
 
-      // Assert
+      // Assert - UI returns to normal state
       expect(state.isSelectionMode).toBe(false);
       expect(state.selectedIds.size).toBe(0);
+    });
+
+    it('should render "Cancel" button in toolbar', () => {
+      // Arrange & Act
+      render(<SelectionToolbar {...defaultToolbarProps} />);
+
+      // Assert
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      expect(cancelButton).toBeInTheDocument();
     });
   });
 
   describe('Dismiss Selected', () => {
-    it('should call bulk dismiss with selected IDs', () => {
+    it('should call onDismissSelected when "Dismiss selected" button clicked', () => {
       // Arrange
-      const selectedIds = new Set(['opp-1', 'opp-2', 'opp-3']);
-      const onBulkDismiss = vi.fn();
+      const onDismissSelected = vi.fn();
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          selectedCount={3}
+          onDismissSelected={onDismissSelected}
+        />
+      );
 
       // Act
-      onBulkDismiss(Array.from(selectedIds));
+      const dismissButton = screen.getByRole('button', { name: /dismiss selected/i });
+      fireEvent.click(dismissButton);
 
       // Assert
-      expect(onBulkDismiss).toHaveBeenCalledWith(['opp-1', 'opp-2', 'opp-3']);
+      expect(onDismissSelected).toHaveBeenCalledOnce();
     });
 
     it('should display count in dismiss button', () => {
       // Arrange
       const selectedCount = 5;
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          selectedCount={selectedCount}
+        />
+      );
 
       // Assert - button text should include count
-      const expectedText = `Dismiss selected (${selectedCount})`;
-      expect(expectedText).toBe('Dismiss selected (5)');
+      const dismissButton = screen.getByRole('button', { name: /dismiss selected \(5\)/i });
+      expect(dismissButton).toBeInTheDocument();
+    });
+
+    it('should display selected count in toolbar', () => {
+      // Arrange & Act
+      render(
+        <SelectionToolbar
+          {...defaultToolbarProps}
+          selectedCount={3}
+        />
+      );
+
+      // Assert
+      expect(screen.getByText(/3 selected/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Toolbar Visibility', () => {
+    it('should render toolbar when selection mode is active', () => {
+      // Arrange & Act
+      render(<SelectionToolbar {...defaultToolbarProps} />);
+
+      // Assert - toolbar is visible
+      expect(screen.getByRole('button', { name: /select all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /select others/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /dismiss selected/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
   });
 });

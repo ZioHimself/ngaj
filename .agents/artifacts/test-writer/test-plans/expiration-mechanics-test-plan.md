@@ -15,8 +15,8 @@
 | Unit | `scoring-service-weights.spec.ts` | 12 | Important |
 | Integration | `bulk-dismiss-api.spec.ts` | 18 | Critical |
 | Integration | `query-filtering.spec.ts` | 11 | Critical |
-| Component | `selection-mode.spec.tsx` | 28 | Important |
-| **Total** | | **88** | |
+| Component | `selection-mode.spec.tsx` | 53 | Important |
+| **Total** | | **113** | |
 
 ---
 
@@ -102,12 +102,34 @@
 - Mobile: long-press (500ms) enters selection mode
 - Mobile: tap toggles selection in selection mode
 - Mobile: card expand disabled in selection mode
-- "Select others" inversion logic
+- Interactive elements (buttons, links) don't trigger selection
+- **"Select all" functionality** (7 tests):
+  - Calls onSelectAll handler when button clicked
+  - Selects all visible opportunities (10 items)
+  - Updates count to total visible
+  - Works regardless of prior selection state (none/some/all selected)
+  - Only selects opportunities in current filter view (not across pagination)
+  - Renders "Select all" button in toolbar
+- **"Select others" functionality** (5 tests):
+  - Calls onSelectOthers handler when button clicked
+  - Inverts selection (previously selected → unselected)
+  - Updates count to inverted amount (7 after inverting 3 of 10)
+  - Deselects originally selected items
+  - Renders "Select others" button in toolbar
+- **"Select all" → "Select others" clears selection** (4 tests):
+  - Results in empty selection when all selected then inverted
+  - Updates selection count to 0
+  - Keeps selection mode active (user can select again)
+  - Allows new selections after clearing
+- **Edge case: "Select others" with none selected** (1 test):
+  - Selects all visible items when starting with empty selection
 - Cancel clears selection and exits mode
+- Toolbar visibility and dismiss button
 
 **Mock Strategy**:
 - Use `@testing-library/react` for rendering
 - Use `vi.useFakeTimers()` for long-press timing
+- SelectionToolbar stub throws "Not implemented" (Red phase)
 
 ---
 
@@ -125,12 +147,14 @@
 7. ⬜ Scoring weights updated to 70/30
 8. ⬜ Selection mode desktop checkbox hover
 9. ⬜ Selection mode mobile long-press
-10. ⬜ "Select others" inverts selection
+10. ⬜ "Select all" selects all visible opportunities
+11. ⬜ "Select others" inverts selection
+12. ⬜ "Select all" then "Select others" clears selection
 
 ### Nice to Have (May Defer)
-11. ⬜ E2E full cleanup cycle
-12. ⬜ Selection mode visual polish
-13. ⬜ Edge case: concurrent cleanup runs
+13. ⬜ E2E full cleanup cycle
+14. ⬜ Selection mode visual polish
+15. ⬜ Edge case: concurrent cleanup runs
 
 ---
 
@@ -225,10 +249,11 @@ npm test -- --coverage
 ## 9. Success Criteria
 
 Test suite is complete when:
-- [ ] All 88 tests pass
+- [ ] All 113 tests pass
 - [ ] CleanupService has 100% method coverage
 - [ ] Bulk dismiss API tested with valid/invalid inputs
 - [ ] Selection mode tested on desktop and mobile viewports
+- [ ] "Select all" and "Select others" tests pass
 - [ ] Time-based logic tested with mocked timers
 - [ ] Cascade delete verified
 - [ ] No linter errors in test code

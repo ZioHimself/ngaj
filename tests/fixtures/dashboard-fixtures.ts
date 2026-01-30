@@ -571,3 +571,87 @@ export const responseModalFixtures = {
     }),
   }),
 };
+
+/**
+ * SelectionToolbar component props interface
+ * @see ADR-018: Expiration Mechanics - Bulk Dismiss UX
+ */
+export interface SelectionToolbarProps {
+  selectedCount: number;
+  totalCount: number;
+  visibleIds: string[];
+  selectedIds: Set<string>;
+  onDismissSelected: () => void;
+  onSelectAll: () => void;
+  onSelectOthers: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * Factory to create SelectionToolbar props for testing
+ * @see ADR-018: Expiration Mechanics - Bulk Dismiss UX
+ */
+export const createSelectionToolbarProps = (
+  overrides?: Partial<SelectionToolbarProps>
+): SelectionToolbarProps => {
+  const visibleIds = overrides?.visibleIds ?? Array.from({ length: 10 }, (_, i) => `opp-${i}`);
+  const selectedIds = overrides?.selectedIds ?? new Set(['opp-0', 'opp-1', 'opp-2']);
+
+  return {
+    selectedCount: selectedIds.size,
+    totalCount: visibleIds.length,
+    visibleIds,
+    selectedIds,
+    onDismissSelected: vi.fn(),
+    onSelectAll: vi.fn(),
+    onSelectOthers: vi.fn(),
+    onCancel: vi.fn(),
+    ...overrides,
+  };
+};
+
+/**
+ * Pre-configured SelectionToolbar fixtures
+ * @see ADR-018: Expiration Mechanics - Bulk Dismiss UX
+ */
+export const selectionToolbarFixtures = {
+  /**
+   * Default state: 3 of 10 items selected
+   */
+  default: createSelectionToolbarProps(),
+
+  /**
+   * All items selected (10 of 10)
+   */
+  allSelected: createSelectionToolbarProps({
+    visibleIds: Array.from({ length: 10 }, (_, i) => `opp-${i}`),
+    selectedIds: new Set(Array.from({ length: 10 }, (_, i) => `opp-${i}`)),
+    selectedCount: 10,
+  }),
+
+  /**
+   * No items selected (0 of 10)
+   */
+  noneSelected: createSelectionToolbarProps({
+    selectedIds: new Set<string>(),
+    selectedCount: 0,
+  }),
+
+  /**
+   * Single item selected (1 of 10)
+   */
+  singleSelected: createSelectionToolbarProps({
+    selectedIds: new Set(['opp-5']),
+    selectedCount: 1,
+  }),
+
+  /**
+   * Large selection (50 items visible, 20 selected)
+   */
+  largeSelection: createSelectionToolbarProps({
+    visibleIds: Array.from({ length: 50 }, (_, i) => `opp-${i}`),
+    selectedIds: new Set(Array.from({ length: 20 }, (_, i) => `opp-${i}`)),
+    totalCount: 50,
+    selectedCount: 20,
+  }),
+};

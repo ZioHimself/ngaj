@@ -18,6 +18,7 @@ import {
   FilterBar,
   LoadMore,
   OpportunityCard,
+  SelectionToolbar,
   type DashboardFilterValue,
 } from '../components/dashboard';
 
@@ -351,6 +352,36 @@ export function OpportunitiesDashboard({
   };
 
   /**
+   * Select all visible opportunities (ADR-018)
+   */
+  const handleSelectAll = () => {
+    const visibleIds = new Set(state.opportunities.map((o) => o._id));
+    setState((prev) => ({
+      ...prev,
+      selectedIds: visibleIds,
+      isSelectionMode: visibleIds.size > 0,
+    }));
+  };
+
+  /**
+   * Invert selection - select unselected items, deselect selected items (ADR-018)
+   */
+  const handleSelectOthers = () => {
+    const visibleIds = state.opportunities.map((o) => o._id);
+    const newSelected = new Set<string>();
+    for (const id of visibleIds) {
+      if (!state.selectedIds.has(id)) {
+        newSelected.add(id);
+      }
+    }
+    setState((prev) => ({
+      ...prev,
+      selectedIds: newSelected,
+      isSelectionMode: newSelected.size > 0,
+    }));
+  };
+
+  /**
    * Handle filter change
    */
   const handleFilterChange = (filter: DashboardFilterValue) => {
@@ -570,30 +601,18 @@ export function OpportunitiesDashboard({
         </div>
       )}
 
-      {/* Selection action bar (ADR-018) */}
+      {/* Selection toolbar (ADR-018) */}
       {state.isSelectionMode && (
-        <div className="flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <span className="text-sm text-blue-700 font-medium">
-            {state.selectedIds.size} selected
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleDismissSelected}
-              disabled={state.selectedIds.size === 0}
-              className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Dismiss selected ({state.selectedIds.size})
-            </button>
-            <button
-              type="button"
-              onClick={handleExitSelectionMode}
-              className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <SelectionToolbar
+          selectedCount={state.selectedIds.size}
+          totalCount={state.opportunities.length}
+          visibleIds={state.opportunities.map((o) => o._id)}
+          selectedIds={state.selectedIds}
+          onSelectAll={handleSelectAll}
+          onSelectOthers={handleSelectOthers}
+          onDismissSelected={handleDismissSelected}
+          onCancel={handleExitSelectionMode}
+        />
       )}
 
       <div className="divide-y divide-slate-200">

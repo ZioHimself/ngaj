@@ -2,7 +2,7 @@
 
 📋 **Decision Context**: [ADR-011: Installation and Setup Architecture](../../../../docs/architecture/decisions/011-installation-and-setup.md) - Read this first to understand **why** we chose this architecture.
 
-**Date**: 2026-01-18 (Updated: 2026-01-24)  
+**Date**: 2026-01-18 (Updated: 2026-01-30)  
 **Designer**: Designer Agent  
 **Status**: Approved
 
@@ -141,16 +141,61 @@ Validation patterns and help URLs defined in `src/shared/types/setup.ts`.
 - Docker daemon timeout → Suggest restart
 - Setup container fails → List created files, cleanup instructions
 
-### 3.2 Windows Post-Install Script (`installer/scripts/postinstall.ps1`)
+### 3.2 Windows Installer (`install.bat` with UAC Auto-Elevation)
+
+**Self-Elevation Pattern:**
+
+The Windows installer uses a self-elevating batch file so users don't need to know about "Run as Administrator":
+
+```batch
+@echo off
+title ngaj Installer
+
+REM Check for admin rights - if not admin, re-launch elevated
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting administrator privileges...
+    echo A Windows prompt will appear - please click "Yes"
+    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0' -ArgumentList 'elevated'"
+    exit /b
+)
+
+REM Installation proceeds with step-by-step progress
+echo Step 1/3: Creating installation directory...
+REM ... copy files ...
+echo Step 2/3: Copying files...
+REM ... copy files ...
+echo Step 3/3: Running post-install setup...
+echo A new window will open for setup. Please follow the prompts there.
+powershell -ExecutionPolicy Bypass -File "%ProgramFiles%\ngaj\scripts\postinstall.ps1"
+```
+
+**User Flow:**
+1. User double-clicks `install.bat`
+2. Script detects non-admin, shows friendly message
+3. Windows UAC dialog appears
+4. User clicks "Yes"
+5. New elevated window shows step-by-step progress
+6. Post-install script opens setup wizard in separate window
+
+### 3.3 Windows Post-Install Script (`installer/scripts/postinstall.ps1`)
 
 **Responsibilities**:
-- Check for Docker (`Get-Command docker`)
-- Download Docker Desktop if missing (Invoke-WebRequest + silent install)
-- Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-- Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
-- Run setup container with volume mount
-- Start production services (`docker-compose up -d`)
-- Open browser (`Start-Process "http://localhost:3000"`)
+- Create user data directories (`%LOCALAPPDATA%\ngaj\`)
+- Copy scripts to user directory
+- Create Start Menu shortcut
+- Display progress messages to user
+- Launch setup wizard in new PowerShell window
+
+**User Messaging:**
+```powershell
+Write-Host "Setting up ngaj directories..." -ForegroundColor Cyan
+# ... create directories ...
+Write-Host "Creating Start Menu shortcut..." -ForegroundColor Cyan
+# ... create shortcut ...
+Write-Host "Opening setup wizard in a new window..." -ForegroundColor Green
+Write-Host "IMPORTANT: Follow the setup wizard in the NEW WINDOW that just opened!" -ForegroundColor Yellow
+```
 
 **Error Handling**: Same as macOS (OS-agnostic error messages)
 

@@ -54,35 +54,74 @@ cp "${PROJECT_ROOT}/installer/scripts/ngaj-update.ps1" "${PAYLOAD_DIR}/scripts/"
 mkdir -p "${PAYLOAD_DIR}/resources"
 cp "${SCRIPT_DIR}/resources/icon.ico" "${PAYLOAD_DIR}/resources/"
 
-# Create install.bat
+# Create install.bat with self-elevation
 cat > "${PAYLOAD_DIR}/install.bat" << 'INSTALL_EOF'
 @echo off
-echo Installing ngaj...
-echo.
+setlocal EnableDelayedExpansion
 
-REM Check for admin rights
+title ngaj Installer
+
+REM ============================================
+REM  Self-elevation: Request admin if not admin
+REM ============================================
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Please run this script as Administrator.
-    pause
-    exit /b 1
+    echo.
+    echo =======================================
+    echo        ngaj Installer
+    echo =======================================
+    echo.
+    echo Requesting administrator privileges...
+    echo A Windows prompt will appear - please click "Yes"
+    echo.
+    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0' -ArgumentList 'elevated'"
+    exit /b
 )
+
+REM ============================================
+REM  Main installation (running as admin)
+REM ============================================
+cls
+echo.
+echo =======================================
+echo        ngaj Installer
+echo =======================================
+echo.
+echo Step 1/3: Creating installation directory...
 
 REM Create installation directory
 if not exist "%ProgramFiles%\ngaj" mkdir "%ProgramFiles%\ngaj"
 if not exist "%ProgramFiles%\ngaj\scripts" mkdir "%ProgramFiles%\ngaj\scripts"
 if not exist "%ProgramFiles%\ngaj\resources" mkdir "%ProgramFiles%\ngaj\resources"
 
+echo          Done.
+echo.
+echo Step 2/3: Copying files...
+
 REM Copy files
-copy /Y docker-compose.yml "%ProgramFiles%\ngaj\"
-copy /Y scripts\*.ps1 "%ProgramFiles%\ngaj\scripts\"
-copy /Y resources\icon.ico "%ProgramFiles%\ngaj\resources\"
+copy /Y docker-compose.yml "%ProgramFiles%\ngaj\" >nul
+copy /Y scripts\*.ps1 "%ProgramFiles%\ngaj\scripts\" >nul
+copy /Y resources\icon.ico "%ProgramFiles%\ngaj\resources\" >nul
+
+echo          Done.
+echo.
+echo Step 3/3: Running post-install setup...
+echo.
+echo =======================================
+echo  A new window will open for setup.
+echo  Please follow the prompts there.
+echo =======================================
+echo.
 
 REM Run post-install script
 powershell -ExecutionPolicy Bypass -File "%ProgramFiles%\ngaj\scripts\postinstall.ps1"
 
 echo.
 echo Installation complete!
+echo.
+echo The setup wizard should now be running in a new window.
+echo You can close this window.
+echo.
 pause
 INSTALL_EOF
 

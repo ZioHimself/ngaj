@@ -6,6 +6,7 @@
 **Updated** - January 24, 2026 (Added: Application Launcher for day-2 restart experience)  
 **Updated** - January 26, 2026 (Changed: Named volumes for database storage, non-root backend user)
 **Updated** - January 28, 2026 (Changed: DMG distribution with self-contained app bundle, Gatekeeper-friendly)
+**Updated** - January 30, 2026 (Changed: Windows installer auto-elevation via UAC, improved user messaging)
 
 ## Context
 
@@ -465,22 +466,55 @@ For support, visit: https://github.com/ziohimself/ngaj/issues
 - Users right-click → Open to bypass unsigned app warning
 - No code signing required for v0.1 (optional enhancement for v0.2)
 
-### Windows .msi Structure
+### Windows Installer (ZIP Distribution)
 
-- Use WiX Toolset to create installer
-- Custom action: PowerShell script (`scripts/postinstall.ps1`, ~30 lines)
-  - Check for Docker Desktop (`Get-Command docker`)
-  - Download if missing (Invoke-WebRequest + silent install)
-  - Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
-  - Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
-  - Run setup container with volume mount:
-    ```powershell
-    docker run --rm -it `
-      -v "$env:USERPROFILE\.ngaj:/data" `
-      ziohimself/ngaj-setup:stable
-    ```
-  - Start production services (`cd "C:\Program Files\ngaj"; docker-compose up -d`)
-  - Open browser (`Start-Process "http://localhost:3000"`)
+**v0.1 Approach:** ZIP archive with self-elevating batch file (simpler than MSI, no WiX dependency)
+
+**Package Contents:**
+- `install.bat` - Self-elevating installer entry point
+- `uninstall.bat` - Cleanup script
+- `docker-compose.yml` - Service orchestration
+- `scripts/` - PowerShell scripts for setup and runtime
+- `resources/` - Icons
+
+**UAC Auto-Elevation:**
+
+The `install.bat` uses a self-elevation pattern so non-technical users don't need to know about "Run as Administrator":
+
+```batch
+@echo off
+title ngaj Installer
+
+REM Check for admin rights
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting administrator privileges...
+    echo A Windows prompt will appear - please click "Yes"
+    powershell -Command "Start-Process -Verb RunAs -FilePath '%~f0' -ArgumentList 'elevated'"
+    exit /b
+)
+
+REM ... installation proceeds with admin rights ...
+```
+
+**User Experience:**
+1. User double-clicks `install.bat`
+2. Script detects non-admin, shows friendly message
+3. Windows UAC dialog appears ("Do you want to allow this app to make changes?")
+4. User clicks "Yes"
+5. New elevated window opens with step-by-step progress
+6. Post-install script launches setup wizard in separate PowerShell window
+
+**Post-Install Script (`scripts/postinstall.ps1`):**
+- Check for Docker Desktop (`Get-Command docker`)
+- Download if missing (Invoke-WebRequest + silent install)
+- Wait for Docker service (`while (!(docker info 2>$null)) { Start-Sleep 1 }`)
+- Pull setup container (`docker pull ziohimself/ngaj-setup:stable`)
+- Run setup container with volume mount
+- Start production services (`docker-compose up -d`)
+- Open browser (`Start-Process "http://localhost:3000"`)
+
+**Future (v0.2+):** Use WiX Toolset to create proper `.msi` installer with native Windows Installer UI
 
 ### Setup Container Implementation
 

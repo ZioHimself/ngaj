@@ -16,6 +16,7 @@ import { BlueskyAdapter } from './adapters/bluesky-adapter.js';
 import { ClaudeClient } from './clients/claude-client.js';
 import { ResponseSuggestionService, type IChromaClient } from './services/response-suggestion-service.js';
 import type { KBChunk } from './utils/prompt-builder.js';
+import { CleanupService, type ICleanupService } from './services/cleanup-service.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -44,9 +45,10 @@ app.use('/api/auth', authRoutes);
 // Scheduler Instance (Issue #35)
 // ============================================================================
 
-// Module-level scheduler and discovery service instances
+// Module-level scheduler, discovery, and cleanup service instances
 let scheduler: ICronScheduler | null = null;
 let discoveryService: DiscoveryService | null = null;
+let cleanupService: ICleanupService | null = null;
 
 /**
  * Create and configure the CronScheduler with all dependencies.
@@ -893,6 +895,11 @@ async function startServer() {
       console.log('✅ Scheduler initialized');
     }
 
+    // Initialize cleanup service (ADR-018)
+    cleanupService = new CleanupService(db);
+    cleanupService.start();
+    console.log('✅ Cleanup service started (runs every 5 minutes)');
+
     // Start Express server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -920,6 +927,12 @@ process.on('SIGTERM', async () => {
     console.log('✅ Scheduler stopped');
   }
   
+  // Stop cleanup service (ADR-018)
+  if (cleanupService) {
+    cleanupService.stop();
+    console.log('✅ Cleanup service stopped');
+  }
+  
   await closeDatabaseConnection();
   process.exit(0);
 });
@@ -931,6 +944,12 @@ process.on('SIGINT', async () => {
   if (scheduler) {
     scheduler.stop();
     console.log('✅ Scheduler stopped');
+  }
+  
+  // Stop cleanup service (ADR-018)
+  if (cleanupService) {
+    cleanupService.stop();
+    console.log('✅ Cleanup service stopped');
   }
   
   await closeDatabaseConnection();

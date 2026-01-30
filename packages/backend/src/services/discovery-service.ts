@@ -66,9 +66,11 @@ export interface IDiscoveryService {
  * 
  * @see ADR-008: Opportunity Discovery Architecture
  */
+/** ADR-018: Pending opportunities expire after 4 hours */
+export const OPPORTUNITY_TTL_HOURS = 4;
+
 export class DiscoveryService implements IDiscoveryService {
   private readonly DEFAULT_SCORE_THRESHOLD = 30;
-  private readonly OPPORTUNITY_TTL_HOURS = 48;
   private readonly DEFAULT_LOOKBACK_HOURS = 2;
 
   constructor(
@@ -200,7 +202,7 @@ export class DiscoveryService implements IDiscoveryService {
 
         // Create opportunity
         const discoveredAt = new Date();
-        const expiresAt = new Date(discoveredAt.getTime() + this.OPPORTUNITY_TTL_HOURS * 60 * 60 * 1000);
+        const expiresAt = new Date(discoveredAt.getTime() + OPPORTUNITY_TTL_HOURS * 60 * 60 * 1000);
 
         const opportunity: OpportunityDocument = {
           _id: new ObjectId(),

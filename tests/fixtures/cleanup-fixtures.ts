@@ -12,8 +12,9 @@ import type { Opportunity, OpportunityStatus, Response } from '@ngaj/shared';
 import { createMockOpportunity, createMockAuthor } from './opportunity-fixtures';
 import { createMockResponse } from './response-fixtures';
 
-/** Opportunity TTL in hours (ADR-018: reduced from 48h to 4h) */
-export const OPPORTUNITY_TTL_HOURS = 4;
+// Import and re-export from the service for single source of truth
+import { OPPORTUNITY_TTL_HOURS as _TTL } from '@ngaj/backend/services/discovery-service';
+export const OPPORTUNITY_TTL_HOURS = _TTL;
 
 /** Dismissed retention period in milliseconds (5 minutes) */
 export const DISMISSED_RETENTION_MS = 5 * 60 * 1000;

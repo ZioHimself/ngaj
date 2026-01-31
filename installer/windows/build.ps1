@@ -82,6 +82,11 @@ if %errorlevel% neq 0 (
 REM ============================================
 REM  Main installation (running as admin)
 REM ============================================
+
+REM Change to the directory where install.bat is located
+REM (elevated processes start in C:\Windows\System32 by default)
+cd /d "%~dp0"
+
 cls
 echo.
 echo =======================================

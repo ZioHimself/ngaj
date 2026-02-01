@@ -161,3 +161,34 @@ export {
   normalizeLoginCode,
   generateLoginSecret,
 } from './auth.js';
+
+// Activation types (heartbeat-based activation system)
+export type {
+  DeviceFingerprint,
+  ActivationKey,
+  ActivationSalt,
+  ActivateRequest,
+  ValidateRequest,
+  HeartbeatRequest,
+  DeactivateRequest,
+  ActivationSuccessResponse,
+  HeartbeatSuccessResponse,
+  ActivationErrorCode,
+  ActivationErrorResponse,
+  ActivationResponse,
+  HeartbeatResponse,
+  ActivationEnvVars,
+  ActivationServerConfig,
+} from './activation.js';
+export {
+  HEARTBEAT_INTERVAL_MS,
+  STALE_TIMEOUT_MS,
+  API_TIMEOUT_MS,
+  DEFAULT_ACTIVATION_API_URL,
+  ACTIVATION_KEY_PATTERN,
+  isValidActivationKey,
+  isValidDeviceFingerprint,
+  isActivationSuccess,
+  isHeartbeatSuccess,
+  isActivationError,
+} from './activation.js';

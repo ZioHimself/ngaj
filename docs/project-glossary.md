@@ -23,6 +23,15 @@
 
 ## Technical Terms
 
+- **Activation**: Authorization mechanism that gates ngaj installations. Users must obtain an activation key from the caretaker before the app will run. Uses heartbeat-based session tracking to prevent concurrent usage.
+- **Activation Key**: Unique identifier (`NGAJ-{UUID}` format) issued by the caretaker to authorize an ngaj installation. One key allows one active session at a time.
+- **Activation Salt**: Random 32-character string generated during setup and stored in `.env`. Combined with host machine ID to create the device fingerprint.
+- **Caretaker**: The project owner/maintainer who issues activation keys and provides support. Contact: https://github.com/ziohimself
+- **Caretaker CLI**: Interactive TypeScript CLI tool for managing activation keys (create, list, revoke). Uses inquirer for menu-driven interface, prompts for admin secret if not in environment. Run via `npm run caretaker`.
+- **Concurrent Session**: State where the same activation key is being used on multiple devices simultaneously. Prevented by the heartbeat-based activation system.
+- **Device Fingerprint**: SHA256 hash of (HOST_MACHINE_ID + ACTIVATION_SALT). Uniquely identifies an installation and prevents filesystem copying attacks.
+- **Cloudflare KV**: Serverless key-value storage used by the activation Worker to store activation records. Globally distributed with eventual consistency.
+- **Cloudflare Worker**: Serverless function running on Cloudflare's edge network. The activation server (`ngaj-activation`) runs as a Worker using the Hono framework.
 - **Embedding**: Vector representation of text chunks used for semantic similarity search via Claude API
 - **Vector Store**: Database (ChromaDB) that stores and queries document embeddings for semantic search
 - **Chunk**: Segment of a document (~500 tokens) created during knowledge base processing, respecting paragraph boundaries
@@ -33,9 +42,13 @@
 - **Synchronous Processing**: Upload workflow where user waits for processing to complete (vs. background job queue)
 - **Atomic Operation**: Database operation that either fully succeeds or fully fails with rollback (e.g., upload creates MongoDB + ChromaDB + filesystem entries together)
 - **Hard Delete**: Permanent removal of data from all systems (MongoDB, ChromaDB, filesystem) with no recovery option
+- **Hono**: Lightweight TypeScript web framework optimized for Cloudflare Workers. Used for the activation server routing.
+- **Heartbeat**: Periodic signal (every 5 minutes) sent from running ngaj instance to the activation server. Proves the installation is still active. If heartbeats stop (crash), session becomes stale after 10 minutes.
+- **Host Machine ID**: OS-specific unique identifier for the physical/virtual machine. Detected by host startup script and passed to Docker container. Used in device fingerprint calculation.
 - **Cleanup Service**: Scheduled background job (runs every 5 minutes) that marks expired opportunities and hard-deletes stale data. Handles cascade deletion of associated responses.
 - **Bulk Dismiss**: Feature to dismiss multiple opportunities at once via `POST /api/opportunities/bulk-dismiss`. Reduces manual effort when processing many items.
 - **Selection Mode**: UI mode for multi-selecting opportunities. Entered via long-press (mobile) or checkbox click (desktop). Enables bulk dismiss and "Select others" actions.
+- **Stale Session**: Activation session where last heartbeat was more than 10 minutes ago (2x heartbeat interval). Stale sessions can be replaced by new activations, enabling crash recovery and device migration.
 - **Storage Limit**: Configurable maximum disk space per profile (default: 100MB total, 10MB per file)
 - **Cron Job**: Scheduled task that runs discovery at regular intervals. Multiple schedules supported per account (e.g., replies every 15 min, search every 2 hours).
 - **Cron Expression**: Time schedule format (e.g., '*/15 * * * *' = every 15 minutes, '0 */2 * * *' = every 2 hours)

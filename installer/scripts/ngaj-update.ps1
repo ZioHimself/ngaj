@@ -9,7 +9,14 @@
 
 $ErrorActionPreference = "Stop"
 
+# Ensure HOME is set for docker-compose compatibility
+# Windows doesn't set HOME by default, but docker-compose.yml uses ${HOME}
+if (-not $env:HOME) {
+    $env:HOME = $env:USERPROFILE
+}
+
 $NgajHome = "$env:LOCALAPPDATA\ngaj"
+$NgajConfig = "$env:HOME\.ngaj"
 
 # Header
 Clear-Host
@@ -90,15 +97,16 @@ try {
 Write-Host ""
 Write-Host "Generating new login secret..." -ForegroundColor Cyan
 
-# Ensure ngaj home directory exists
-if (-not (Test-Path $NgajHome)) {
-    New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
+# Ensure config directory exists
+if (-not (Test-Path $NgajConfig)) {
+    New-Item -ItemType Directory -Path $NgajConfig -Force | Out-Null
 }
 
 # Run setup container with --regenerate-secret flag to generate new secret
 # The container outputs only the new secret on stdout
+# Mount $NgajConfig (which is $HOME/.ngaj) so .env is in the right place
 try {
-    $newSecret = docker run --rm -v "${NgajHome}:/data" ziohimself/ngaj-setup:stable --regenerate-secret 2>$null
+    $newSecret = docker run --rm -v "${NgajConfig}:/data" ziohimself/ngaj-setup:stable --regenerate-secret 2>$null
     $newSecret = $newSecret.Trim()
     
     if ([string]::IsNullOrEmpty($newSecret)) {

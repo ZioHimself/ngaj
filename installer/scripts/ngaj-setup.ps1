@@ -4,7 +4,16 @@
 
 $ErrorActionPreference = "Stop"
 
+# Ensure HOME is set for docker-compose compatibility
+# Windows doesn't set HOME by default, but docker-compose.yml uses ${HOME}
+if (-not $env:HOME) {
+    $env:HOME = $env:USERPROFILE
+}
+
+# NgajHome stores local app data (scripts, logs, resources)
 $NgajHome = "$env:LOCALAPPDATA\ngaj"
+# NgajConfig stores .env file at $HOME/.ngaj (matches docker-compose.yml)
+$NgajConfig = "$env:HOME\.ngaj"
 $InstallDir = "$env:ProgramFiles\ngaj"
 
 # Header
@@ -14,8 +23,13 @@ Write-Host "       ngaj First-Time Setup          " -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host ""
 
+# Ensure config directory exists
+if (-not (Test-Path $NgajConfig)) {
+    New-Item -ItemType Directory -Path $NgajConfig -Force | Out-Null
+}
+
 # Check if already set up
-if (Test-Path "$NgajHome\.env") {
+if (Test-Path "$NgajConfig\.env") {
     Write-Host "ngaj is already configured." -ForegroundColor Yellow
     Write-Host ""
     $reconfigure = Read-Host "Do you want to reconfigure? (y/N)"
@@ -87,21 +101,25 @@ Write-Host ""
 Write-Host "Pulling ngaj setup container..."
 docker pull ziohimself/ngaj-setup:stable
 
-# Ensure ngaj home directory exists
+# Ensure ngaj directories exist
 if (-not (Test-Path $NgajHome)) {
     New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
 }
+if (-not (Test-Path $NgajConfig)) {
+    New-Item -ItemType Directory -Path $NgajConfig -Force | Out-Null
+}
 
 # Run setup wizard with volume mount
+# Mount $NgajConfig (which is $HOME/.ngaj) so .env ends up where docker-compose expects
 Write-Host ""
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host "       Credentials Setup              " -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host ""
-docker run --rm -it -v "${NgajHome}:/data" ziohimself/ngaj-setup:stable
+docker run --rm -it -v "${NgajConfig}:/data" ziohimself/ngaj-setup:stable
 
 # Check if setup completed (.env exists)
-if (-not (Test-Path "$NgajHome\.env")) {
+if (-not (Test-Path "$NgajConfig\.env")) {
     Write-Host ""
     Write-Host "Setup was cancelled." -ForegroundColor Red
     Write-Host ""
@@ -174,8 +192,8 @@ $lanIP = Get-LanIP
 
 # Read login secret from .env
 $loginSecret = $null
-if (Test-Path "$NgajHome\.env") {
-    $envContent = Get-Content "$NgajHome\.env"
+if (Test-Path "$NgajConfig\.env") {
+    $envContent = Get-Content "$NgajConfig\.env"
     $loginLine = $envContent | Where-Object { $_ -match "^LOGIN_SECRET=" }
     if ($loginLine) {
         $loginSecret = $loginLine -replace "^LOGIN_SECRET=", ""

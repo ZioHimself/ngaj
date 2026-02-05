@@ -10,9 +10,16 @@
 
 $ErrorActionPreference = "Stop"
 
+# Ensure HOME is set for docker-compose compatibility
+# Windows doesn't set HOME by default, but docker-compose.yml uses ${HOME}
+if (-not $env:HOME) {
+    $env:HOME = $env:USERPROFILE
+}
+
 $NgajHome = "$env:LOCALAPPDATA\ngaj"
+$NgajConfig = "$env:HOME\.ngaj"
 $InstallDir = "$env:ProgramFiles\ngaj"
-$EnvFile = "$NgajHome\.env"
+$EnvFile = "$NgajConfig\.env"
 
 # Header
 Clear-Host

@@ -4,16 +4,25 @@
 
 $ErrorActionPreference = "Stop"
 
+# Ensure HOME is set (Windows doesn't set it by default)
+if (-not $env:HOME) {
+    $env:HOME = $env:USERPROFILE
+}
+
 $NgajHome = "$env:LOCALAPPDATA\ngaj"
+$NgajConfig = "$env:HOME\.ngaj"
 $InstallDir = "$env:ProgramFiles\ngaj"
 
 Write-Host "Setting up ngaj directories..." -ForegroundColor Cyan
 
-# Create user data directory structure
+# Create user data directory structure (for scripts, logs, resources)
 # Note: MongoDB and ChromaDB use Docker named volumes, not host directories
 New-Item -ItemType Directory -Force -Path "$NgajHome\logs" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\scripts" | Out-Null
 New-Item -ItemType Directory -Force -Path "$NgajHome\resources" | Out-Null
+
+# Create config directory for .env file (at $HOME/.ngaj to match docker-compose.yml)
+New-Item -ItemType Directory -Force -Path $NgajConfig | Out-Null
 
 # Copy scripts to user directory
 Copy-Item "$InstallDir\scripts\ngaj-start.ps1" "$NgajHome\scripts\" -Force

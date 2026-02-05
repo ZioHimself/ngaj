@@ -253,6 +253,9 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+REM Set HOME if not set (for consistency)
+if not defined HOME set HOME=%USERPROFILE%
+
 REM Stop services
 cd /d "%ProgramFiles%\ngaj"
 docker compose down 2>nul
@@ -265,12 +268,13 @@ rmdir /s /q "%ProgramFiles%\ngaj" 2>nul
 
 REM Remove user data (optional - ask user)
 echo.
-set /p REMOVE_DATA="Remove user data (%LOCALAPPDATA%\ngaj)? [y/N]: "
+set /p REMOVE_DATA="Remove user data? [y/N]: "
 if /i "%REMOVE_DATA%"=="y" (
     rmdir /s /q "%LOCALAPPDATA%\ngaj" 2>nul
+    rmdir /s /q "%HOME%\.ngaj" 2>nul
     echo User data removed.
 ) else (
-    echo User data preserved at %LOCALAPPDATA%\ngaj
+    echo User data preserved at %LOCALAPPDATA%\ngaj and %HOME%\.ngaj
 )
 
 echo.

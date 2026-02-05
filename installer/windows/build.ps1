@@ -63,6 +63,32 @@ setlocal EnableDelayedExpansion
 title ngaj Installer
 
 REM ============================================
+REM  Check if running from extracted location
+REM  (Running from inside ZIP will fail)
+REM ============================================
+cd /d "%~dp0"
+
+if not exist "%~dp0docker-compose.yml" (
+    echo.
+    echo =======================================
+    echo          ERROR: Extract First!
+    echo =======================================
+    echo.
+    echo It looks like you're running install.bat directly
+    echo from inside the ZIP file. This won't work.
+    echo.
+    echo Please:
+    echo   1. Extract the entire ZIP to a folder
+    echo   2. Open the extracted folder
+    echo   3. Run install.bat from there
+    echo.
+    echo =======================================
+    echo.
+    pause
+    exit /b 1
+)
+
+REM ============================================
 REM  Self-elevation: Request admin if not admin
 REM ============================================
 net session >nul 2>&1
@@ -93,6 +119,27 @@ echo =======================================
 echo        ngaj Installer
 echo =======================================
 echo.
+
+REM Verify source files exist (double-check after elevation)
+if not exist "docker-compose.yml" (
+    echo ERROR: docker-compose.yml not found in %~dp0
+    echo.
+    echo Make sure you extracted the entire ZIP file and
+    echo are running install.bat from the extracted folder.
+    echo.
+    pause
+    exit /b 1
+)
+if not exist "scripts\postinstall.ps1" (
+    echo ERROR: scripts\postinstall.ps1 not found in %~dp0
+    echo.
+    echo Make sure you extracted the entire ZIP file and
+    echo are running install.bat from the extracted folder.
+    echo.
+    pause
+    exit /b 1
+)
+
 echo Step 1/3: Creating installation directory...
 
 REM Create installation directory
@@ -104,10 +151,36 @@ echo          Done.
 echo.
 echo Step 2/3: Copying files...
 
-REM Copy files
-copy /Y docker-compose.yml "%ProgramFiles%\ngaj\" >nul
-copy /Y scripts\*.ps1 "%ProgramFiles%\ngaj\scripts\" >nul
-copy /Y resources\icon.ico "%ProgramFiles%\ngaj\resources\" >nul
+REM Copy files with error checking
+copy /Y "docker-compose.yml" "%ProgramFiles%\ngaj\"
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to copy docker-compose.yml
+    pause
+    exit /b 1
+)
+
+copy /Y "scripts\*.ps1" "%ProgramFiles%\ngaj\scripts\"
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to copy PowerShell scripts
+    pause
+    exit /b 1
+)
+
+copy /Y "resources\icon.ico" "%ProgramFiles%\ngaj\resources\"
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to copy icon resource
+    pause
+    exit /b 1
+)
+
+REM Verify critical file was copied
+if not exist "%ProgramFiles%\ngaj\scripts\postinstall.ps1" (
+    echo ERROR: postinstall.ps1 was not copied successfully
+    echo.
+    echo Please check file permissions and try again.
+    pause
+    exit /b 1
+)
 
 echo          Done.
 echo.
@@ -131,6 +204,40 @@ echo.
 pause
 "@
 $installBat | Out-File -FilePath "$PayloadDir\install.bat" -Encoding ASCII
+
+# Create README.txt with installation instructions
+$readmeTxt = @"
+=======================================
+       ngaj Installer - README
+=======================================
+
+IMPORTANT: You must EXTRACT this ZIP file before running the installer!
+
+Installation Steps:
+-------------------
+1. EXTRACT this entire ZIP to a folder (e.g., Desktop or Downloads)
+   - Right-click the ZIP file
+   - Select "Extract All..."
+   - Choose a destination folder
+   - Click "Extract"
+
+2. OPEN the extracted folder
+
+3. DOUBLE-CLICK "install.bat"
+   - Windows will ask for Administrator permission - click "Yes"
+   - Follow the on-screen prompts
+
+DO NOT run install.bat directly from inside the ZIP file!
+Windows cannot access the other required files when you do this.
+
+Troubleshooting:
+----------------
+- If you see "Extract First!" error: Extract the ZIP and try again
+- If you see permission errors: Right-click install.bat, "Run as administrator"
+- For more help: https://github.com/ziohimself/ngaj/issues
+
+"@
+$readmeTxt | Out-File -FilePath "$PayloadDir\README.txt" -Encoding ASCII
 
 # Create uninstall.bat
 $uninstallBat = @"

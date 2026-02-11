@@ -148,11 +148,36 @@ else
     echo -e "  Dashboard:    ${BLUE}http://localhost:3000${NC}"
 fi
 
-echo ""
+# Display login code with visual emphasis (ADR-021)
 if [ -n "$LOGIN_SECRET" ]; then
-    echo -e "  Login code:   ${YELLOW}${LOGIN_SECRET}${NC}"
+    # Copy to clipboard (macOS)
+    CLIPBOARD_SUCCESS=false
+    if command -v pbcopy &> /dev/null; then
+        if echo -n "$LOGIN_SECRET" | pbcopy 2>/dev/null; then
+            CLIPBOARD_SUCCESS=true
+        fi
+    fi
+    
+    # Save to file for backup reference
+    LOGIN_CODE_FILE="${NGAJ_HOME}/login-code.txt"
+    FILE_SAVE_SUCCESS=false
+    if echo -n "$LOGIN_SECRET" > "$LOGIN_CODE_FILE" 2>/dev/null; then
+        FILE_SAVE_SUCCESS=true
+    fi
+    
+    # Display with visual emphasis
+    echo ""
+    echo -e "${YELLOW}═══════════════════════════════════════${NC}"
+    echo -e "${YELLOW}  LOGIN CODE:  ${LOGIN_SECRET}${NC}"
+    echo -e "${YELLOW}═══════════════════════════════════════${NC}"
+    if [ "$CLIPBOARD_SUCCESS" = true ]; then
+        echo -e "  ${GREEN}✓ Copied to clipboard${NC}"
+    fi
     echo ""
     echo "  (Use this code to log in from any device on your WiFi)"
+    if [ "$FILE_SAVE_SUCCESS" = true ]; then
+        echo -e "  Login code also saved to: $LOGIN_CODE_FILE"
+    fi
 fi
 
 echo ""

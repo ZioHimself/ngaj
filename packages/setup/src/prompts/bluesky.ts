@@ -6,13 +6,19 @@ import inquirer from 'inquirer';
 import type { BlueskyCredentials } from '@ngaj/shared';
 import { CREDENTIAL_PATTERNS } from '@ngaj/shared';
 import { validateBlueskyConnection } from '../validators/bluesky.js';
+import { showPasteInstructions } from '../utils/paste-instructions.js';
 
 /**
  * Prompt for Bluesky credentials with validation
+ *
+ * Note: Handle and app password are prompted separately so that
+ * paste instructions can be shown before the password prompt only.
+ * Handle is a text input (no paste instructions needed).
  */
 export async function promptBlueskyCredentials(): Promise<BlueskyCredentials> {
   while (true) {
-    const answers = await inquirer.prompt([
+    // First prompt: handle (text input, no paste instructions needed)
+    const handleAnswer = await inquirer.prompt([
       {
         type: 'input',
         name: 'handle',
@@ -24,6 +30,13 @@ export async function promptBlueskyCredentials(): Promise<BlueskyCredentials> {
           return true;
         },
       },
+    ]);
+
+    // Show paste instructions before password prompt
+    showPasteInstructions();
+
+    // Second prompt: app password (hidden input)
+    const passwordAnswer = await inquirer.prompt([
       {
         type: 'password',
         name: 'appPassword',
@@ -39,18 +52,18 @@ export async function promptBlueskyCredentials(): Promise<BlueskyCredentials> {
     ]);
 
     console.log('\nValidating Bluesky connection...');
-    
+
     const result = await validateBlueskyConnection(
-      answers.handle,
-      answers.appPassword
+      handleAnswer.handle,
+      passwordAnswer.appPassword
     );
 
     if (result.valid) {
       console.log('✓ Connection successful');
       return {
         platform: 'bluesky',
-        handle: answers.handle,
-        appPassword: answers.appPassword,
+        handle: handleAnswer.handle,
+        appPassword: passwordAnswer.appPassword,
       };
     }
 

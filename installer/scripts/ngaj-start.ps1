@@ -159,11 +159,45 @@ if ($lanIP) {
     Write-Host "  Dashboard:    http://localhost:3000" -ForegroundColor Cyan
 }
 
-Write-Host ""
+# Display login code with visual emphasis (ADR-021)
 if ($loginSecret) {
-    Write-Host "  Login code:   $loginSecret" -ForegroundColor Yellow
+    # Copy to clipboard
+    $clipboardSuccess = $false
+    try {
+        $loginSecret | Set-Clipboard
+        $clipboardSuccess = $true
+    } catch {
+        # Clipboard operation failed (e.g., headless environment)
+        $clipboardSuccess = $false
+    }
+    
+    # Save to file for backup reference
+    $loginCodeFile = "$NgajHome\login-code.txt"
+    $fileSaveSuccess = $false
+    try {
+        # Ensure directory exists
+        if (-not (Test-Path $NgajHome)) {
+            New-Item -ItemType Directory -Path $NgajHome -Force | Out-Null
+        }
+        $loginSecret | Out-File -FilePath $loginCodeFile -Encoding ASCII -NoNewline
+        $fileSaveSuccess = $true
+    } catch {
+        $fileSaveSuccess = $false
+    }
+    
+    # Display with visual emphasis
+    Write-Host ""
+    Write-Host "═══════════════════════════════════════" -ForegroundColor Yellow
+    Write-Host "  LOGIN CODE:  $loginSecret" -ForegroundColor Yellow
+    Write-Host "═══════════════════════════════════════" -ForegroundColor Yellow
+    if ($clipboardSuccess) {
+        Write-Host "  ✓ Copied to clipboard" -ForegroundColor Green
+    }
     Write-Host ""
     Write-Host "  (Use this code to log in from any device on your WiFi)"
+    if ($fileSaveSuccess) {
+        Write-Host "  Login code also saved to: $loginCodeFile" -ForegroundColor DarkGray
+    }
 }
 
 Write-Host ""

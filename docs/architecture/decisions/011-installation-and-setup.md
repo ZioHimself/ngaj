@@ -686,6 +686,7 @@ Start Menu shortcut → ngaj-start.ps1
 - [ADR-005: MVP Scope](./005-mvp-scope.md) - v0.1 feature scope and target audience
 - [ADR-012: First-Launch Setup Wizard](./012-first-launch-wizard.md) - Web UI setup after installation
 - [ADR-014: Simple Token Authentication](./014-simple-token-auth.md) - Login secret generated during setup
+- [ADR-021: Installation Clipboard Experience](./021-installation-clipboard-experience.md) - Clipboard UX improvements
 - [Docker Desktop Licensing](https://www.docker.com/pricing/faq/) - Commercial use requires license
 
 ## Related Documentation
@@ -694,6 +695,7 @@ Start Menu shortcut → ngaj-start.ps1
 - Handoff Doc (Installation): `.agents/artifacts/designer/handoffs/006-installation-setup-handoff.md`
 - Handoff Doc (Network Access): `.agents/artifacts/designer/handoffs/010-network-access-display-handoff.md`
 - Handoff Doc (Application Launcher): `.agents/artifacts/designer/handoffs/012-application-launcher-handoff.md`
+- Handoff Doc (Clipboard UX): `.agents/artifacts/designer/handoffs/018-installation-clipboard-experience-handoff.md`
 - Type Definitions: `packages/shared/src/types/setup.ts`
 - GitHub Issue: [#10 - Installation and Setup](https://github.com/ZioHimself/ngaj/issues/10)
 

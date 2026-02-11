@@ -5,11 +5,22 @@
  * Handles display of network URLs, login codes, and status messages.
  *
  * @see ADR-011: Installation and Setup Architecture (Sections 6 and 7)
+ * @see ADR-021: Installation Clipboard Experience
  * @see 010-network-access-display-handoff.md (Section 2.4)
  * @see 012-application-launcher-handoff.md
  */
 
 import type { LoginCodeResult } from './login-code-reader.js';
+
+/**
+ * Options for formatting login code with visual emphasis
+ */
+export interface FormatLoginCodeEmphasisOptions {
+  /** The login code to display */
+  loginCode: string;
+  /** Whether the clipboard copy operation succeeded */
+  clipboardSuccess: boolean;
+}
 
 /**
  * Options for formatting network access display
@@ -148,4 +159,52 @@ export async function createTerminalOutput(options: CreateTerminalOutputOptions)
 
   // Format and return
   return formatStatusDisplay({ lanIP, loginCode, port });
+}
+
+/**
+ * Emphasis line character for visual emphasis box
+ */
+const EMPHASIS_LINE = '═══════════════════════════════════════';
+
+/**
+ * Format login code with visual emphasis box
+ *
+ * Displays:
+ * ```
+ * ═══════════════════════════════════════
+ *   LOGIN CODE:  A1B2-C3D4-E5F6-G7H8
+ * ═══════════════════════════════════════
+ *   ✓ Copied to clipboard
+ * ```
+ *
+ * @param options - Options including login code and clipboard status
+ * @returns Formatted output string, empty string if login code is empty/whitespace
+ *
+ * @see ADR-021: Installation Clipboard Experience
+ */
+export function formatLoginCodeWithEmphasis(options: FormatLoginCodeEmphasisOptions): string {
+  const { loginCode, clipboardSuccess } = options;
+
+  // Handle empty or whitespace-only login codes
+  if (!loginCode || !loginCode.trim()) {
+    return '';
+  }
+
+  const lines: string[] = [];
+
+  // Top emphasis line
+  lines.push(EMPHASIS_LINE);
+
+  // Login code with label
+  lines.push(`  LOGIN CODE:  ${loginCode}`);
+
+  // Bottom emphasis line
+  lines.push(EMPHASIS_LINE);
+
+  // Clipboard success message (only if clipboard succeeded)
+  if (clipboardSuccess) {
+    lines.push('  ✓ Copied to clipboard');
+  }
+
+  return lines.join('\n');
 }

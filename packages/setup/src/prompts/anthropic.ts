@@ -6,12 +6,16 @@ import inquirer from 'inquirer';
 import type { AnthropicCredentials } from '@ngaj/shared';
 import { CREDENTIAL_PATTERNS, CREDENTIAL_HELP_URLS } from '@ngaj/shared';
 import { validateAnthropicConnection } from '../validators/anthropic.js';
+import { showPasteInstructions } from '../utils/paste-instructions.js';
 
 /**
  * Prompt for Anthropic API key with validation
  */
 export async function promptAnthropicCredentials(): Promise<AnthropicCredentials> {
   while (true) {
+    // Show paste instructions before password prompt
+    showPasteInstructions();
+
     const answers = await inquirer.prompt([
       {
         type: 'password',

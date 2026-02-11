@@ -3,6 +3,7 @@
  * 
  * Test data for installation and setup wizard testing.
  * @see ADR-011: Installation and Setup Architecture
+ * @see ADR-021: Installation Clipboard Experience
  */
 
 import type {
@@ -237,3 +238,34 @@ export const generateExpectedEnvLines = (config: SetupConfiguration): string[] =
 
   return lines;
 };
+
+// ============================================================================
+// Paste Instructions Fixtures (ADR-021)
+// ============================================================================
+
+/**
+ * Expected paste instructions output patterns
+ */
+export const pasteInstructionsPatterns = {
+  /** Tip emoji and header */
+  header: '📋 Tip: To paste in this terminal:',
+  /** Windows Terminal instruction */
+  windowsTerminal: 'Windows Terminal',
+  /** PowerShell instruction */
+  powershell: 'PowerShell',
+  /** Right-click instruction */
+  rightClick: 'Right-click',
+  /** Ctrl+Shift+V instruction */
+  ctrlShiftV: 'Ctrl+Shift+V',
+  /** Bullet point */
+  bullet: '•',
+};
+
+/**
+ * Expected full paste instructions output
+ */
+export const expectedPasteInstructionsOutput = `
+📋 Tip: To paste in this terminal:
+   • Windows Terminal: Right-click or Ctrl+Shift+V
+   • PowerShell: Right-click
+`;

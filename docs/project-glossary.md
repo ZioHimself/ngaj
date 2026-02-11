@@ -77,6 +77,8 @@
 - **Volume Mount**: Docker mechanism to share files between container and host. Setup container mounts `~/.ngaj:/data` to write `.env` file that persists after container exits.
 - **Native Installer**: OS-specific installation package (.pkg for macOS, .msi for Windows) that bundles Docker Compose configs and post-install scripts. Downloads Docker Desktop and setup container on first run.
 - **OS-Specific Scripts**: Post-install scripts written in the native scripting language of each operating system (bash for macOS, PowerShell for Windows). Handle Docker installation check, setup container launch, and production services startup.
+- **Paste Instructions**: Helper text displayed before password prompts in the setup wizard, guiding Windows users on how to paste clipboard content in their terminal (Right-click for PowerShell, Ctrl+Shift+V for Windows Terminal).
+- **Login Code File**: Backup file (`login-code.txt`) saved to user data directory containing the login secret. Provides alternative access when clipboard is unavailable or terminal is closed.
 
 ## Development Terms
 

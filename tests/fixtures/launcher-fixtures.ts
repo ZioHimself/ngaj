@@ -281,6 +281,12 @@ export const terminalOutputPatterns = {
   /** Login code display pattern */
   loginCode: /Login code:\s+[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/,
 
+  /** Login code emphasis box pattern (ADR-021) */
+  loginCodeEmphasisTop: /═{30,}/,
+  loginCodeEmphasisLabel: /LOGIN CODE:\s+[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/,
+  loginCodeEmphasisBottom: /═{30,}/,
+  clipboardCopied: '✓ Copied to clipboard',
+
   /** Startup messages */
   startingDocker: 'Starting Docker Desktop...',
   waitingForDocker: 'Waiting for Docker daemon...',
@@ -317,6 +323,17 @@ export const terminalOutputExamples = {
 
   Login code: A1B2-C3D4-E5F6-G7H8
   (Enter this code when prompted in your browser)`,
+
+  /** Login code with visual emphasis box (ADR-021) */
+  loginCodeWithEmphasis: `═══════════════════════════════════════
+  LOGIN CODE:  A1B2-C3D4-E5F6-G7H8
+═══════════════════════════════════════
+  ✓ Copied to clipboard`,
+
+  /** Login code emphasis without clipboard success */
+  loginCodeEmphasisNoClipboard: `═══════════════════════════════════════
+  LOGIN CODE:  A1B2-C3D4-E5F6-G7H8
+═══════════════════════════════════════`,
 
   /** Cold start output */
   coldStart: `🚀 Starting ngaj...
